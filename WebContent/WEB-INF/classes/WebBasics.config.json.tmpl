@@ -1,0 +1,48 @@
+{ "email": { "sysadmin": { "smtp"  :"smtp.gmail.com:465:ssl", "userId":"hello@capsicohealth.com", "pswd"  :"IDK" }
+            ,"user"    : { "smtp"  :"smtp.gmail.com:465:ssl", "userId":"hello@capsicohealth.com", "pswd"  :"IDK" }
+   }
+ ,"sessionConfig": {
+        "loginAttempts"      : 5
+       ,"withinMins"         : 5
+       ,"lockForMins"        : 10
+       ,"failedLoginCycle"   : 3
+       ,"lockForeverDays"    : 1000
+       ,"resetCodeExpiryMins": 60
+       ,"passwordExpiryDays" : 720
+   }
+ ,"passwordRules": [
+     {"rule":".{8,}"    , "description":"A minimum of 8 characters." }
+    ,{"rule":".*[A-Z].*", "description":"At least one uppercase character." }
+    ,{"rule":".*[a-z].*", "description":"At least one lowercase character." }
+    ,{"rule":".*\\W.*"  , "description":"At least one non alpha-numeric character." }
+    ]
+ ,"hostName": "https://localhost:8443"
+ ,"appName": "/CapsicoAdmin/"
+ ,"appPath": "xxx"
+ ,"homePagePath": "xxx"
+ ,"resetEmailText": ["<p>Hello,</p>"
+                    ,"<p>A password reset was requested from your CapsicoHealth account. If you have not done this, please contact your "
+                    ,"administrator immediately. Otherwise, please click on the link below to reset your password. This code will remain "
+                    ,"valid for 60 minutes.</p>"
+                    ]    
+ ,"inviteEmailText": ["<p>Hello,</p>"
+                     ,"<p>You have been invited to join the CapsicoHealth application.</p>"
+                     ]
+ ,"lookAndFeel": {
+      "pageTitle" :"CapsicoHealth"
+     ,"logoSmall":"/static/img/CapsicoHealth.100px.png"
+     ,"logoBig"  :"/static/img/CapsicoLogo.full.png"
+//    ,"overrideCssFile":"/static/css/overrides/tenant_1.css"    
+   }
+ ,"authPassthroughs": [
+     "/home.jsp"
+    ,"/svc/user/invite"
+    ,"/svc/user/token"
+    ,"/svc/Login"
+    ,"/svc/Logout"
+    ,"/svc/Signup"
+    ,"/svc/user/forgotPswd"
+    ,"/svc/user/setPswd"
+    ,"/svc/user/onboarding"
+   ]
+}

@@ -1,0 +1,9 @@
+/bin/
+/build/
+/WebContent/WEB-INF/classes/log4j2.xml
+/WebContent/WEB-INF/classes/tilda.config.json
+/WebContent/WEB-INF/classes/WebBasics.config.json
+*.DS_Store
+/*.svg
+/*.dot
+
