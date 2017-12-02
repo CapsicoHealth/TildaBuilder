@@ -26,5 +26,8 @@
 	<classpathentry exported="true" kind="lib" path="lib/tomcat-embed-jasper.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/tomcat-embed-websocket.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/WebBasics.jar"/>
+	<classpathentry kind="lib" path="lib/commons-logging-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/json-simple-1.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/sqljdbc42.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
