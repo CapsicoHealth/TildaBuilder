@@ -1,28 +1,31 @@
 /*************************************************************************
    DOJO CLARO THEME
 **************************************************************************/
+
+/*
 @font-face {
   font-family: 'Lato';
   font-style: normal;
   font-weight: 400;
   src: local('Lato Regular'), local('Lato-Regular'), url(/static/css/LatoRegular.woff2) format('woff2');
 }
+*/
 
 .claro {
-    font-family: Lato;
-    letter-spacing: -0.25px;
-    color: #5A5A5A;
+    font-family: arial, sans-serif;
+    letter-spacing: -0.33px;
+    color: #567;
 }
 
-@media all and (max-width: 1280px) {
+@media all and (max-width: 1175px) {
   .claro {
-    font-size: 12px;
+    font-size: 14px;
   }
 }
 
-@media all and (min-width: 1280px) {
+@media all and (min-width: 1175px) {
   .claro {
-    font-size: 14px;
+    font-size: 18px;
   }
 }
 
@@ -38,7 +41,7 @@
 **************************************************************************/
 .claro .dijitDialogUnderlay {
     background: #000000;
-    opacity: 0.8;
+    opacity: 0.80;
 }
 .dj_ie claro .dijitDialogUnderlay {
     filter: alpha(opacity=50);
@@ -48,32 +51,27 @@
   background-color: #FFFFFF;
   outline-style: none;
   padding: 0px 0px 4px 0px;
-  -webkit-border-radius: 10px 10px 5px 5px; 
-          border-radius: 10px 10px 5px 5px; 
-  border: 0px;
 }
 .claro .dojoxDialogTitleBar {
-  padding: 0px 3px 1px 5px;
-  font-size: 130%;
-  color: #000000;
+  padding: 0px 3px 10px 5px;
+  font-size: 125%;
+  color: #456;
   font-weight: bold;
-  background-color: #FEBE22;
+  background-color: #EEE;
   background-image: none;
-  -webkit-border-radius: 5px 5px 0px 0px;
-          border-radius: 5px 5px 0px 0px; 
-  border: 0px !important;
 }
 .claro .dojoxDialogPaneContent, .dojoxDialogPaneContent {
   -webkit-overflow-scrolling: touch;
-  position: absolute;
-//  top: 23px !important;
-//  padding: 5px;
+  position: relative;
+  scrollbar-width: thin;
+  height: 96%;
+  background-color: #FFF;
 }
 .claro .dojoxDialogCloseIcon {
   background: url(/static/img/cross_icon.png) no-repeat;
-  background-size: 15px;
+  background-size: 20px;
   position: absolute;
-  right: 10px; top: 3px;
+  right: 10px; top: 7px;
   width: 20px; height: 20px;
   cursor: pointer;
 }
@@ -85,9 +83,10 @@
 }
 
 .claro #DLG_POPUPLOGIN  .dojoxDialogTitleBar {
-//   background-color: #FF6785;
-   background-image: url('/static/img/loginBanner.lighter.gif');
-   background-size: 450px;
+   background-color: RGBA(231, 93, 93, 0.8);
+//   background-image: url('/static/img/loginBanner.lighter.gif');
+//   background-size: 450px;
+   color: #000000;
    font-weight: bolder;
    font-size: 175%;
    border-bottom: 1px #EEE solid !important;
@@ -95,8 +94,12 @@
 
 .claro #DLG_POPUPLOGIN  .dojoxDialogPaneContent, #DLG_POPUPLOGIN  .dojoxDialogPaneContent {
 //   background-color: #FF6785;
-   background-image: url('/static/img/specialBackgroundInverted-red.gif');
-   background-size: 500px;
+//   background-image: url('/static/img/specialBackgroundInverted-red.gif');
+//   background-size: 500px;
+}
+
+.claro #DLG_POPUPLOGIN .dojoxDialogTitleBar {
+    border: 2px outset RGBA(231, 93, 93, 1) !important;
 }
 
 
@@ -210,10 +213,18 @@
 
 
 .claro .dijitTooltipContainer {
-  position: relative;
-  top: -16px;
+    position: relative;
+    top: -18px;
+    right: 4px;
+    max-height: 600px;
+    max-width: 400px;
+    overflow: auto;
+    scrollbar-width: thin;
+    border: outset 1px #999;
+    -webkit-border-radius: 0px 0px 10px 10px;
+    border-radius: 0px 0px 10px 10px;
+    box-shadow: 5px 5px 5px 0px rgba(0,0,0,0.5);
 }
-
 .claro .dijitTooltipConnector {
   display: none;
 }
@@ -237,7 +248,8 @@ rect {
 .axis path,
 .axis line {
   fill: none;
-  stroke: rgba(0, 0, 0, 0.1);
+  stroke-width: 1px;
+  stroke: rgba(200, 200, 200, 0.5);
   shape-rendering: crispEdges;
 }
 
@@ -249,7 +261,7 @@ rect {
 }
 
 .dot {
-  fill-opacity: .5;
+  fill-opacity: .8;
 }
 
 /*********** title line and hightlighting *****************/

@@ -1,11 +1,11 @@
-//"use strict";
-// Strict mode breaks Dojo inheritance which we use for pie charts.
+"use strict";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //DojoSimple
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-define(["floria/superdom", "floria/date", "dijit/dijit", "dojo/dom", "dojo/dom-construct"], function(SuperDOM, FloriaDate, dojoDijit, dojoDom, domConstruct)
+define(["floria/superdom", "floria/textutil", "floria/date", "dijit/dijit", "dojo/dom", "dojo/dom-construct"]
+     , function(SuperDOM, TextUtil, FloriaDate, dojoDijit, dojoDom, domConstruct)
     {
       
 var dojoSimple = {}; 
@@ -35,6 +35,187 @@ dojoSimple.HeaderBodyFooterLayout = function(MainId, initFunc)
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DojoSimple Dialog
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+var __DIALOGS = [];
+var __hiding = false; // global flag to manage overlapping dialog functionality, e.g., hiding one while showing another
+
+function printDialogStack()
+ {
+//   for (var i = 0; i < __DIALOGS.length; ++i)
+//    console.log(""+i+__DIALOGS[i]._md.id+" ("+__DIALOGS[i]._md.style.display+")");
+ }
+
+dojoSimple.Dialog = function(elementId)
+ {
+   this._e = document.getElementById("MASTER_MODEL_BACKGROUND");
+   if (this._e == null)
+    {
+      this._e = document.createElement('div');
+      this._e.id = "MASTER_MODEL_BACKGROUND";
+      this._e.classList.add("modalBackground");
+      document.body.appendChild(this._e);
+    }
+   this._md = document.getElementById(elementId);
+   if (this._md == null)
+    {
+      this._md = document.createElement('div');
+      this._md.id = elementId;
+      this._md.classList.add("modalDialog");
+      this._md.innerHTML = '<DIV class="modalTitle"><SPAN id="'+elementId+'_MD_TITLE"></SPAN><SPAN id="'+elementId+'_MD_CLOSE"></SPAN></DIV>'
+                          +'<DIV class="modalContent" id="'+elementId+'_MD_CNT"></DIV>'
+                         ;
+      this._e.appendChild(this._md);
+    }
+    
+   var that = this;
+   SuperDOM.addEvent(elementId+"_MD_CLOSE", "click", function() {
+     that.hide();
+   })
+       
+   this.setOnHide = function(func)
+    {
+      this._onHideHandler = func;
+    };
+   this.setOnLoad = function(func)
+    {
+      this._onLoadHandler = func;
+    };
+   this.show = function(title, url, w, h, contents, recall)
+    {
+      var that = this;
+      console.log("dialog.show() - "+this._md.id)
+      if (__hiding == true && recall == null)
+       return setTimeout(function() { that.show(title, url, w, h, contents, true); }, 300); // 500 is the hiding delay, so we undershoot a little
+      else
+       __hiding = false;
+       
+      var repaint = false;
+      if (__DIALOGS.length > 0)
+       {
+         // push down and slide down previous dialog
+         var lastDialog = __DIALOGS[__DIALOGS.length-1];
+         // If we are repainting the current popup, then we can't tuck it away. 
+         if (lastDialog._md.id == this._md.id)
+          repaint = true;
+         else
+          {
+            lastDialog._md.style.top = "110%";
+            lastDialog._md.style.opacity="";
+            lastDialog._md.style.zIndex=0;
+          }
+       }
+
+      // Paint title
+      var t = this._md.childNodes[0].childNodes[0]; // first child element -> modalTitle, then first element is first SPAN
+      t.innerHTML = title;
+
+      if (repaint == false)
+       {
+         __DIALOGS.push(this);
+         // Set the dialog's size
+         this._w = w > 0.98 ? 98 : w < 0.2 ? 2 : 100*w;
+         this._h = h > 0.98 ? 98 : h < 0.2 ? 2 : 100*h;
+         this._md.style.width=this._w+"%";
+         this._md.style.height=this._h+"%";
+         this._md.style.left=((100-this._w)/2)+"%";
+         this._md.style.top = "-25%"; //((100-this._h)/2)+"%"; // new comes from the top
+         this._md.style.zIndex=1000+__DIALOGS.length;
+           
+         // Unhide everything as a setTimeout to trigger animations if any
+         setTimeout(function() { 
+           that._e.style.opacity=1;
+           that._e.style.left=0;
+           that._md.style.opacity=1;
+           that._md.style.top = ((100-that._h)/2)+"%";
+         }, 10);
+       }
+          
+      // Paint the dialog's content
+      if (url != null)
+       {
+         // We can load HTML dynamically, and in doing so, we need to execute the script blocks if any
+         fetch(url).then(response => response.text()) 
+                   .then(function(html) { 
+                       that._md.childNodes[1].innerHTML = html;
+                       Array.from(that._md.childNodes[1].querySelectorAll("script"))
+                            .forEach( oldScript => {
+                               const newScript = document.createElement("script");
+                               Array.from(oldScript.attributes)
+                                    .forEach( attr => newScript.setAttribute(attr.name, attr.value) );
+                               newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                               oldScript.parentNode.replaceChild(newScript, oldScript);
+                       });
+                      if (that._onLoadHandler != null)
+                       that._onLoadHandler();
+                   });
+          return;
+       }
+      
+      if (typeof contents == "string")
+       this._md.childNodes[1].innerHTML = contents;
+      else if (contents != null)
+       contents(this._md.id+"_MD_CNT"); // second element, i.e., the modalContent
+      if (that._onLoadHandler != null)
+       that._onLoadHandler();
+    }
+   this.setContent = function(contents)
+    {
+      this._md.childNodes[1].innerHTML = contents;
+    }
+   this.hide = function()
+    {
+      console.log("dialog.hide() - "+this._md.id);
+//      console.trace();
+      var that = this;
+
+      var topDlg = __DIALOGS.pop();
+      if (topDlg != null && topDlg._md.id != this._md.id) // hide is being called twice on the same object
+       {
+         __DIALOGS.push(topDlg);
+         return;
+       }
+      
+      __hiding = true;
+
+      if (that._onHideHandler != null)
+       that._onHideHandler();
+
+      // It's possible for someone to close a dialog and re-open a new one right away.
+      // Because of the timeouts below for animation effects, we hve to "capture" this._md
+      // before it gets overwritten by the following show().
+      var that_md = that._md;       
+      // Reset items to default (from css)
+      setTimeout(function(){
+        that_md.style.top="-25%";
+        that_md.style.opacity="0";
+        that_md.style.zIndex=0;
+        __hiding = false;
+      }, 10);
+
+      // sliding back in the previous dialog
+      if (__DIALOGS.length > 0)
+       {
+          var lastDialog = __DIALOGS[__DIALOGS.length-1];
+          lastDialog._md.style.opacity="1";
+          lastDialog._md.style.top = ((100-lastDialog._h)/2)+"%";
+          lastDialog._md.style.zIndex=1000+__DIALOGS.length;
+       }
+      else
+       setTimeout(function(){
+         that._e.style.opacity="0";
+         setTimeout(function(){
+           if (__DIALOGS.length == 0) // Only move out the background div and clear the node if we cleared the whole stack
+            {
+              that._e.style.left="";
+              that_md.childNodes[1].innerHTML = '';
+            }
+         }, 500);
+       }, 10);
+    }
+ };
+
+
+/*
 dojoSimple.Dialog = function(elementId, enableEsc)
 {
   this._elementId = elementId;
@@ -45,6 +226,7 @@ dojoSimple.Dialog = function(elementId, enableEsc)
       {
         console.warn("DESTROYING DIALOG "+elementId);
         that.dlg.destroy();
+        that.dlg = null;
       }
 
      var e = SuperDOM.getElement(elementId);
@@ -61,7 +243,8 @@ dojoSimple.Dialog = function(elementId, enableEsc)
              closable : true,
              modal : true,
              draggable : false,
-             easing : Easing.elasticOut,
+             resizable: false,
+             easing : Easing.linear,
              sizeDuration : 200,
              sizeMethod : "combine"
          }, dojoDom.byId(elementId));
@@ -71,11 +254,15 @@ dojoSimple.Dialog = function(elementId, enableEsc)
 };
 dojoSimple.Dialog.prototype.setOnLoad = function(func)
   {
-    this.dlg.connect(this.dlg, "load", func);
+    if (this.onLoadHandle != null)
+     this.dlg.disconnect(this.onLoadHandle);
+    this.onLoadHandle = this.dlg.connect(this.dlg, "load", func);
   };
 dojoSimple.Dialog.prototype.setOnHide = function(func)
   {
-    this.dlg.connect(this.dlg, "hide", func);
+    if (this.onHideHandle != null)
+     this.dlg.disconnect(this.onHideHandle);
+    this.onHideHandle = this.dlg.connect(this.dlg, "hide", func);
   };
 
 dojoSimple.Dialog.prototype.show = function(Title, Url, WidthPercent, HeightPercent, Contents)
@@ -88,6 +275,7 @@ dojoSimple.Dialog.prototype.show = function(Title, Url, WidthPercent, HeightPerc
       HeightPercent = 0.25;
     if (HeightPercent > 1)
       HeightPercent = 1;
+
     var ScreenDim = dojoDijit.getViewport();
     this.dlg.dimensions = [ ScreenDim.w * WidthPercent, ScreenDim.h * HeightPercent ];
 
@@ -103,20 +291,17 @@ dojoSimple.Dialog.prototype.show = function(Title, Url, WidthPercent, HeightPerc
     if (Title == null)
       SuperDOM.alertThrow("System error: A dialog is being initialized without a title and/or a URL.");
     this.dlg.set("title", Title);
+
     if (Url != null)
       this.dlg.set("href", Url);
     else if (Contents != null)
      {
+       var contentId = this._elementId+'__CNT__';
+       this.dlg.set("content", '<DIV id="'+contentId+'" style="width:99%; padding:5px;"></DIV>');
        if (typeof Contents == "string")
-        {
-          this.dlg.set("content", Contents);
-        }
+        setTimeout(function() {  SuperDOM.setInnerHTML(contentId, Contents); }, 250);
        else
-        {
-          var contentId = this._elementId+'__CNT__';
-          this.dlg.set("content", '<DIV id="'+contentId+'" style="padding: 5px;"></DIV>');
-          setTimeout(function() { Contents(contentId); }, 225);
-        }
+        setTimeout(function() {  Contents(contentId); }, 250);
      }
     this.dlg.startup();
     this.dlg.show();
@@ -125,10 +310,16 @@ dojoSimple.Dialog.prototype.setContent = function(Str)
   {
     this.dlg.set("content", Str);
   };
+dojoSimple.Dialog.prototype.setTitle = function(Str)
+  {
+    this.dlg.set("title", Str);
+  };
 dojoSimple.Dialog.prototype.hide = function()
   {
     this.dlg.hide();
   };
+*/
+
 
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DojoSimple ContentPane
@@ -169,677 +360,40 @@ dojoSimple.ContentPane.prototype.setContents = function(Contents)
   };
 
   
-  
-// var StandardChartTheme = "dojox/charting/themes/Shrooms";
-var StandardChartTheme = "floria/charttheme";
-  
-
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// DojoSimple TimeSeriesChart
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-dojoSimple.TimeSeriesChart = function(Id, TooltipFunc)
-  {
-    this.min = '3000.01.01_00.00.00';
-    this.max = '1000.01.01_00.00.00';
-    this.minv = Number.MAX_VALUE;
-    this.maxv = Number.MIN_VALUE;
-    this.margin = 0;
-    this.hours = 0;
-    this.id = Id;
-    this.tooltipFunc = TooltipFunc;
-    this.chart = dojoDijit.byId(Id);
-    if (this.chart != null)
-      this.chart.destroy();
-    var lthis = this;
-    require([
-    // Require the basic chart class
-    "dojox/charting/Chart",
-
-    // Require the theme of our choosing
-    StandardChartTheme,
-
-    // We want to plot Lines
-    "dojox/charting/plot2d/Lines",
-    // Load the Legend, Tooltip, and Magnify classes
-    "dojox/charting/widget/SelectableLegend", "dojox/charting/action2d/Tooltip", "dojox/charting/action2d/Magnify",
-    // We want to use Markers
-    "dojox/charting/plot2d/Markers",
-    // We'll use default x/y axes
-    "dojox/charting/axis2d/Default"], function(Chart, Theme, Lines, Legend, Tooltip, Magnify)
-      {
-        // Create the chart within it's "holding" node
-        lthis.chart = new Chart(Id);
-        // Set the theme
-        lthis.chart.setTheme(Theme);
-        // Add the only/default plot
-        lthis.chart.addPlot("default", {
-          type : Lines,
-          markers : true,
-          stroke : {
-            width : 1
-          },
-          tension : 2
-        });
-        // Create the tooltip
-        var tip = new Tooltip(lthis.chart);
-        // Create the magnifier
-        var mag = new Magnify(lthis.chart);
-        lthis.legend = Legend;
-      });
-    this.series = [];
-  };
-
-dojoSimple.TimeSeriesChart.prototype.addLegend = function(Horizontal, Outline)
-  {
-    this.legendPaint = {
-      horizontal : Horizontal,
-      outline : Outline
-    };
-  };
-
-dojoSimple.TimeSeriesChart.prototype.addSeries = function(Name, Values)
-  {
-    for (var i = 0; i < Values.length; ++i)
-      {
-        var d = Values[i][0];
-        if (d < this.min)
-          this.min = d;
-        if (d > this.max)
-          this.max = d;
-        var v = Values[i][1];
-        if (v < this.minv)
-          this.minv = v;
-        if (v > this.maxv)
-          this.maxv = v;
-      }
-    this.first = FloriaDate.parseDateTime(this.min).roundDownHour();
-    this.last = FloriaDate.parseDateTime(this.max).roundDownHour().addHours(1);
-    this.hours = FloriaDate.parseDateTime(this.max).getHoursSince(FloriaDate.parseDateTime(this.min)) + 1;
-    this.amplitude = this.maxv - this.minv;
-
-    this.labels = [];
-    var h = FloriaDate.parseDateTime(this.min).roundDownHour(); // Make a copy
-                                                                // again to
-    for (var i = 0; i < this.hours + Math.round(this.hours * 0.1); ++i)
-      {
-        this.labels.push({
-          value : i,
-          text : this.hours > 1000 ? h.printShort(false) : h.printShort(true)
-        });
-        h.addHours(1);
-      }
-    this.series.push({
-      name : Name,
-      values : Values
-    });
-  };
-dojoSimple.TimeSeriesChart.prototype.mapDate = function(DateTime)
-  {
-    return (FloriaDate.parseDateTime(DateTime).getTime() - this.first.getTime()) / (1000 * 60 * 60.0);
-  };
-dojoSimple.TimeSeriesChart.prototype.mapSeries = function(Values)
-  {
-    var Vals = [];
-    for (var i = 0; i < Values.length; ++i)
-      {
-        var v = Values[i];
-        Vals.push({
-          x : this.mapDate(v[0]),
-          y : v[1],
-          tooltip : this.tooltipFunc == null ? null : this.tooltipFunc(v[0], v[1])
-        });
-      }
-    return Vals;
-  };
-dojoSimple.TimeSeriesChart.prototype.draw = function()
-  {
-    var HourMargin = this.hours * (this.hours < 1000 ? 0.025 : this.hours < 5000 ? 0.020 : this.hours < 10000 ? 0.015 : 0.010);
-    var AmplitudeMargin = this.amplitude * (this.amplitude < 10 ? 0.025 : this.amplitude < 100 ? 0.020 : this.amplitude < 1000 ? 0.015 : 0.010);
-
-    this.chart.addAxis("x", {
-      min : 0 - HourMargin,
-      max : this.hours + HourMargin,
-      labels : this.labels,
-      rotation : -60,
-      majorLabels : true,
-      majorTicks : true,
-      majorTick : {
-        length : 10
-      },
-      minorLabels : false,
-      minorTicks : true,
-      minorTick : {
-        length : 5
-      },
-      majorTickStep : this.hours <= 100 ? 5 : this.hours <= 500 ? 20 : this.hours <= 1000 ? 50 : Math.round(this.hours / 20),
-      minorTickStep : this.hours <= 100 ? 1 : this.hours <= 500 ? 5 : this.hours <= 1000 ? 10 : Math.round(this.hours / 80)
-    });
-    this.chart.addAxis("y", {
-      vertical : true,
-      min : this.minv - AmplitudeMargin,
-      max : this.maxv + AmplitudeMargin
-    });
-    for (var i = 0; i < this.series.length; ++i)
-      {
-        var s = this.series[i];
-        this.chart.addSeries(s.name, this.mapSeries(s.values), {
-          marker : "m-2,-2 l0,3 3,0 0,-3 z"
-        });
-      }
-    this.chart.render();
-
-    if (this.legendPaint != null)
-      new this.legend({
-        chart : this.chart,
-        outline : this.legendPaint.outline,
-        horizontal : this.legendPaint.horizontal
-      }, this.id + "_LEGEND");
-  };
-
-  
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// DojoSimple BasicChart
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-var chartList = [];
-function addChart(Id, Chart)
- {
-   var i = chartList.indexOfSE(Id, "id");
-   if (i == -1)
-    return chartList.push({id: Id, c: Chart});
-   SuperDOM.alertThrow("Trying to add a Chart with an Id '"+Id+"' that already has been registered.")
- }
-  
-dojoSimple.BasicChart = function(Id)
- {
-   var that = this;
-   require(["dojox/charting/Chart", "dojox/charting/axis2d/Default", StandardChartTheme],
-     function(Chart, Default, Theme)
-       {
-         dojoSimple.BasicChart.destroy(Id);
-         that._chart = new Chart(Id);
-         addChart(Id, that._chart);
-         that._chart.setTheme(Theme);
-         that._chart._actions = [];
-       });  
- };
-dojoSimple.BasicChart.destroy = function(Id)
- {
-   var i = chartList.indexOfSE(Id, "id");
-   if (i == -1)
-    return;
-   var c = chartList[i].c;
-   chartList.remove(i);
-   if (c._actions != null)
-    for (var i = 0; i < c._actions.length; ++i)
-     c._actions[i].destroy();
-   c.destroy();
-   for (var i = 0; i < 5; ++i)
-    {
-      var e = SuperDOM.getElement("dijit__MasterTooltip_"+i);
-      if (e == null)
-       break;
-      e.parentNode.removeChild(e);
-    }
- }
-
-dojoSimple.BasicChart.prototype.setXAxis = function(title, labelFunc, minorTicks, minorLabels, majorTickStep)
- {
-   var that = this;
-   require(["dojox/charting/Chart", "dojox/charting/axis2d/Default", StandardChartTheme], function() {
-    if(minorTicks != null && minorLabels != null){
-      that._chart.addAxis("x", {title:title, rotation : -30, titleOrientation:"away", majorTickStep: majorTickStep, minorTicks: minorTicks, minorLabels: minorLabels, labelFunc: labelFunc, font: "normal 12pt Tahoma"});
-    } else{
-      that._chart.addAxis("x", {title:title, rotation : -30, titleOrientation:"away", minorTicks: true, minorLabels: true, labelFunc: labelFunc, font: "normal 12pt Tahoma"});
-    }
-   });
- };
-dojoSimple.BasicChart.prototype.setYAxis = function(title, labelFunc, min, max, majorTickStep)
- {
-  var that = this;
-  require(["dojox/charting/Chart", "dojox/charting/axis2d/Default", StandardChartTheme], function() {
-    var params = {title:title, vertical: true, minorTicks: true, minorLabels: true, labelFunc: labelFunc, font: "normal 12pt Tahoma"}
-    if (min != null) params.min = min;
-    if (max != null) params.max = max;
-    if (majorTickStep != null) params.majorTickStep = majorTickStep;
-    that._chart.addAxis("y", params);
-   });
- };
-dojoSimple.BasicChart.prototype.addIndicatorPlot = function(title, vertical, color, value, front)
- {
-   var that = this;
-   require(["dojox/charting/Chart", "dojox/charting/axis2d/Default", StandardChartTheme, "dojox/charting/plot2d/Indicator"], 
-     function(Chart, Default, Theme, Indicator) {
-       that._chart.addPlot(title, { type: Indicator,
-                                    vertical: vertical,
-                                    lineStroke: { color: color },
-                                    labels: "none",
-                                    values: value
-                                  });
-       if (front == true)
-        that._chart.movePlotToFront(title);
-   });
- }
-/*
- * Indicator Plot
- * 
- * The indicator plot type will draw horizontal or vertical lines on the chart
- * at a given position. Optionally a label as well as markers can also be drawn
- * on the indicator line. These indicators are typically used as threshold
- * indicators showing the data displayed by the chart are reaching particular
- * threshold values.
- * 
- * To display a horizontal threshold dashed line at data coordinate 15 on the
- * vertical axis you can do the following:
- * 
- * require(["dojox/charting/plot2d/Indicator", ...], function(Indicator, ...){
- * chart.addPlot("threshold", { type: Indicator, vertical: false, lineStroke: {
- * color: "red", style: "ShortDash"}, stroke: null, outline: null, fill: null,
- * offset: { y: -7, x: -10 }, values: 15}); });
- * 
- * The offset property allows to adjust the position of the label with respect
- * to its default position (that is the end of the threshold line). To hide the
- * label, set the labels property to “none”:
- * 
- * require(["dojox/charting/plot2d/Indicator", ...], function(Indicator, ...){
- * chart.addPlot("threshold", { type: Indicator, vertical: false, lineStroke: {
- * color: "red", style: "ShortDash"}, labels: "none", values: 15}); });
- * 
- * If you want to display markers on the indicator line you can specify a series
- * for the indicator which will contain the marker coordinates. In the following
- * example a vertical indicator is rendered data coordinate 15 on the horizontal
- * axis and on the threshold line markers are rendered at coordinates 8, 17 and
- * 30 along the vertical axis.
- * 
- * require(["dojox/charting/plot2d/Indicator", "dojox/charting/Series", ...],
- * function(Indicator, Series, ...){ chart.addPlot("threshold", { type:
- * Indicator, lineStroke: { color: "red", style: "ShortDash"}, labels: "none",
- * values: 15}); chart.addSeries("markers", [ 8, 17, 30 ], { plot: "threshold"
- * }); });
- * 
- */ 
-
-
-function addTooltip(chart, plotName, tooltips)
- {
-   require(["dojox/charting/action2d/Tooltip"], function(Tooltip) {
-     if (tooltips == true)
-      chart._actions.push(new Tooltip(chart, plotName));
-     else if (SuperDOM.isFunction(tooltips) == true)
-      chart._actions.push(new Tooltip(chart, plotName, { text: tooltips }));
-   });
- }
-
-dojoSimple.BasicChart.prototype.addLinePlot = function(labelFunc, markers, strokeWidth, tension, tooltips)
- {
-   if (this._linePlot == true)
-    SuperDOM.alertThrow("A line plot has already been created for this chart");
-   var that = this;
-   require(["dojox/charting/plot2d/Lines", "dojox/charting/action2d/Tooltip"], function(LineChart, Tooltip) {
-      that._linePlot == true;
-      that._chart.addPlot("PlotLine", {type: LineChart, markers: markers, stroke: { width: strokeWidth }, tension: tension, labelStyle: 'outside', labelOffset: 5, labels: labelFunc!=null, labelFunc: labelFunc });
-      addTooltip(that._chart, "PlotLine", tooltips);
-      that._chart.movePlotToFront("PlotLine");
-      
-// var chart1 = new Chart("simplechart");
-// chart1.addPlot("default", {type: Lines, markers:true, styleFunc:
-// function(item {
-// if(item <= 2){
-// return { fill : "red" };
-// }else if(item > 3){
-// return { fill: "green" };
-// }
-// return {};
-// }});
-    });
- };
-dojoSimple.BasicChart.prototype.addLineSeries = function(name, data, overrideColor)
- {
-   var that = this;
-   require(["dojox/charting/plot2d/Lines", "dojox/charting/action2d/Tooltip"], function() {
-     that._chart.addSeries(name, data, {plot:"PlotLine", color: overrideColor });
-   });
- };
- 
- dojoSimple.BasicChart.prototype.addLineClickHandler = function(handlerFunc, highlight, magnify)
- {
-   var that = this;
-   require(["dojox/charting/plot2d/Lines", "dojox/charting/action2d/Highlight", "dojox/charting/action2d/Tooltip", "dojox/charting/action2d/Magnify"],
-     function(Plot, Highlight, Tooltip, Magnify) {
-       if (that._linePlot == true)
-        SuperDOM.alertThrow("Trying to add a line series when a line plot hasn't been created yet");
-       if (highlight == true)
-        that._chart._actions.push(new Highlight(that._chart, "PlotLine"));     
-       if (magnify == true)
-        that._chart._actions.push(new Magnify(that._chart, "PlotLine"));
-       that._chart.connectToPlot("PlotLine", function(evt) {
-           if(evt.type == "onclick")
-            handlerFunc(evt.index, evt.run.data[evt.index], evt.run.name);
-         });
-   });
- }
- 
-dojoSimple.BasicChart.prototype.addScatterPlot = function(labelFunc, tooltips)
- {
-   if (this._scatterPlot == true)
-    SuperDOM.alertThrow("A scatter plot has already been created for this chart");
-   var that = this;
-   require(["dojox/charting/plot2d/Scatter", "dojox/charting/action2d/Tooltip"], function(ScatterChart, Tooltip) {
-      that._scatterPlot == true;
-      that._chart.addPlot("PlotScatter", {type: ScatterChart, labels: labelFunc!=null, labelFunc: labelFunc});
-      addTooltip(that._chart, "PlotScatter", tooltips);
-    });
- };
-dojoSimple.BasicChart.prototype.addScatterSeries = function(name, data, samplingPercentWindow)
- {
-   var that = this;
-   require(["dojox/charting/plot2d/Scatter", "dojox/charting/action2d/Tooltip"], function() {
-     if (that._scatterPlot == true)
-       SuperDOM.alertThrow("Trying to add a scatter series when a scatter plot hasn't been created yet");
-     if (samplingPercentWindow != null)
-       {
-         var min = Number.MAX_VALUE;
-         var max = Number.MIN_VALUE;
-         for (var i = 0; i < data.length; ++i)
-          {
-            var v = data[i].y;
-            if (min > v)
-             min = v;
-            if (max < v)
-             max = v;
-          }
-         var rangeX = samplingPercentWindow*(data.length)/100;
-         var rangeY = samplingPercentWindow*(max-min)/100;
-         
-         var newData = [];
-         var lastX = -100000;
-         var lastY = 0;
-         for (var i = 0; i < data.length; ++i)
-          {
-            var d = data[i];
-            if (i-lastX > rangeX || Math.abs(d.y-lastY) > rangeY)
-              {
-                lastX = i;
-                lastY = d.y;
-                newData.push(d);
-              }
-          }
-         console.log("Simplified Scatter data series from "+data.length+" points to "+newData.length+".");
-         data = newData;
-       }
-     that._chart.addSeries(name, data, {plot:"PlotScatter", markers: false, stroke: {width: 1, color: "grey"} });
-   });
- };
-
-dojoSimple.BasicChart.prototype.addScatterClickHandler = function(handlerFunc, highlight, magnify)
- {
-   var that = this;
-   require(["dojox/charting/plot2d/Scatter", "dojox/charting/action2d/Highlight", "dojox/charting/action2d/Tooltip", "dojox/charting/action2d/Magnify"], 
-     function(ScatterPlot, Highlight, Tooltip, Magnify) {
-       if (that._scatterPlot == true)
-        SuperDOM.alertThrow("Trying to add a scatter series when a scatter plot hasn't been created yet");
-       if (highlight == true)
-        that._chart._actions.push(new Highlight(that._chart, "PlotScatter"));     
-       if (magnify == true)
-        that._chart._actions.push(new Magnify(that._chart, "PlotScatter"));
-       that._chart.connectToPlot("PlotScatter", function(evt) {
-            if(evt.type == "onclick")
-             handlerFunc(evt.index, evt.run.data[evt.index], evt.run.name);
-         });
-   });
- }
-/*
- * dojoSimple.BasicChart.prototype.addBarPlot = function(labelFunc, tooltips,
- * gap) { if (this._barPlot == true) SuperDOM.alertThrow("A bar plot has already
- * been created for this chart"); var that = this;
- * require(["dojox/charting/plot2d/ClusteredColumns",
- * "dojox/charting/action2d/Tooltip"], function(BarChart, Tooltip) {
- * that._barPlot == true; if (labelFunc != null) that._chart.addPlot("PlotBar",
- * {type: BarChart, gap: gap==null?5:gap, labels: true, labelStyle: 'outside',
- * labelOffset: 5, labelFunc: labelFunc }) else that._chart.addPlot("PlotBar",
- * {type: BarChart, gap: gap==null?5:gap }) addTooltip(that._chart, "PlotBar",
- * tooltips); }); };
- */
-
-dojoSimple.BasicChart.prototype.addBarPlot = function(labelFunc, tooltips, gap, horizontal)
- {
-   if (this._barPlot == true)
-    SuperDOM.alertThrow("A bar plot has already been created for this chart");
-   var that = this;
-   if(horizontal){
-    require(["dojox/charting/plot2d/Bars", "dojox/charting/action2d/Tooltip" ], function(BarChart, Tooltip) {
-       that._barPlot == true;
-       if (labelFunc != null)
-        that._chart.addPlot( "PlotBar", {type: BarChart, gap: gap==null?5:gap, labels: true , labelStyle: 'outside', minBarSize: 3, labelOffset: 20, precision: 0, labelFunc: labelFunc , hAxis: "y", vAxis: "x"})
-       else
-        that._chart.addPlot( "PlotBar", {type: BarChart, gap: gap==null?5:gap, labels: true , labelStyle: 'columns', minBarSize: 3, labelOffset: 5, hAxis: "y", vAxis: "x",})
-       if (tooltips == true)
-        new Tooltip(that._chart, "PlotBar");
-     });
-   }else {
-    require(["dojox/charting/plot2d/ClusteredColumns", "dojox/charting/action2d/Tooltip"], function(BarChart, Tooltip) {
-       that._barPlot == true;
-       if (labelFunc != null)
-        that._chart.addPlot("PlotBar", {type: BarChart, gap: gap==null?5:gap, labels: true, labelStyle: 'outside', labelOffset: 5, labelFunc: labelFunc })
-       else
-        that._chart.addPlot("PlotBar", {type: BarChart, gap: gap==null?5:gap })
-       addTooltip(that._chart, "PlotBar", tooltips);
-     });
-   }
- };
- 
- dojoSimple.BasicChart.prototype.addBarSeries = function(name, data)
- {
-   var that = this;
-   require(["dojox/charting/plot2d/ClusteredColumns", "dojox/charting/action2d/Tooltip"], function() {
-     that._chart.addSeries(name, data, {plot:"PlotBar"});
-   });
- };
- 
- dojoSimple.BasicChart.prototype.addBarClickHandler = function(handlerFunc, highlight, magnify)
- {
-   var that = this;
-   require(["dojox/charting/plot2d/ClusteredColumns", "dojox/charting/action2d/Highlight", "dojox/charting/action2d/Tooltip", "dojox/charting/action2d/Magnify"],
-     function(Plot, Highlight, Tooltip, Magnify) {
-       if (that._barPlot == true)
-        SuperDOM.alertThrow("Trying to add a bar series when a bar plot hasn't been created yet");
-       if (highlight == true)
-        that._chart._actions.push(new Highlight(that._chart, "PlotBar"));     
-       if (magnify == true)
-        that._chart._actions.push(new Magnify(that._chart, "PlotBar"));
-       that._chart.connectToPlot("PlotBar", function(evt) {
-           if(evt.type == "onclick")
-            handlerFunc(evt.index, evt.run.data[evt.index], evt.run.name);
-         });
-   });
- }
-
- dojoSimple.BasicChart.prototype.draw = function()
- {
-  var that = this;
-  require(["dojox/charting/Chart", "dojox/charting/axis2d/Default", StandardChartTheme, "dojox/charting/plot2d/Indicator"], function() {
-     that._chart.render();
-   });
- }
- 
- dojoSimple.BasicChart.prototype.legend = function(legendId, horizontal ){
-     var that = this;
-     require([ "dojox/charting/Chart", 
-              "dojox/charting/axis2d/Default",
-              "dojox/charting/action2d/Highlight",
-              "dojox/charting/action2d/MoveSlice" , 
-              "dojox/charting/action2d/Tooltip",
-              "dojox/charting/widget/Legend",
-              StandardChartTheme
-      ], function(Chart, Default, Highlight, MoveSlice, Tooltip, Legend, Theme) {
-     var legend = dijit.byId(legendId); 
-      if (legend) { 
-         legend.destroyRecursive(true); 
-      } 
-      
-     legend = new Legend({chart: that._chart, horizontal:  horizontal == null ? true : horizontal }, legendId);
-     
-    });
-}
-
-
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// DojoSimple PieChart
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-dojoSimple.PieChart = function(Id, isDonut, chartTitle, chartTitlePos, tooltips) {
-  var that = this;
-  require([ "dojo/_base/declare",
-            "dojox/charting/Chart", 
-            "dojox/charting/axis2d/Default",
-            "dojox/charting/action2d/Highlight",
-            "dojox/charting/action2d/MoveSlice" , 
-            "dojox/charting/action2d/Tooltip",
-            "dojox/charting/widget/Legend",
-            StandardChartTheme,
-            "dojox/charting/plot2d/Pie"
-      ], function(Declare, Chart, Default, Highlight, MoveSlice, Tooltip, Legend, Theme, Pie) {
-              var ChartType;
-
-              var e = SuperDOM.getElement(Id);
-              var h = chartTitle == null ? e.offsetHeight : e.offsetHeight-70;
-              var baseWwidth = e.offsetWidth > h ? Math.min(e.offsetWidth*0.5, h) // margins
-                                                                                  // on
-                                                                                  // each
-                                                                                  // sides
-                                                                                  // for
-                                                                                  // labels
-                                                 : Math.min(e.offsetWidth, h)*0.5
-                                                 ;
-              var radius = baseWwidth/2; // (width * diameter/100)/2
-// alert("baseWwidth= "+baseWwidth+"; e.offsetWidth: "+e.offsetWidth+";
-// e.offsetHeight: "+e.offsetHeight+"; radius: "+radius+";");
-              
-              if(isDonut == true)
-               {
-                 var ChartType = Declare(Pie, {
-                        render: function (dim, offsets) {
-                            // Call the Pie's render method
-                            this.inherited(arguments);
-
-                            // Draw a white circle in the middle
-                            var rx = (dim.width - offsets.l - offsets.r) / 2;
-                            var ry = (dim.height - offsets.t - offsets.b) / 2;
-                            var circle = {cx: offsets.l + rx, cy: offsets.t + ry, r: radius*0.75 };
-                            this.group.createCircle(circle).setFill("#fff").setStroke("gray");
-                        }
-                    });
-               } 
-              else
-               {
-                 ChartType = Pie;
-               }
-              that._chart = new Chart(Id, chartTitle == null ? null : { title: chartTitle, titlePos: chartTitlePos==null?"top":chartTitlePos, titleGap: 5, titleFont: "italic normal normal 11pt Tahoma", });
-              that._chart.setTheme(Theme);
-              that._chart.addPlot("default", { type: ChartType, radius: radius, labels: true, font: "normal 8pt Tahoma", fontColor: "black", stroke:"gray", labelWiring: "#FEBE22", labelStyle: "columns" });
-              new MoveSlice(that._chart, "default");
-              new Highlight(that._chart, "default");
-              if (tooltips != false)
-               new Tooltip(that._chart, "default");
-      });
-  };
-  
-  dojoSimple.PieChart.prototype.addSeries = function(title, data)
-   {
-     this._chart.addSeries(title, data);
-   };
-  
-  dojoSimple.PieChart.prototype.addClickHandler = function(handlerFunc)
-    {
-      var that = this;
-      require(["dojo/_base/declare",
-               "dojox/charting/Chart", 
-               "dojox/charting/axis2d/Default",
-               "dojox/charting/action2d/Highlight",
-               "dojox/charting/action2d/MoveSlice" , 
-               "dojox/charting/action2d/Tooltip",
-               "dojox/charting/widget/Legend",
-               StandardChartTheme,
-               "dojox/charting/plot2d/Pie"], function() {
-        that._chart.connectToPlot("default", function(evt) {
-          if(evt.type == "onclick")
-           handlerFunc(evt.index, evt.run.data[evt.index], evt.run.name);
-        });
-      });
-    }
-  
-        
-  dojoSimple.PieChart.prototype.draw = function(legendId) {
-    var that = this;
-    require([ "dojox/charting/Chart", 
-              "dojox/charting/axis2d/Default",
-              "dojox/charting/action2d/Highlight",
-              "dojox/charting/action2d/MoveSlice" , 
-              "dojox/charting/action2d/Tooltip",
-              "dojox/charting/widget/Legend",
-              StandardChartTheme,
-              "dojox/charting/plot2d/Pie"
-        ], function(Chart, Default, Highlight, MoveSlice, Tooltip, Legend, Theme, ChartType) {
-      that._chart.render();
-      if (legendId != null)
-       new Legend({chart: that._chart}, legendId);
-    });
-};
-
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// DojoSimple SpiderChart
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    dojoSimple.SpiderChart = function(Id) {
-      var that = this;
-      require([ "dojox/charting/Chart", 
-                "dojox/charting/axis2d/Default", 
-                StandardChartTheme,
-                "dojox/charting/plot2d/Spider"
-          ], function(Chart, Default, Theme, Spider) {
-        that._chart = new Chart(Id);
-        that._chart.addPlot("default", {
-            type: Spider,
-            labelOffset: -10,
-          // divisions: 2,//params.divisions,
-            seriesFillAlpha: 0.2,
-            markerSize: 3,
-            precision: 0,
-            spiderType: "polygon"
-          });
-      });
-    };
-    
-    dojoSimple.SpiderChart.prototype.addSeries = function(title, data, fill) {
-      this._chart.addSeries(title, {  data : data}, fill);
-    };
-          
-    dojoSimple.SpiderChart.prototype.draw = function() {
-      this._chart.render();
-    };
 
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DojoSimple Calendar
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-dojoSimple.Calendar = function(containerId, elementId, onValueSelectedFunc, min, datePattern)
+dojoSimple.Calendar = function(containerId, elementId, onValueSelectedFunc, min, datePattern, v, fieldName)
   {
     this.elementId = elementId;
     var that = this;
+
+    var newItem = document.createElement("INPUT");
+    newItem.setAttribute("type","hidden");
+    newItem.setAttribute("id",elementId);
+    newItem.setAttribute("name",fieldName);
+    newItem.setAttribute("value",v==null?"":v);
+    var e = document.getElementById(containerId);
+    e.parentNode.insertBefore(newItem, e);
+    
     require(["dojo/parser", "dijit/form/DateTextBox"
         ], function(Parser, Calendar){
-           var val = SuperDOM.getElement(elementId, "Cannot find calendar element '"+elementId+"'.").value;
            that.cal = dojoDijit.byId(containerId);
            if (that.cal != null)
              that.cal.destroy();
            that.cal = new Calendar({
-                 value: FloriaDate.parseDateTime(val),
+                 value: FloriaDate.parseDateTime(v),
                  constraints: {min:min, datePattern : datePattern==null?'yyyy-MMM-dd':datePattern},
                  onChange : function(d) {
+//                   alert("d: "+d+"; typeof d: "+typeof d+";");
                    document.getElementById(elementId).value= d==null?'':d.toISOString();
                  if (onValueSelectedFunc)
                     onValueSelectedFunc(d);
                  }
              }, containerId);
            that.cal.startup();
-         });
+       });
      this.destroy = function()
       {
         this.cal.destroy();
@@ -852,23 +406,58 @@ dojoSimple.Calendar = function(containerId, elementId, onValueSelectedFunc, min,
       }
   };
 
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DojoSimple PopupLogin
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 dojoSimple.PopupLogin = {
   loginUrl  : null,
   logoutUrl : null,
-  setUrls : function(basePath, login, logout)
+  isAuthPassthrough: function(path)
+    {
+      var authPassthroughs = window.authPassthroughs || [];
+      var bool = false;
+      authPassthroughs.some(function(authPassthrough)
+          {
+            bool = path.indexOf(authPassthrough) != -1;
+            return bool;
+          })
+      return bool;
+    },
+  setUrls : function(basePath, login, logout, help)
     {
       dojoSimple.PopupLogin.basePath = basePath;
       dojoSimple.PopupLogin.loginUrl = login;
       dojoSimple.PopupLogin.logoutUrl = "/"+basePath+"/"+logout;
+      dojoSimple.PopupLogin.helpUrl = help;
       require(["dojo/cookie"], function(Cookie){
           dojoSimple.PopupLogin.dojoCookie = Cookie;
         });
     },
   loggedIn : false,
   dlgHandle: null,
+  showError: function(code, msg, errors)
+  {
+    var element = SuperDOM.getElement("MESSAGES", null);
+    msg = msg.replaceAll("\n", "<BR>");
+    if(element == null)
+      {
+        alert(msg+"\n\n"+errors.join("\n"));
+      }
+    else
+      {
+        var HTML = '<span style="color: red !important;">'+msg+"</span>";
+        if(errors != null && errors.length != 0 && errors instanceof Array)
+          {
+            HTML += '<ul style="color: red !important;">';
+            errors.forEach(function(error)
+                {
+                  HTML += "<li>"+error.p+': '+error.m+"</li>";
+                })
+           HTML += "</ul>";
+          }
+        SuperDOM.setInnerHTML("MESSAGES", HTML);
+      }
+  },
   init: function(elementIdBase)
     {
       var c = this.dojoCookie("REMEMBERME");
@@ -884,23 +473,28 @@ dojoSimple.PopupLogin = {
       if (e != null)
        e.focus();
     },
-   createPopup : function(onSuccessFunc, errorMessage, title, url, width, height)
+   createPopup : function(onSuccessFunc, errorMessage, title, url, width, height, Contents)
     {
-      width = width || 0.6;
-      height = height || 0.6;
+      width = width || 0.8;
+      height = height || 0.66;
       
-      if (url == null)
-          SuperDOM.alertThrow(errorMessage);
+      if (Contents == null && url == null)
+        SuperDOM.alertThrow(errorMessage);
       if (dojoSimple.PopupLogin.dlgHandle == null)
        dojoSimple.PopupLogin.dlgHandle = new dojoSimple.Dialog("DLG_POPUPLOGIN");
-      dojoSimple.PopupLogin.dlgHandle.show(title, url, width, height);
       if (onSuccessFunc != null)
        dojoSimple.PopupLogin.dlgHandle.setOnHide(onSuccessFunc);
+      dojoSimple.PopupLogin.dlgHandle.show(title, url, width, height, Contents);
     },
-  show : function(Timeout, onSuccessFunc)
+  hide : function()
+   {
+     dojoSimple.PopupLogin.dlgHandle.hide();
+   },
+  show : function(Timeout, onSuccessFunc, titleMsg)
     {
-    this.createPopup(onSuccessFunc, "The default url for the popup Login panel has not been set"
-                ,Timeout == true ? "Your session has timed out: please login again" : "Please login"
+      titleMsg = titleMsg || (Timeout == true ? "Your session has timed out: please login again" : "Please login")
+      this.createPopup(onSuccessFunc, "The default url for the popup Login panel has not been set"
+                ,titleMsg
                 ,dojoSimple.PopupLogin.loginUrl);
     },
   signIn : function(elementIdBase)
@@ -912,7 +506,7 @@ dojoSimple.PopupLogin = {
       var v = e == null ? false : e.checked;
       this.dojoCookie("REMEMBERME", v==true ? Email:"", { expires : v==true ? 30:-1, path : "/" });
       
-      dojoSimple.ajaxUrl("/"+dojoSimple.PopupLogin.basePath+"/svc/Login?email=" + encodeURIComponent(Email) + "&pswd=" + encodeURIComponent(Pswd), "POST", "Cannot login", dojoSimple.PopupLogin.signInOK, dojoSimple.PopupLogin.signInErr);
+      dojoSimple.ajaxUrl("/"+dojoSimple.PopupLogin.basePath+"/svc/Login?email=" + encodeURIComponent(Email) + "&pswd=" + encodeURIComponent(Pswd), "POST", null, dojoSimple.PopupLogin.signInOK, dojoSimple.PopupLogin.signInErr);
       return false;
     },
   signInOK : function(data)
@@ -920,22 +514,37 @@ dojoSimple.PopupLogin = {
       var tenants = data.tenants
       if(tenants != null)
         {
+//          alert("Tenant");
           dojoSimple.PopupLogin.tenantsSelect(data.tenants);
+          return;
         }
-      else
+      var eulaUrl = data.eulaUrl;
+      if (eulaUrl != null)
         {
-          SuperDOM.setInnerHTML("HEADER_ACCOUNT", '<A href="javascript:dojoSimple.PopupLogin.logout();"><IMG height="50px" src="/static/img/logout.big.png"></A>');
-          dojoSimple.PopupLogin.loggedIn = true;
-          if (dojoSimple.PopupLogin.dlgHandle != null)
-           dojoSimple.PopupLogin.dlgHandle.hide();
+//          alert("Eula");
+//          alert("dojoSimple.PopupLogin.dlgHandle: "+dojoSimple.PopupLogin.dlgHandle);
+          dojoSimple.PopupLogin.eula(data);
+          return;
         }
+
+//      alert("OK TO LOG IN");
+//      SuperDOM.setInnerHTML("HEADER_ACCOUNT", '<A href="javascript:dojoSimple.PopupLogin.logout();"><IMG height="50px" src="/static/img/logout.big.png"></A>');
+      dojoSimple.PopupLogin.loggedIn = true;
+      if (dojoSimple.PopupLogin.dlgHandle != null)
+       dojoSimple.PopupLogin.dlgHandle.hide();
     },
   signInErr : function(code, msg, errors)
     {
-      if (code == 412)
+      if (code == 403)
         {
-          dojoSimple.ForgotPswd.show();
-          alert("Please reset your password")
+          var loginCallBack = function(){ window.location.reload(); };
+          var titleMessage = "Your password has expired please reset your password.";
+          var popUpInfoMessage = "You should be receiving an email shortly with instructions to reset your password."
+          dojoSimple.SetPassword.show(window.successLogin || loginCallBack, titleMessage, popUpInfoMessage);
+        }
+      else
+        {
+          dojoSimple.PopupLogin.showError(code, msg, errors);
         }
     },
   logout : function()
@@ -951,17 +560,9 @@ dojoSimple.PopupLogin = {
    {
       alert("Error logging out!");
    },
-  forgotPassword : function()
+  help : function()
     {
-      alert("Forgot your password");
-    },
-  createAccount : function()
-    {
-      alert("Create an account");
-    },
-  manageAccount : function()
-    {
-      alert("Manage your account");
+      dojoSimple.PopupLogin.createPopup(null, "No help available", "Quick Help", dojoSimple.PopupLogin.helpUrl, .6, .85);
     },
   PickTenant: function(TenantId)
     {
@@ -970,109 +571,161 @@ dojoSimple.PopupLogin = {
     },
   tenantsSelect : function(tenants)
     {
-      var popupTitle = "You have successfully logged in and you have access to the following systems. Please select one";
-      SuperDOM.setInnerHTML("DLG_POPUPLOGIN_title", popupTitle);
-      var child = document.getElementById("loginForm");
-      child.parentNode.removeChild(child);
-      var html = "<TABLE border=\"0px\" style=\"font-size:125%; color:black; margin: 0px;padding-bottom:8px\">";
-      var tds = []
-      var i,j,temparray,chunk = 3;
-      for(i=0; i<tenants.length;i++)
-        {
-          var tenant = tenants[i];
-          if((i+1) % 3 == 0)
-            {
-              tds.push("<td style=\"padding: 5px;\"><A href=\"#\" onclick=\"dojoSimple.PopupLogin.PickTenant("+tenant.refnum+");\">"+tenant.name+"</A></td>")
-              html = html + "<tr>"+tds.join("")+"</tr>";
-              tds = [];
-            }
-          else
-            {
-              tds.push("<td style=\"padding: 5px;\"><A href=\"#\" onclick=\"dojoSimple.PopupLogin.PickTenant("+tenant.refnum+");\">"+tenant.name+"</A></td>")
-            }
-        }
-      if(tds.length > 0)
-        html = html + "<tr>"+tds.join("")+"</tr>";
+    var html = "<DIV class=\"fullCenter capsicoLogo\" style=\"max-height: 80%;overflow: auto;margin-top: 3%\">"
+              +"<TABLE cellspacing=\"10px\" border=\"0px\" style=\"font-size:125%; color:black; margin: 0px;padding-bottom:8px\">"
+              +"<TR><TD colspan=\"3\">You have successfully logged in and you have access to the following systems.</TD></TR>"
+              +"<TR><TD colspan=\"3\">Please select one..</TD></TR>"
+              ;
+    var tds = []
+    var i,j,temparray,chunk = 3;
+    for(i=0; i<tenants.length;i++)
+      {
+        var tenant = tenants[i];
+        var element  = "<td style=\"border-radius: 5px; border: 1px solid grey;\">" +
+            "<A style=\"text-align: center; padding: 35px; display: block;\" href=\"#\" onclick=\"dojoSimple.PopupLogin.PickTenant("+tenant.tenantUserRefnum+");\">"+tenant.name+"</A>" +
+            "</td>";
+        tds.push(element);
+        if((i+1) % 3 == 0)
+          {
+            html += "<tr>"+tds.join("")+"</tr>";
+            tds = [];
+          }
+      }
+    if(tds.length > 0)
+      html += "<tr>"+tds.join("")+"</tr>";
 
-      html = html + "</TABLE>";
-      SuperDOM.setInnerHTML("selectTenant", html);
+    html += "</TABLE></DIV>";
+
+    dojoSimple.PopupLogin.dlgHandle.setTitle("Select A System");
+    dojoSimple.PopupLogin.dlgHandle.setContent(html);
+    },
+    
+   eula: function(data)
+    {
+      require(["dojo/text!"+data.eulaUrl], function(eulaHtml) {
+         eulaHtml+='<HR/><CENTER><FORM id="EULA_FORM" onSubmit="return dojoSimple.PopupLogin.acceptEula(\'EULA_FORM\');">'
+                  +'<input type="hidden" name="tenantUserRefnum" value="'+data.tenantUserRefnum+'">'
+                  +'<input type="hidden" name="eulaToken" value="'+encodeURIComponent(data.eulaToken)+'">'
+//                  +'Sign your name: <input type="text" name="name"><BR>'
+                  +'I accept this EULA: <input type="checkbox" name="accept" value="1" width="50%"><BR><BR>'
+                  +'<BUTTON id="login-Eula" type="submit" title="Submit">Submit</BUTTON><BR><BR>'
+                  ;
+         dojoSimple.PopupLogin.dlgHandle.setTitle("End User License Agreement");
+         dojoSimple.PopupLogin.dlgHandle.setContent(eulaHtml);
+      });
+    },
+   acceptEula: function(formId)
+    {
+      var f = document.getElementById(formId);
+      var tenantUserRefnum = f.tenantUserRefnum.value;
+      var eulaToken = f.eulaToken.value;
+      var accept = f.accept.checked == true ? 1 : 0;
+      dojoSimple.ajaxUrl("/"+dojoSimple.PopupLogin.basePath+"/svc/Login?tenantUserRefnum=" + tenantUserRefnum + "&eulaToken=" + eulaToken + "&accept=" + accept, "POST", null, dojoSimple.PopupLogin.signInOK, dojoSimple.PopupLogin.eulaFail);
+      return false;
+    },
+   eulaFail: function(data)
+    {
+      alert("You must accept the EULA before continuing.");
     }
 }
 
 
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DojoSimple PopupSignup
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 dojoSimple.PopupSignup = {
   Token : null,
   Url: null,
   ElementIdBase: null,
   setUrls : function(basePath, Url, Token)
-  {
-    dojoSimple.PopupSignup.basePath = basePath;
-    dojoSimple.PopupSignup.Url = Url;
-    dojoSimple.PopupSignup.Token = Token;
-  },
-  init: function(elementIdBase)
-  {
-    dojoSimple.PopupSignup.ElementIdBase = elementIdBase;
-    this.passwordUI = new dojoSimple.PasswordUI(elementIdBase+"password");
-    dojoSimple.PopupSignup.getTokenDetails();
-  },
+   {
+     dojoSimple.PopupSignup.basePath = basePath;
+     dojoSimple.PopupSignup.Url = Url;
+     dojoSimple.PopupSignup.Token = Token;
+   },
+  init: function(elementIdBase, guest)
+   {
+     dojoSimple.PopupSignup.guest = guest;
+     dojoSimple.PopupSignup.ElementIdBase = elementIdBase;
+     this.passwordUI = new dojoSimple.PasswordUI(elementIdBase+"password");
+     if (guest != true)
+      dojoSimple.PopupSignup.getTokenDetails();
+   },
   show: function(onSuccessFunc) 
-  {
-    dojoSimple.PopupLogin.createPopup(onSuccessFunc, "The default url for the popup Signup has not been set"
-        ,"Sign Up"
-        ,dojoSimple.PopupSignup.Url);
-  },
+   {
+     dojoSimple.PopupLogin.createPopup(onSuccessFunc, "The default url for the popup Signup has not been set"
+         ,"Sign Up"
+         ,dojoSimple.PopupSignup.Url, 0.7, 0.8);
+   },
   getTokenDetails: function() 
-  {
-    dojoSimple.ajaxUrl("/"+dojoSimple.PopupSignup.basePath+"/svc/user/token?token="+dojoSimple.PopupSignup.Token, "GET", "Failed to fetch details", dojoSimple.PopupSignup.TokenDetailsOK, dojoSimple.PopupSignup.TokenDetailsErr);
-  },
+   {
+     dojoSimple.ajaxUrl("/"+dojoSimple.PopupSignup.basePath+"/svc/user/token?token="+dojoSimple.PopupSignup.Token, "GET", null, dojoSimple.PopupSignup.TokenDetailsOK, dojoSimple.PopupSignup.TokenDetailsErr);
+   },
   signUp : function(elementIdBase)
-  {
-    var token = dojoSimple.PopupSignup.Token;
-    var Pswd = SuperDOM.getElement(elementIdBase+"password", "Please enter a password").value;
-    var confirmPswd = SuperDOM.getElement(elementIdBase+"confirmPassword", "Confirm password").value;
-    var phone = SuperDOM.getElement(elementIdBase+"phone", "phone number (Optional)").value;
-    if(!this.passwordUI.isValid()){
-      return false;
-    }
-    var params = "password=" + encodeURIComponent(Pswd)+"&token=" + encodeURIComponent(token);
-    if(phone != null && phone.length > 0){
-      params += "&phone="+encodeURIComponent(phone);
-    }
-    if(Pswd == confirmPswd){
-        dojoSimple.ajaxUrl("/"+dojoSimple.PopupSignup.basePath+"/svc/user/onboarding?"+params, "POST", "Cannot login", dojoSimple.PopupSignup.signUpOK, dojoSimple.PopupSignup.signUpErr);
-    }
-    else{
-      alert("Password and confirm password does not match");
-    }
-    return false;
-  },
+   {
+     if (dojoSimple.PopupSignup.guest == true)
+      {
+        var email = SuperDOM.getElement(elementIdBase+"email", "Your email is a mandatory field").value;
+        var fName = SuperDOM.getElement(elementIdBase+"fName", "Your first name is a mandatory field").value;
+        var lName = SuperDOM.getElement(elementIdBase+"lName", "Your last name is a mandatory field").value;
+        var phone = SuperDOM.getElement(elementIdBase+"phone").value;
+        var params = "email=" + encodeURIComponent(email)+"&fName=" + encodeURIComponent(fName)+"&lName=" + encodeURIComponent(lName)+"&phone=" + encodeURIComponent(phone);
+        dojoSimple.ajaxUrl("/"+dojoSimple.PopupSignup.basePath+"/svc/user/guest/registration?"+params, "POST", null, dojoSimple.PopupSignup.signUpGuestOK, dojoSimple.PopupSignup.signUpErr);
+        return false;
+      }
+      
+     var email = SuperDOM.getElement(elementIdBase+"email", "Email").value;
+     var token = dojoSimple.PopupSignup.Token;
+     var Pswd = SuperDOM.getElement(elementIdBase+"password", "Please enter a password").value;
+     var confirmPswd = SuperDOM.getElement(elementIdBase+"confirmPassword", "Confirm password").value;
+     var phone = SuperDOM.getElement(elementIdBase+"phone", "phone number (Optional)").value;
+     if(!this.passwordUI.isValid())
+       {
+         return false;
+       }
+     var params = "email="+encodeURIComponent(email)+"&password="+encodeURIComponent(Pswd)+"&token="+encodeURIComponent(token);
+     if(phone != null && phone.length > 0)
+       {
+         params += "&phone="+encodeURIComponent(phone);
+       }
+     if(Pswd == confirmPswd)
+       {
+         dojoSimple.ajaxUrl("/"+dojoSimple.PopupSignup.basePath+"/svc/user/onboarding?"+params, "POST", null, dojoSimple.PopupSignup.signUpOK, dojoSimple.PopupSignup.signUpErr);
+       }
+     else
+       {
+         dojoSimple.PopupLogin.showError(400, "Password and confirmation password do not match", null);
+       }
+     return false;
+   },
   TokenDetailsOK: function(user)
-  {
-    var elementIdBase = dojoSimple.PopupSignup.ElementIdBase;
-// document.getElementById(elementIdBase+"progress").style.display = "none";
-// document.getElementById(elementIdBase+"form").style.display = "block";
-    document.getElementById(elementIdBase+"email").value = user.email;
-    document.getElementById(elementIdBase+"fName").value = user.nameFirst;
-    document.getElementById(elementIdBase+"lName").value = user.nameLast;
-  },
+   {
+     var e = document.getElementById(elementIdBase+"email");
+     if (e == null)
+      setTimeout(function() { dojoSimple.PopupSignup.TokenDetailsOK(user); }, 25);
+
+     var elementIdBase = dojoSimple.PopupSignup.ElementIdBase;
+//     document.getElementById(elementIdBase+"email").value = user.email;
+     document.getElementById(elementIdBase+"fName").value = user.nameFirst;
+     document.getElementById(elementIdBase+"lName").value = user.nameLast;
+   },
   TokenDetailsErr: function(code, msg, errors)
-  {
-    // Hide dialog
-    if (dojoSimple.PopupLogin.dlgHandle) dojoSimple.PopupLogin.dlgHandle.hide();
-  },
+   {
+     dojoSimple.PopupLogin.createPopup(null, null, "Registration Confirmation Failure", null, .5, .5, "<BR><CENTER><H2>The link to complete your registration has either expired,<BR> or been replaced with a newer request in your inbox.<BR>Please try registering again.</H2></CENTER></BR>");
+   },
   signUpOK : function(data)
-  {
-    dojoSimple.PopupLogin.show(false, successLogin);
-    alert("Signed up successfully, please login");
-  },
-  signUpErr : function(data)
-  {
-    alert("Err: " + SuperDOM.printObject(data));
-  }
+   {
+     alert("Signed up successfully, please login");
+     window.location.href = SuperDOM.getUrlPath();
+   },
+  signUpGuestOK : function(data)
+   {
+     dojoSimple.PopupLogin.createPopup(null, null, "Registration Request Confirmed", null, .5, .5, "<BR><CENTER><H2>An email from notifications@capsicohealth.com<BR>is on its way to you to complete your<BR>registration process.<BR><BR>You can close this browser tab/window.</H2></CENTER></BR>");
+   },
+  signUpErr : function(code, msg, errors)
+   {
+     dojoSimple.PopupLogin.showError(code, msg, errors);
+   }
 }
 
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1080,38 +733,43 @@ dojoSimple.PopupSignup = {
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 dojoSimple.ForgotPswd = {
   Url  : null,
-  setUrls : function(basePath, signupUrl)
+  Email: null,
+  setUrls : function(basePath, url)
   { 
     dojoSimple.ForgotPswd.basePath = basePath;
-    dojoSimple.ForgotPswd.Url = signupUrl;
+    dojoSimple.ForgotPswd.Url = url;
   },
   init: function(elementIdBase)
   {
   },
-  show : function(onSuccessFunc)
+  show : function(onSuccessFunc, popUpTitle)
   {
+    var popUpTitle = popUpTitle || "Reset your password";
     dojoSimple.PopupLogin.createPopup(onSuccessFunc, "The default url for the popup Forgot password panel has not been set"
-                ,"Reset your password"
+                ,popUpTitle
                 ,dojoSimple.ForgotPswd.Url);
   },
   forgot : function(elementIdBase)
   {
     var Email = SuperDOM.getElement(elementIdBase+"Email", "Please enter your registered email id").value;
-    if(Email.length > 0){
-        dojoSimple.ajaxUrl("/"+dojoSimple.ForgotPswd.basePath+"/svc/user/forgotPswd?email=" + encodeURIComponent(Email), "POST", "Forgot password request failed", dojoSimple.ForgotPswd.OK, dojoSimple.ForgotPswd.Err);
-    }
-    else{
-      alert("Please enter email address");
-    }
+    if(Email.length > 0)
+      {
+        dojoSimple.ForgotPswd.Email = Email;
+        dojoSimple.ajaxUrl("/"+dojoSimple.ForgotPswd.basePath+"/svc/user/forgotPswd?email=" + encodeURIComponent(Email), "POST", null, dojoSimple.ForgotPswd.OK, dojoSimple.ForgotPswd.Err);
+      }
+    else
+      {
+        alert("Please enter an email address");
+      }
     return false;
   },
   OK : function(data)
   {
-    alert("You should be receiving an email shortly with instructions to reset your password.");
+     dojoSimple.PopupLogin.createPopup(null, null, "Password Reset Request Confirmed", null, .5, .5, "<BR><CENTER><H2>An email from notifications@capsicohealth.com<BR>is on its way to you to reset your password.<BR><BR>You can close this browser tab/window.</H2></CENTER></BR>");
   },
-  Err : function(data)
+  Err : function(code, msg, errors)
   {
-    alert("Err: " + SuperDOM.printObject(data));
+    dojoSimple.PopupLogin.showError(code, msg, errors);
   }
 }
 
@@ -1122,20 +780,28 @@ dojoSimple.SetPassword = {
   Url  : null,
   Token: null,
   passwordUI: null,
-  setUrls : function(basePath, signupUrl, token)
+  setUrls : function(basePath, Url, token)
   { 
     dojoSimple.SetPassword.basePath = basePath;
-    dojoSimple.SetPassword.Token = token;
-    dojoSimple.SetPassword.Url = signupUrl;
+    dojoSimple.SetPassword.Url = Url;
+    if(token != null)
+      {
+        dojoSimple.SetPassword.Token = token;
+      }
   },
   init: function(elementIdBase)
   {
     this.passwordUI = new dojoSimple.PasswordUI(elementIdBase+"password");
+    var tokenDOM = SuperDOM.getElement(elementIdBase+"token", "Password reset code");
+    tokenDOM.value = dojoSimple.SetPassword.Token || "";
+    var Email = SuperDOM.getElement(elementIdBase+"email", "Please enter your registered email id");
+    Email.value = dojoSimple.ForgotPswd.Email;
   },
-  show : function(onSuccessFunc)
+  show : function(onSuccessFunc, popUpTitle)
   {
-    dojoSimple.PopupLogin.createPopup(onSuccessFunc, "The default url for the popup Set password password panel has not been set"
-            ,"Reset your password"
+    popUpTitle = popUpTitle || "Reset your password";
+    dojoSimple.PopupLogin.createPopup(onSuccessFunc, "The default url for the popup Set password panel has not been set"
+            ,popUpTitle
             ,dojoSimple.SetPassword.Url);
 
   },
@@ -1144,27 +810,41 @@ dojoSimple.SetPassword = {
     var email = SuperDOM.getElement(elementIdBase+"email", "Please enter your registered email id").value;
     var password = SuperDOM.getElement(elementIdBase+"password", "password").value;
     var confirmPswd = SuperDOM.getElement(elementIdBase+"confirmPassword", "confirm password").value;
-    var token = dojoSimple.SetPassword.Token;
-    if(!this.passwordUI.isValid()){
-      return false;
-    }
-    if(password == confirmPswd){
-      dojoSimple.ajaxUrl("/"+dojoSimple.SetPassword.basePath+"/svc/user/setPswd?email=" + encodeURIComponent(email)+"&token="+encodeURIComponent(token)+"&password="+encodeURIComponent(password)
-                , "POST", "Forgot password request failed", dojoSimple.SetPassword.OK, dojoSimple.SetPassword.Err);
-    }
-    else{
-      alert("Password and confirm password do not match");
-    }
+    var token = SuperDOM.getElement(elementIdBase+"token", "Password reset code").value;
+    if(token.length == 0 )
+      {
+        alert("Please enter the password reset code");
+        return false;
+      }
+    if(email.length == 0 )
+      {
+        alert("Please enter an email address");
+        return false;
+      }
+
+    if(!this.passwordUI.isValid())
+      {
+        return false;
+      }
+    if(password == confirmPswd)
+      {
+        dojoSimple.ajaxUrl("/"+dojoSimple.SetPassword.basePath+"/svc/user/setPswd?email=" + encodeURIComponent(email)+"&token="+encodeURIComponent(token)+"&password="+encodeURIComponent(password)
+                , "POST", null, dojoSimple.SetPassword.OK, dojoSimple.SetPassword.Err);
+      }
+    else
+      {
+        dojoSimple.PopupLogin.showError(400, "Password and confirm password do not match", null);
+      }
     return false;
   },
   OK : function(data)
   {
-    dojoSimple.PopupLogin.show(false, successLogin);
-    alert("Password reset was a success, now please login");
+    alert("Your password was reset. Now please login.");
+    window.location.href = SuperDOM.getUrlPath();
   },
-  Err : function(data)
+  Err : function(code, msg, errors)
   {
-    alert("Err: " + SuperDOM.printObject(data));
+    dojoSimple.PopupLogin.showError(code, msg, errors);
   }
 }
 
@@ -1190,27 +870,37 @@ dojoSimple.Account = {
             ,"Account Settings"
             ,dojoSimple.Account.Url, 0.9, 0.9);  
   },
+  info : function()
+  {
+    dojoSimple.PopupLogin.createPopup(null, "The default url for the popup Account panel has not been set"
+            ,"Account Information"
+            ,"/static/html/account-info.html", 0.5, 0.9);  
+  },
   account : function(elementIdBase)
   {
-    var email = SuperDOM.getElement(elementIdBase+"email", "email").value;
-    var nameTitle =  SuperDOM.getElement(elementIdBase+"title", "title").value;
-    var nameFirst =  SuperDOM.getElement(elementIdBase+"nameFirst", "title").value;
-    var nameLast =  SuperDOM.getElement(elementIdBase+"nameLast", "title").value;
+    if (elementIdBase == null)
+     return;
     
-    var password = SuperDOM.getElement(elementIdBase+"password", "password").value;
-    var confirmPswd = SuperDOM.getElement(elementIdBase+"confirmPassword", "confirm password").value;
-    var currentPassword = SuperDOM.getElement(elementIdBase+"currentPassword", "confirm password").value;
-    if(password.length > 0 && confirmPswd.length > 0 && !this.passwordUI.isValid()){
-      return false;
-    }
-    if(password == confirmPswd){
-      params  = "nameTitle="+nameTitle+"&nameLast="+nameLast+"&nameFirst="+nameFirst+"&email="+encodeURIComponent(email);
-      params += "&password="+encodeURIComponent(password)+"&currentPassword="+encodeURIComponent(currentPassword); 
-      dojoSimple.ajaxUrl("/"+dojoSimple.Account.basePath+"/svc/user/account?"+params , "POST", 
-          "Failed to update details", dojoSimple.Account.OK, dojoSimple.Account.Err);
-    }
+    var email = SuperDOM.getElement(elementIdBase+"email", "ERROR: The email field cannot be found!").value;
+    var nameFirst =  SuperDOM.getElement(elementIdBase+"nameFirst", "ERROR: The first-name field cannot be found!").value;
+    var nameLast =  SuperDOM.getElement(elementIdBase+"nameLast", "ERROR: The last-name field cannot be found!").value;
+    
+    var password = SuperDOM.getElement(elementIdBase+"password", "ERROR: The new-password field cannot be found!").value;
+    var confirmPswd = SuperDOM.getElement(elementIdBase+"confirmPassword", "ERROR: The new-password-confirm field cannot be found!").value;
+    var currentPassword = SuperDOM.getElement(elementIdBase+"currentPassword", "ERROR: The current-password field cannot be found!").value;
+    if(password.length > 0 && confirmPswd.length > 0 && !this.passwordUI.isValid())
+     {
+       alert("Your password doesn't meet the system's requirements.");
+       return false;
+     }
+    if(password == confirmPswd)
+     {
+       var params  = "nameLast="+nameLast+"&nameFirst="+nameFirst+"&email="+encodeURIComponent(email)
+                    +"&password="+encodeURIComponent(password)+"&currentPassword="+encodeURIComponent(currentPassword);
+       dojoSimple.ajaxUrl("/"+dojoSimple.Account.basePath+"/svc/user/account?"+params , "POST", null, dojoSimple.Account.OK, dojoSimple.Account.Err);
+     }
     else{
-      alert("Password and confirm password do not match");
+      alert("Your password and confirm-password do not match");
     }
     return false;
   },
@@ -1231,9 +921,9 @@ dojoSimple.Account = {
   {
     window.location.reload();
   },
-  Err : function(data)
+  Err : function(code, msg, errors)
   {
-    alert("Err: " + SuperDOM.printObject(data));
+    dojoSimple.PopupLogin.showError(code, msg, errors);
   }
 }
 
@@ -1248,17 +938,16 @@ dojoSimple.Verifications = {
   },
   EmailVerification: function(basePath, token)
   {
-    dojoSimple.ajaxUrl("/"+basePath+"/svc/Verifications?action=emailVerification&token="+encodeURIComponent(token), "POST", "Email Verification Failed", dojoSimple.Verifications.OK, dojoSimple.Verifications.Err);
+    dojoSimple.ajaxUrl("/"+basePath+"/svc/Verifications?action=emailVerification&token="+encodeURIComponent(token), "POST", null, dojoSimple.Verifications.OK, dojoSimple.Verifications.Err);
   },
   OK: function(data)
   {
     alert("Successfully Verified")
     dojoSimple.Verifications.reloadPage();
   },
-  Err: function(data)
+  Err: function(code, msg, errors)
   {
-    console.log("Err: " + SuperDOM.printObject(data));
-    dojoSimple.Verifications.reloadPage();
+    dojoSimple.PopupLogin.showError(code, msg, errors);
   }
 }
 
@@ -1266,7 +955,7 @@ dojoSimple.Verifications = {
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DojoSimple ajaxUrl
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-dojoSimple.ajaxUrl = function(Url, Method, ErrorMsg, SuccessFunc, ErrorFunc, PostContents)
+dojoSimple.ajaxUrl = function(Url, Method, ErrorMsg, SuccessFunc, ErrorFunc, PostContents, Timeout, handleAs)
   {
     if (PostContents != null && Method != 'POST')
      SuperDOM.alertThrow("Error: you cannot post data in a non POST ajax request");
@@ -1281,56 +970,73 @@ dojoSimple.ajaxUrl = function(Url, Method, ErrorMsg, SuccessFunc, ErrorFunc, Pos
         {
           try
             {
+              if (ioArgs.xhr.getResponseHeader("x-wanda-canceler") == "1")
+                alert("FYI THAT YOU CANCELED ANOTHER REQUEST!\n\nYou (or another user on the same account) was running a request you interrupted.");
+
               if (data == null)
                 throw ("An error occurred: no JSON data for " + this.url);
               if (data.code == undefined)
                 throw ("An error occurred: invalid JSON data for " + this.url);
-              if (data.code == 401 && Url.indexOf('/svc/Login') == -1)
+              
+              if (data.code == 401 && dojoSimple.PopupLogin.isAuthPassthrough(Url) == false)
                 {
                   var lthis = this;
                   dojoSimple.PopupLogin.show(true, function() { dojo.xhr(lthis.method, lthis); });
                 }
               else if (data.code != 200)
-                this.error({ code: data.code, message : data.msg, errors: data.errors }, ioArgs);
-              else if (this.successFunc != null)
-                this.successFunc(data.data);
+                this.error({ code: data.code, message : data.msg, errors: data.errors, type: data.type }, ioArgs);
+              else
+               {
+                 if (data.perfMessage != null)
+                  setTimeout(function(){ alert(data.perfMessage); }, 10);
+                 if (this.successFunc != null)
+                  this.successFunc(data.data);   
+               }
             }
           catch (e)
             {
-              SuperDOM.alertException(e, "Caught exception in dojoSimple.ajaxUrl.load(): ");
+              SuperDOM.alertException(e, "Caught exception in dojoSimple.ajaxUrl.load()\nFrom: "+this.successFunc+"\nError: ", true);
             }
         },
       error : function(error, ioArgs)
         {
+          console.error("dojoSimple.ajaxUrl error: ", error);
           try
             {
-              if (error != null && error.status == 401 && Url.indexOf('/svc/Login') == -1)
+              if (error != null && error.status == 401 && dojoSimple.PopupLogin.isAuthPassthrough(Url) == false)
                {
                  var lthis = this;
                  dojoSimple.PopupLogin.show(true, function() { dojo.xhr(lthis.method, lthis); });
                }
               else
                 {
-                  var Str = this.errorMsg;
+                  if (error.type == 'CANCELED')
+                    alert("YOUR REQUEST WAS CANCELED!\n\nYou (or another person using the same account) have just invoked the same data from another browser window.");
+                  else if (error.type == 'DEADLOCKED')
+                    alert("YOUR REQUEST DEADLOCKED!\nA database issue has occurred that caused your request to deadlock with another request.");
+
                   var msg = error == null ? null : error.message != null ? error.message : error.msg;
-                  if (msg != null)
-                   Str+="\n"+msg;
-                  if (error.errors != null && error.errors.length != 0)
-                   for (var i = 0; i < error.errors.length; ++i)
-                    Str+="\n  - "+error.errors[i].p+': '+error.errors[i].m;
                   if (this.errorMsg != null)
-                    alert(Str);
+                    {
+                      var Str = this.errorMsg;
+                      if (msg != null)
+                       Str+="\n"+msg;
+                      if (error.errors != null && error.errors.length != 0)
+                       for (var i = 0; i < error.errors.length; ++i)
+                        Str+="\n  - "+error.errors[i].p+': '+error.errors[i].m;
+                      alert(Str);
+                    }
                   if (this.errorFunc != null)
-                    this.errorFunc(error.code, msg, error.errors);
+                   this.errorFunc(error.code, msg, error.errors, error.type);
                 }
             }
           catch (e)
             {
-              SuperDOM.alertException(e, "Caught exception in dojoSimple.ajaxUrl.error(): ");
+              SuperDOM.alertException(e, "Caught exception in dojoSimple.ajaxUrl.error()\nFrom: "+this.errorFunc+"\nError: ", true);
             }
         },
-      timeout : 45000,
-      handleAs : 'json'
+      timeout : Timeout==null?90000:Timeout,
+      handleAs : handleAs==null?'json':handleAs
     });
   };
   
@@ -1347,6 +1053,43 @@ dojoSimple.ajaxUrlMulti = function(AjaxInfos, Func)
      f = createNestedFunc(AjaxInfos[i], f);
     setTimeout(f, 1);
   }
+
+/**
+ * Launched a Url using the regular AjaxUrl facility but expects it to take some time before it returns (long running Job).
+ * While the job is running, launches a secondary Polling URL, with a handler and an interval check in seconds. The PollHandler
+ * function takes the result from the PollUrl and is expected to return the next PollUrl. If PollUrl is given NULL, an error
+ * occurred.
+ */
+dojoSimple.ajaxUrlLongRunningJob = function(Url, ErrorMsg, SuccessFunc, ErrorFunc, PostContents, TimeoutSecs, PollUrl, PollHandler, PollIntervalSecs, canTimeout)
+  {
+    var done = false;
+    var loop = function() {
+      dojoSimple.ajaxUrl(PollUrl, "GET", null
+                        ,function(data) {
+                            if (data != null)
+                             {
+                               PollUrl = PollHandler(data);
+                               if (done == false && PollUrl != null)
+                                setTimeout(loop, PollIntervalSecs*1000);
+                             }
+                            else if (done == false)
+                             {
+                               PollHandler(null);
+                             }
+                          }
+                        ,function(data) {
+                            PollHandler(null);
+                          }
+                        );
+     };
+    dojoSimple.ajaxUrl(Url, "GET", ErrorMsg, function(data) {
+         done = true;
+//         alert("done!!!!");
+         SuccessFunc(data);
+      }, ErrorFunc, PostContents, TimeoutSecs*1000);
+    setTimeout(loop, 1000);
+  }
+
   
 
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1371,16 +1114,16 @@ dojoSimple.ajaxForm = function(FormId, ErrorMsg, SuccessFunc, ErrorFunc)
                   throw ("An error occurred: no JSON data from the form" + FormId);
                 if (data.code == undefined)
                   throw ("An error occurred: invalid JSON data from the form " + FormId);
-                if (data.code == 401 && f.action.indexOf('/svc/Login') == -1)
+                if (data.code == 401 && dojoSimple.PopupLogin.isAuthPassthrough(f.action) == false)
                   {
                     var lthis = this;
                     dojoSimple.PopupLogin.show(true, function()
-                          { 
-                            if (f.encoding == "multipart/form-data")
-                              dojoIFrame.send(lthis);                            
-                            else
-                              dojo.xhr(lthis.method, lthis);
-                          });
+                      { 
+                        if (f.enctype == "multipart/form-data")
+                         dojoIFrame.send(lthis);                            
+                        else
+                         dojo.xhr(lthis.method, lthis);
+                      });
                   }
                 else if (data.code != 200)
                   this.error(data, ioArgs);
@@ -1389,20 +1132,21 @@ dojoSimple.ajaxForm = function(FormId, ErrorMsg, SuccessFunc, ErrorFunc)
               }
             catch (e)
               {
-                SuperDOM.alertException(e, "Caught exception in dojoSimple.ajaxForm.load: ");
+                SuperDOM.alertException(e, "Caught exception in dojoSimple.ajaxForm.load()\nFrom: "+this.successFunc+"\nError: ", true);
               }
           },
         error : function(error, ioArgs)
           {
             try
               {
-                if (error != null && error.status == 401 && f.action.indexOf('/svc/Login') == -1)
+                console.error("dojoSimple.ajaxForm error: ", error);
+                if (error != null && error.status == 401 && dojoSimple.PopupLogin.isAuthPassthrough(f.action) == false)
                  {
                     var lthis = this;
                     dojoSimple.PopupLogin.show(true, function()
                         { 
                           if (f.encoding == "multipart/form-data")
-                            dojoIFrame.send(lthis);                            
+                            dojoIFrame.send(lthis);
                           else
                             dojo.xhr(lthis.method, lthis);
                         });
@@ -1411,6 +1155,8 @@ dojoSimple.ajaxForm = function(FormId, ErrorMsg, SuccessFunc, ErrorFunc)
                  {
                     var Str = this.errorMsg;
                     var msg = error == null ? null : error.message != null ? error.message : error.msg;
+                    if (f.encoding == "multipart/form-data" && msg == "doc.getElementsByTagName(...)[0] is undefined")
+                     console.error("if you are using a framework like Dojo, the result JSON data must be returned inside a TEXTAREA element in an HTML response.")
                     if (msg != null)
                      Str+="\n"+msg;
                     if (error.errors != null && error.errors.length != 0)
@@ -1424,10 +1170,10 @@ dojoSimple.ajaxForm = function(FormId, ErrorMsg, SuccessFunc, ErrorFunc)
               }
             catch (e)
               {
-                SuperDOM.alertException(e, "Caught exception in dojoSimple.ajaxForm.error(): ");
+                SuperDOM.alertException(e, "Caught exception in dojoSimple.ajaxForm.error()\nFrom: "+this.errorFunc+"\nError: ", true);
               }
           },
-        timeout : 45000,
+        timeout : 90000,
         handleAs : 'json'
         };
       if (f.encoding == "multipart/form-data")
@@ -1521,31 +1267,35 @@ dojoSimple.PasswordUI = function(elementId){
   var p = dojo.byId(elementId);
 
   passwordRules.forEach(function(item, index){
-    var doc = domConstruct.toDom("<TR class=\"passwordRules\"><TD colspan=\"1\"" +
-        " data-index=\""+index+"\" class=\"error\">"+item.description+"</TD></TR>");
+    var doc = domConstruct.toDom("<TR class=\"passwordRules\"><TD colspan=\"1\" data-index=\""+index+"\" class=\"error\">"+item.description+"</TD></TR>");
       domConstruct.place(doc, p.closest('tr'), 'after');
   })
   element.addEventListener("keyup", function(){
     var password = this.value;
     var domRules = document.getElementsByClassName("passwordRules");
-    for(i=0;i<domRules.length;i++){
+    for(var i=0;i<domRules.length;i++){
       var item = domRules[i];
       var childEle = item.querySelector('td');
       var index = parseInt(childEle.getAttribute('data-index'));
+      if (index == null || isNaN(index) == true)
+        continue;
       var passwordRule = passwordRules[index];
       var regexp = new RegExp(passwordRule.rule);
       childEle.classList.remove("success", "error");
-      if(regexp.test(password)){
-        childEle.classList.add("success");
-      } else {
-        childEle.classList.add("error");
-      }
+      if(regexp.test(password))
+        {
+          childEle.classList.add("success");
+        }
+      else
+        {
+          childEle.classList.add("error");
+        }
     }
   });
   this.isValid = function(){
     var password = this.element.value;
     var flag = true;
-    for(i=0;i<passwordRules.length;i++){
+    for(var i=0;i<passwordRules.length;i++){
       var item = passwordRules[i];
       var regexp = new RegExp(item.rule);
       flag = regexp.test(password)
@@ -1561,19 +1311,86 @@ dojoSimple.PasswordUI = function(elementId){
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Tooltip dialog
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-dojoSimple.TooltipDialog = function(elementId, content) {
 
+dojoSimple.TooltipDialog = function(elementId, content)
+ {
+   var that = this;
+   
+   require(["jslibs/popper"], function(Popper) {
+      that._e = document.getElementById(elementId);
+      that._tt = document.getElementById(elementId+"_TD");
+      if (that._tt == null)
+       {
+         that._tt = document.createElement('div');
+         that._tt.setAttribute("id", elementId+"_TD");
+         that._tt.setAttribute("fade-in-popper", "");
+         that._tt.classList.add("popperTooltip");
+         document.body.appendChild(that._tt);
+       }
+      that._tt.innerHTML=content;
+      that._popper = Popper.createPopper(that._e, that._tt);
+      var onclick=function(evt) { that._clickHandler(evt); };
+      that._e.addEventListener("click", onclick);
+      var onmouseleave=function(evt) { that.hide(evt); };
+      var onmouseleave2=function(evt) { setTimeout(function(){that.hide();},100); };
+      that._tt.addEventListener("mouseleave", onmouseleave);
+      that._tt.addEventListener("click", onmouseleave2);
+      
+      that._clickHandler = function (evt)
+       {
+         if (evt != null)
+          evt.preventDefault();
+         if (this._tt.hasAttribute("show-popper"))
+          this._tt.removeAttribute("show-popper");
+         else
+          this._tt.setAttribute("show-popper", "");
+         this._popper.update();
+       }
+      that.destroy = function()
+       {
+         if (this._popper)
+          {
+            this._popper.destroy();
+            this._e.removeEventListener("click", onclick);
+            this._tt.removeEventListener("mouseleave", onmouseleave);
+            this._tt.removeEventListener("click", onmouseleave2);
+            this._popper = null;
+          }
+       }
+      that.hide = function (evt)
+       {
+         if (evt != null)
+          evt.preventDefault();
+         this._tt.removeAttribute("show-popper");
+         this._popper.update();
+       }
+      that.show = function (evt)
+       {
+         if (evt != null)
+          evt.preventDefault();
+         this._tt.setAttribute("show-popper", "");
+         this._popper.update();
+       }
+   });
+
+/*
   var that = this;
 
   require(["dijit/TooltipDialog","dijit/popup","dojo/on","dojo/dom"], function(TooltipDialog, popup, on, dom) {
-   that.tooltipDialog = new TooltipDialog({
+    that.tooltipDialog = dojoDijit.byId(elementId+"_TD");
+    if (that.tooltipDialog != null)
+     {
+       console.warn("DESTROYING tooltipDialog "+elementId);
+       that.tooltipDialog.destroy();
+       that.tooltipDialog = null;
+     }
+    that.tooltipDialog = new TooltipDialog({
           id: elementId+"_TD",
           content: content,
           onMouseLeave: function(){
             popup.close(that.tooltipDialog);
           }
     });
-
     on(dojoDom.byId(elementId), 'click', function(){
         dojoDijit.popup.open({
               popup: that.tooltipDialog,
@@ -1581,6 +1398,7 @@ dojoSimple.TooltipDialog = function(elementId, content) {
           });
       });
   });
+*/
  };
  
 

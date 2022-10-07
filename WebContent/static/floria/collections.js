@@ -13,17 +13,20 @@ if (!Array.prototype.randomElement)
   }
 
 if (!Array.prototype.indexOfSE)
-  Array.prototype.indexOfSE = function(obj, field, throwMsg)
+  Array.prototype.indexOfSE = function(obj, field, throwMsg, index)
   {
+    if (index == null)
+     index = 0;
+     
     if (field == null)
     {
-      for (var i = 0; i < this.length; i++)
+      for (var i = index; i < this.length; i++)
         if (this[i] == obj)
           return i;
     }
     else
     {
-      for (var i = 0; i < this.length; i++)
+      for (var i = index; i < this.length; i++)
         if (this[i][field] == obj)
           return i;
     }
@@ -31,6 +34,29 @@ if (!Array.prototype.indexOfSE)
       SuperDOM.alertThrow(throwMsg);
     return -1;
   };
+
+
+/**
+ * Array.prototype.concatUnique
+ * Adds the elements of Arr2 to this array unless they are already present. Returns a whole new Array just like
+ * the plain concat(). Note that if this array includes duplicates, they will not get deduped.
+ */
+if (!Array.prototype.concatUnique)
+ Array.prototype.concatUnique = function(Arr2)
+  {
+    if (Arr2 == null)
+     return this.slice();
+
+    var Arr = this.slice();
+    for (var i = 0; i < Arr2.length; ++i)
+     {
+       var a = Arr2[i];
+       if (Arr.indexOfSE(a) == false)
+        Arr.push(a);
+     }
+    return Arr;
+  };
+
 
 if (!Array.prototype.getSE)
   Array.prototype.getSE = function(obj, field, throwMsg)
@@ -51,6 +77,56 @@ if (!Array.prototype.getSE)
       SuperDOM.alertThrow(throwMsg);
   };
   
+//extract rows from Array (remove the rows) and returns the extracted elements, in order, in a new array.
+  if (!Array.prototype.extractElements)
+   Array.prototype.extractElements = function(obj, field, throwMsg)
+    {
+    var A = [];
+      if (field == null)
+       {
+         for (var i = 0; i < this.length; i++)
+          if (this[i] == obj)
+           {
+             A.push(this[i]);
+             this.remove(i);
+             --i;
+           }
+       }
+      else
+       {
+         for (var i = 0; i < this.length; i++)
+          if (this[i][field] == obj)
+           {
+             A.push(this[i]);
+             this.remove(i);
+             --i;
+           }
+       }
+      return A;
+    };
+
+
+  //extract rows from Array and returns the extracted elements, in order, in a new array.
+  if (!Array.prototype.allElements)
+   Array.prototype.allElements = function(obj, field, throwMsg)
+    {
+      var A = [];
+      if (field == null)
+       {
+         for (var i = 0; i < this.length; i++)
+          if (this[i] == obj)
+           A.push(this[i]);
+       }
+      else
+       {
+         for (var i = 0; i < this.length; i++)
+          if (this[i][field] == obj)
+           A.push(this[i]);
+       }
+      return A;
+    };
+
+    
 if (!Array.prototype.addWrapped)
   Array.prototype.addWrapped = function(sourceArray, wrapSize, lastRowFillerObj)
    {
@@ -98,6 +174,14 @@ if (!Array.prototype.insertAt)
   Array.prototype.insertAt = function(pos, val)
    {
      this.splice(pos, 0, val);
+   }
+
+if (!Array.prototype.fill)
+  Array.prototype.fill = function(val)
+   {
+     for (var i = 0; i < this.length; ++i)
+      this[i]=val;
+     return this;
    }
 
 
@@ -220,14 +304,16 @@ function SortedObjectArray(sortColumn, A)
    };
   this.setSortColumn = function(ColumnName)
    {
-     if (ColumnName != null && ColumnName != this.sortColumn) // new
-     // sorting
-     {
-       this.sortColumn = "" + ColumnName;
-       this.sortOrder = -1; // Next sort will reverse. We want to start
-       // asc.
-       this.sort();
-     }
+     if (ColumnName != null && ColumnName != this.sortColumn) // new sorting
+      {
+        this.sortColumn = "" + ColumnName;
+        this.sortOrder = -1; // Next sort will reverse. We want to start asc.
+        this.sort();
+      }
+     else
+      {
+        this.sort();
+      }
    };
   this.sort = function(sortOrder)
    {
@@ -321,6 +407,110 @@ function SortedObjectMap()
   };
 }
 
-return { "SortedStringArray": SortedStringArray, "SortedObjectArray": SortedObjectArray, "SortedObjectMap": SortedObjectMap };
+var ArrayAggs = {
+  max: function(a, field)
+   {
+     if (a == null || a.length == 0)
+      return 0;
+     var max = a[0][field];
+     for (var i = 1; i < a.length; ++i)
+       {
+         var v = a[i][field];
+         if (max < v)
+          max = v;
+       }
+     return max;
+   }
+ ,min: function(a, field)
+   {
+     if (a == null || a.length == 0)
+       return 0;
+     var min = a[0][field];
+     for (var i = 1; i < a.length; ++i)
+       {
+         var v = a[i][field];
+         if (min > v)
+          min = v;
+       }
+     return min;
+   }
+ ,range: function(a, field)
+   {
+     if (a == null || a.length == 0)
+       return 0;
+     
+     var min = a[0][field];
+     var max = a[0][field];
+     for (var i = 1; i < a.length; ++i)
+      {
+        var v = a[i][field];
+        if (min > v)
+         min = v;
+        if (max < v)
+         max = v;
+      }
+     return max-min;
+   }
+ ,rangeMid: function(a, field)
+   {
+      return ArrayAggs.range(a, field) / 2;
+   }
+ ,sum: function(a, field)
+   {
+     if (a == null || a.length == 0)
+       return 0;
+     var sum = 0;
+     for (var i = 1; i < a.length; ++i)
+      sum+=a[i][field];
+     return sum;
+   }
+ ,average: function(a, field)
+   {
+     if (a == null || a.length == 0)
+       return 0;
+     return ArrayAggs.sum(a, field) / a.length;
+   }
+ ,median: function(a, field)
+   {
+     if (a == null || a.length == 0)
+       return 0;
+     a = a.slice(0);
+     a.sort(function(x, y) { return x[field] > y[field] ? 1 : x[field] < y[field] ? -1 : 0; });
+     var mid = a.length / 2;
+     return mid % 1 ? a[mid - 0.5][field] : (a[mid - 1][field] + a[mid][field]) / 2;
+   }
+ ,variance: function(a, field)
+   {
+//     console.log("\n\n-------------------------------------------------------------------------------------------------------------------------------------");
+     if (a == null || a.length == 0)
+       return 0;
+     var avg = ArrayAggs.average(a, field);
+     var sum = 0;
+     for (var i = 1; i < a.length; ++i)
+       {
+//         console.log("a[i][field]: ",a[i][field],"; avg: ",avg,"; a[i][field] - avg: ",a[i][field] - avg,"; Math.pow(a[i][field] - avg, 2): ",Math.pow(a[i][field] - avg, 2),";");
+         sum+=Math.pow(a[i][field] - avg, 2);
+       }
+//     console.log("sum/a.length: ", sum/a.length);
+     return sum/a.length;
+   }
+ ,standardDeviation: function(a, field)
+   {
+     if (a == null || a.length == 0)
+       return 0;
+     return Math.sqrt(ArrayAggs.variance(a, field));
+   }
+ ,sumArrayLengths: function()
+   {
+     var sum = 0;
+     for (var i = 0; i < arguments.length; i++)
+      if (arguments[i] != null && Array.isArray(arguments[i]) == true)
+       sum+=arguments[i].length;
+     return sum;
+   }
+};
+
+
+return { "SortedStringArray": SortedStringArray, "SortedObjectArray": SortedObjectArray, "SortedObjectMap": SortedObjectMap, "ArrayAggs": ArrayAggs };
 
 });

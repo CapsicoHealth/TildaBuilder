@@ -1,6 +1,5 @@
 package tildabuilder.config;
 
-import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -19,45 +18,34 @@ import com.google.gson.annotations.SerializedName;
 
 import tilda.utils.AsciiArt;
 import tilda.utils.FileUtil;
-import tilda.utils.TextUtil;
 
 public class Config
   {
     protected static final Logger           LOG          = LogManager.getLogger(Config.class.getName());
 
     /*@formatter:off*/
-    @SerializedName("allowedPaths") public String[]      _allowedPaths = null;
     @SerializedName("projects"    ) public List<Project> _projects   = null;
-
-    protected transient static final String _MSG = 
-          "***   Please add valid paths for the tool to have access to your local file system.\n"
-        + "***   Add folders for which you give the application access. Please make sure that the\n"
-        + "***   folder is as restrictive as possible and not something silly like 'c:\\'.\n"
-        + "***      - First, the Tilda Builder will explore the entire folder hierarchy to find\n"
-        + "***       Tilda JSON files so exploring your whole file system will take a very long\n"
-        + "***       time.\n"
-        + "***      - Second, this also opens up security issues by giving access to more content\n"
-        + "***       on your computer than needed. Always reduce what you expose to the strict minimum."
-        ;
     /*@formatter:on*/
 
 
-    public static Config getInstance()
+    protected static Config _CONF;
+    
+    public static synchronized Config getInstance()
     throws IOException
       {
+        if (_CONF != null)
+         return _CONF;
+        
         File F = new File(SystemUtils.getUserHome().getAbsolutePath() + File.separator + ".tildaWorkbench.json");
         if (F.exists() == false)
           {
             try (PrintWriter out = FileUtil.getBufferedPrintWriter(F.getAbsolutePath(), true))
               {
                 out.println("{");
-                out.println(_MSG.replace("***   ", "  // "));
-                out.println("  \"allowedPaths\":[");
-                out.println("      \"ADD_FULL_PATHS_TO_PROJECT_ROOT_FOLDERS\"");
+                out.println("  \"projects\":[");
                 out.println("    ]");
                 out.println("}");
               }
-            exitWithError(F, "was created");
           }
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         Reader R = new BufferedReader(new FileReader(F));
@@ -65,7 +53,7 @@ public class Config
         if (conf.validate() == false)
           exitWithError(F, "is invalid");
 
-        return conf;
+        return _CONF = conf;
       }
 
 
@@ -73,42 +61,26 @@ public class Config
     throws IOException
       {
         LOG.error("\n"
-        + "\n"
-        + "\n"
         + "***************************************************************************************************************\n"
         + AsciiArt.Error("***   ")
         + "***\n"
         + "***   The file " + F.getAbsolutePath() + " " + action + ".\n"
         + "***\n"
-        + _MSG
-        + "***\n"
         + "***************************************************************************************************************\n");
-        if (Desktop.isDesktopSupported() == true && Desktop.getDesktop().isSupported(Desktop.Action.OPEN) == true)
-          {
-            LOG.info("");
-            LOG.info("Press 'y' to open the file editor...");
-            String answer = FileUtil.readlnFromStdIn(false);
-            Desktop.getDesktop().open(F);
-          }
         System.exit(-1);
       }
 
 
     private boolean validate()
       {
-        if (TextUtil.isNullOrEmpty(_allowedPaths) == true)
-         return false;
-        
-        for (String p : _allowedPaths)
+        for (Project p : _projects)
           {
-            File F = new File(p);
-            if (F.exists() == false)
+            if (p != null && p.validate() == false)
               {
-                LOG.error("The allowed path '"+p+"' doesn't exist. Please change it to a real path.");
+                LOG.error("The project '"+p._name+"' is configured incorrectly in the configuration file .tildaWorkbench.json.");
                 return false;
               }
           }
-        
         return true;
       }
 

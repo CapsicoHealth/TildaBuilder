@@ -6,8 +6,17 @@
 
 define(["floria/textutil"], function(FloriaText)
 {
+  Date.prototype.clone = function()
+   {
+     var d = new Date(this.getTime());
+     d._timezone = this._timezone;
+     return d;
+   }
+  
   Date.prototype.adjustToLocalTime = function()
   {
+    if (this._timezone == null)
+     return;
     var coh = this.getTimezoneOffset() / 60 + this._timezone.h;
     var com = this.getTimezoneOffset() % 60 + this._timezone.m;
     this.setHours(this.getHours() - coh);
@@ -27,24 +36,59 @@ define(["floria/textutil"], function(FloriaText)
     return d;
   }
 
-  Date.prototype.getAge = function()
+  Date.prototype.getAge = function(toDate)
   {
-    var today = new Date();
-    var age = today.getFullYear() - this.getFullYear();
+    if (toDate == null)
+      toDate = new Date();
+    var age = toDate.getFullYear() - this.getFullYear();
     // compare month and day to check if birthday has happened already. If not,
     // substract 1. to age.
-    if (today.getMonth() < this.getMonth() || today.getMonth() == this.getMonth() && today.getDate() < this.getDate())
+    if (toDate.getMonth() < this.getMonth() || toDate.getMonth() == this.getMonth() && toDate.getDate() < this.getDate())
       --age;
     return age;
   }
+  
+  Date.prototype.getQuarter = function()
+   {
+     var m = this.getMonth();
+     return m < 3 ? 1 : m < 6 ? 2 : m < 9 ? 3 : 4;
+   }
 
-  Date.prototype.diffDays = function(laterDate)
-  {
-    var d = Math.floor((laterDate - this) / (1000 * 60 * 60 * 24));
-    if (this.getDate() != laterDate.getDate())
-      ++d;
-    return d;
-  }
+  /**
+   * Returns the number of hours (with decimal) between this date and otherDate. If otherDate is
+   * after this date, the value returned will be positive. If it's before, the value
+   * will be negative:
+   */
+  Date.prototype.diffHours = function(otherDate)
+   {
+     return Math.round((otherDate - this) / (1000 * 60 * 60));
+   }
+
+  /**
+   * Returns the number of days between this date and otherDate. If otherDate is
+   * after this date, the value returned will be positive. If it's before, the value
+   * will be negative:
+   *    var d = new Date('November 1 2019 00:00:00');
+   *    var v1 = d.diffDays(new Date('October 31, 2019 00:00:00')); -> -1
+   *    var v2 = d.diffDays(new Date('November 1, 2019 00:00:00')); -> 0
+   *    var v3 = d.diffDays(new Date('November 2, 2019 00:00:00')); -> +1
+   */
+  Date.prototype.diffDays = function(otherDate)
+   {
+     var d0 = new Date(otherDate.getTime());
+     d0.setHours(0,0,0,0);
+     var d1 = new Date(this.getTime());
+     d1.setHours(0,0,0,0);
+     return Math.round((d0 - d1) / (1000 * 60 * 60 * 24)); // must be round to handle daylight saving time changes.
+   }
+  Date.prototype.diffMonths = function(laterDate)
+   {
+     return (laterDate.getFullYear()-this.getFullYear())*12+(laterDate.getMonth()-this.getMonth());
+   }
+  Date.prototype.diffQuarters = function(laterDate)
+   {
+     return (laterDate.getFullYear()-this.getFullYear())*4+(laterDate.getQuarter()-this.getQuarter());
+   }
 
   Date.prototype.getDayOfYear = function()
   {
@@ -65,15 +109,40 @@ define(["floria/textutil"], function(FloriaText)
 
   Date.prototype.getMinutesSince = function(someDate)
   {
-    var x = (this.getTime() - someDate.getTime()) / 60000;
+    var x = (this.getTime() - someDate.getTime()) / (60*1000);
     return -1 < x && x < 1 && this.getDate() == someDate.getDate() ? 0 : x > 0 ? (x > 1 ? Math.ceil(x) : 1) : (x < -1 ? Math.ceil(x) : -1);
   };
+
+  Date.prototype.getSecondsSince = function(someDate)
+  {
+    var x = (this.getTime() - someDate.getTime()) / (60*60*1000);
+    return -1 < x && x < 1 && this.getDate() == someDate.getDate() ? 0 : x > 0 ? (x > 1 ? Math.ceil(x) : 1) : (x < -1 ? Math.ceil(x) : -1);
+  };
+  
+  Date.prototype.printDuration = function(someDate)
+      {
+        var ms = this.getTime() - someDate.getTime();
+        
+        var h = Math.floor(ms / (60 * 60 * 1000.0));
+        ms -= h * 60 * 60 * 1000;
+        var mn = Math.floor(ms / (60 * 1000.0));
+        ms -= mn * 60 * 1000;
+        var s = Math.floor(ms / 1000.0);
+        
+        var str = "";
+        if (h  != 0 || str.length != 0) str+=(str.length != 0 ? " " : "")+h+"h";
+        if (mn != 0 || str.length != 0) str+=(str.length != 0 ? " " : "")+mn+"mn";
+        if (s  != 0 || str.length != 0) str+=(str.length != 0 ? " " : "")+s+"s";
+
+        return str;
+      }
+  
 
   Date.prototype.addHours = function(h)
   {
     this.setTime(this.getTime() + (h * 60 * 60 * 1000));
     return this;
-  };
+  };  
 
   Date.prototype.roundDownHour = function(h)
   {
@@ -124,21 +193,42 @@ define(["floria/textutil"], function(FloriaText)
     var m = this.getMonth();
     return this.getFullYear() + "/" + (month == true ? this.DATE_MONTHS[m] : m < 9 ? "0"+(m+1) : (m+1));
   };
+  
+  Date.prototype.printMonth = function()
+  {
+    return this.DATE_MONTHS[this.getMonth()];
+  };
+  
+  
+  Date.prototype.printMonthDay = function(month)
+  {
+    var m = this.getMonth()+1;
+    var d = this.getDate();
+    return (m < 10 ? "0"+m : m) + "/" + (d < 10 ? "0"+d : d);
+  };
+  
+
+  Date.prototype.printYYYYMMDD = function()
+  {
+    var m = this.getMonth()+1;
+    var d = this.getDate();
+    return this.getFullYear() + "/" + (m < 10 ? "0"+m : m) + "/" + (d < 10 ? "0"+d : d);
+  };
 
   Date.prototype.printYearQuarter = function()
   {
     return this.getFullYear() + "/Q" + Math.floor(this.getMonth()/3+1);
   };
 
-  Date.prototype.printShortInTZ = function(PrintTime, PrintTimezone)
+  Date.prototype.printShortInTZ = function(PrintTime, PrintTimezone, PrintYear)
   {
-    return this.adjustFromLocalTime().__printShort(PrintTime, true);
+    return this.adjustFromLocalTime().__printShort(PrintTime, PrintTimezone, PrintYear);
   };
   
-  Date.prototype.__printShort = function(PrintTime, Timezone)
+  Date.prototype.__printShort = function(PrintTime, PrintTimezone, PrintYear)
   {
-    return this.DATE_MONTHS[this.getMonth()] + "/" + this.getDate() + "/" + this.getFullYear()
-        + (PrintTime == true ? " " + this.print24hTime(Timezone) : "");
+    return this.DATE_MONTHS[this.getMonth()] + "/" + this.getDate() + (PrintYear == false ? "" : "/" + this.getFullYear())
+        + (PrintTime == true ? " " + this.print24hTime(PrintTimezone) : "");
   };
 
   Date.prototype.printFriendly = function(PrintYear, PrintTime)
@@ -240,6 +330,7 @@ define(["floria/textutil"], function(FloriaText)
     return this;
   }
 
+
   return {
     /**
      * Takes a date time string as 'YYYY.MM.DD HH.MM.SS.mmmZ' where the separator
@@ -279,21 +370,33 @@ define(["floria/textutil"], function(FloriaText)
         var mil = DateTimeStr.substring(20, 23);
         var tzp = DateTimeStr.charAt(23);
         var tzh = DateTimeStr.substring(24, 26);
-        var tzm = DateTimeStr.substring(26, 28);
+        var semicolon = DateTimeStr.charAt(26)==':'?1:0;
+        var tzm = DateTimeStr.substring(26+semicolon, 28+semicolon);
 
         var d = new Date(yea, mon - 1, day, hou, min, sec, mil);
-        // alert("DateTimeStr:
-        // "+DateTimeStr+";\nyea:"+yea+"\nmon:"+(mon-1)+"\nday:"+day+"\nhou:"+hou+"\nmin:"+min+"\nsec:"+sec+"\nmil:"+mil+"\n--->"+d);
-        d._timezone = {
-          str : tzp + tzh + tzm,
-          h : tzp == '+' ? +tzh : -tzh,
-          m : tzp == '+' ? +tzm : -tzm
-        };
-        d.adjustToLocalTime();
+        var x = tzp + tzh + tzm;
+        // alert("DateTimeStr: "+DateTimeStr+";\nyea:"+yea+"\nmon:"+(mon-1)+"\nday:"+day+"\nhou:"+hou+"\nmin:"+min+"\nsec:"+sec+"\nmil:"+mil+"\n--->"+d);
+        if (FloriaText.isNoE(x) == false)
+         {
+           d._timezone = { str : x,
+                             h : tzp == '+' ? +tzh : -tzh,
+                             m : tzp == '+' ? +tzm : -tzm
+                         };
+           d.adjustToLocalTime();
+        }
+       else 
+        d._timezone = null;
       }
-//      console.log(DateTimeStr+" -> "+d+" -> "+d.printContextual()+"\n     "+SuperDOM.printObject(d));
       return d;
-    }
+    },
+    printYYYYMMDD: function(DateTimeStr)
+     {
+       if (DateTimeStr != null)
+         DateTimeStr = this.parseDateTime(DateTimeStr);
+       if (DateTimeStr != null)
+         DateTimeStr = DateTimeStr.printYYYYMMDD();
+       return DateTimeStr;
+     }
   }
 
 });

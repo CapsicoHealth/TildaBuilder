@@ -2,8 +2,8 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"/>
-    <title>Tilda builder</title>
-    <link rel="stylesheet" href="/static/dojo-1.10.4/dijit/themes/claro/claro.css"/>
+    <title>Tilda Workbench</title>
+    <link rel="stylesheet" href="/static/dojo-release-1.16.4/dijit/themes/claro/claro.css"/>
     <link rel="stylesheet" href="/static/css/dojoSimple.css"/>
     <STYLE>
     html {
@@ -30,92 +30,51 @@
 
 <div id="CAPSCONTAINER">
 
-<DIV id="CAPSCONTAINER_HEADER">
-<TABLE width="100%" border="0px" cellspacing="0px" cellpadding="0px">
- <TR><TD id="HEADER_LOGO"><A href="/index.html"><IMG src="/static/img/tilda-logo.gif"></A></TD>
-     <TD id="HEADER_TITLE">Tilda Builder</TD>
-     <TD id="HEADER_ACCOUNT">&nbsp;</TD>
- </TR>
-</TABLE>
-</DIV>
+<HEADER id="CAPSCONTAINER_HEADER">
+  <TABLE width="100%" border="0px" cellspacing="0px" cellpadding="0px">
+    <TR><TD id="HEADER_LOGO"><A href="/index.html"><IMG src="/static/img/tilda-logo.gif"></A></TD>
+        <TD id="HEADER_TITLE">Tilda Workbench</TD>
+        <TD id="HEADER_ACCOUNT">&nbsp;</TD>
+    </TR>
+  </TABLE>
+</HEADER>
+<MAIN id="CAPSCONTAINER_BODY">
+  <DIV class="column left"  style="top:100px; bottom:10px; left:15%; width:70%; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin;">
+    <DIV class="tileHeader360g">Projects</DIV>
+    <DIV id="PROJECT_LIST" class="tileGroup360g"></DIV>
+  </DIV>
+</MAIN>
+
+<FOOTER id="CAPSCONTAINER_FOOTER">
+  <TABLE WIDTH=100% style="font-size: 80%;">
+    <TR><TD ALIGN="LEFT">Powered by <IMG align="absmiddle" src="/static/img/CapsicoHealth.small.png" height="14px" hspace="5px"></TD>
+        <TD ALIGN="RIGHT">Copyright &copy; 2021 CapsicoHealth Inc.</TD>
+    </TR>
+  </TABLE>
+</FOOTER>
+
+</div>
+
+
 <SCRIPT> var djConfig = { isDebug: false, locale: 'en-us', parseOnLoad: false, disableFlashStorage:true, parseWidgets:false, baseUrl: "/static/",
-                          packages: [ { name: "dojo", location: "dojo-1.10.4/dojo" },
-                                      { name: "dijit", location: "dojo-1.10.4/dijit" },
-                                      { name: "dojox", location: "dojo-1.10.4/dojox" },
+                          packages: [ { name: "dojo", location: "dojo-1.16.4/dojo" },
+                                      { name: "dijit", location: "dojo-1.16.4/dijit" },
+                                      { name: "dojox", location: "dojo-1.16.4/dojox" },
                                       { name: "floria", location: "floria" },
                                       { name: "js", location: "js" },
                                       { name: "json", location: "json" }
                                     ]
                         };
 </SCRIPT>
-<script src="/static/dojo-1.10.4/dojo/dojo.js"></script>
-
-<DIV id="CAPSCONTAINER_BODY" style="position: relative; top: 0px;">
-
-
-
-
-
-<DIV class="column left controlColumn" style="width: 35%;">
-    <DIV class="section">
-        Abc<span><img src="/static/img/sync_icon.png" onclick="BundleManager.list()"><img src="/static/img/add.gif" onclick="doBundleWizard()"></span>
-    </DIV>
-    <DIV  class="outline" id="COLUMN1aFILTER"></DIV>
-    <DIV class="innerFlowedDiv" id="COLUMN1a" style="top: 6em;"></DIV>
-</DIV>
-
-<DIV class="column right controlColumn" style="left: 36%; right: 5px;">
-    <DIV class="section">
-        Details<span>
-                 <img id="WIZ_SC_IMG" src="/static/img/form-complex.gif" onclick="BundleManager.switchSimpleComplex()" alt="Switch Form" text="Switch Form">
-                 <img src="/static/img/edit.gif" onclick="BundleManager.edit(0)" alt="Edit" text="Edit">
-                 <img src="/static/img/charts.gif" onclick="BundleManager.popupCharts()" alt="Charts" text="Charts">
-                 <img src="/static/img/download.gif" onclick="BundleManager.downloadCSV()" alt="Download" text="Download">
-                 <img src="/static/img/pages.gif" onclick="BundleManager.printContract()" alt="Contract" text="Contract">
-               </span>
-    </DIV>
-    <DIV></DIV>
-    <DIV id="COLUMN3a" class="innerFlowedDiv" style="top: 1.75em;">
-        <CENTER style="font-size: 150%">
-            <BR>
-            <BR>
-            <IMG src="/static/img/warning.gif" width="80px" align="absmiddle"><BR>
-            Please make a selection to see details.
-        </CENTER>
-    </DIV>
-</DIV>
-
-
-
-<SCRIPT>
-require(["floria/superdom", "floria/dojoSimple", "floria/controls", "floria/textutil", "floria/date", "floria/forms2",
-        ],
-  function(SuperDOM, dojoSimple, FloriaControls, FloriaText, FloriaDate, FloriaForms,
-          ){
-
-
-});
+<script src="/static/dojo-release-1.16.4/dojo/dojo.js"></script>
+<script type="module">
+  import { projects } from "./static/js/module-projects.js";
+  projects.paint("PROJECT_LIST");
 </SCRIPT>
 
-
-</DIV>
-
-<DIV id="CAPSCONTAINER_FOOTER" style="position: relative; top: 99%;">
-<TABLE WIDTH=100% style="font-size: 80%;">
- <TR><TD ALIGN="LEFT">Powered by <IMG align="absmiddle" src="/static/img/CapsicoHealth.small.png" height="14px" hspace="5px"></TD>
-     <TD ALIGN="RIGHT">Copyright &copy; 2015-2017 CapsicoHealth Inc.</TD>
- </TR>
-</TABLE>
-</DIV>
-
-</div>
 
 <DIV id="DLG_POPUPLOGIN" style="display:none;"></DIV>
-<SCRIPT>
-require(["floria/dojoSimple"], function(dojoSimple) {
-  dojoSimple.HeaderBodyFooterLayout("CAPSCONTAINER", function() {} );
-});
-</SCRIPT>
+
 </body>
 </html>
 

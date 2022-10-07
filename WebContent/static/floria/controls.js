@@ -12,6 +12,8 @@ function defaultEdgeFunc()
    return "";
  }
 
+
+
 function tableEdgeFunc(columnsCount, classNames)
  { 
     if (classNames == null)
@@ -19,12 +21,17 @@ function tableEdgeFunc(columnsCount, classNames)
     if (columnsCount == null)
      columnsCount = 4;
     var width=Math.floor(100/columnsCount)+"%";
-    return function(i, before, count, tdExtras)
+    return function(i, before, count, tdExtras, doWrap)
      {
+        if (doWrap == true)
+         return columnsCount - i%columnsCount;
         if (tdExtras == null)
          tdExtras = "";
+        if (i == null && before == null) // This is a forced break
+         return '</TR>';
+
         if (before == true)
-         return i == 0                    ? '<TABLE align="center" border="0px" cellpadding="0px" cellspacing="0px" width="98%" class="'+classNames+'"><TR><TD width="'+width+'" '+tdExtras+'>' 
+         return i == 0                    ? '<TABLE align="left" border="0px" cellpadding="0px" cellspacing="0px" width="98%" class="'+classNames+'"><TR><TD width="'+width+'" '+tdExtras+'>' 
               : i!=0 && i%columnsCount==0 ? '<TR valign="top"><TD width="'+width+'" '+tdExtras+'>'
                                           : '<TD width="'+width+'" '+tdExtras+'>' ;
         else if (i == count-1)
@@ -75,9 +82,14 @@ var Radio = {
         {
           var v = Values[i];
           var fullId = Ids.fullId+'_'+i;
-          Str += edgeFunc(i, true, Values.length) + '<A id="RADIO_'+fullId+'" class="Radio_' + (Default == v[0] ? 'ON' : 'OFF')
-              + '" title="' + v[2] + '" href="javascript:Radio.click([\'' + Ids.formId + '\',\'' + Ids.elementId + '\'], \'' + v[0] + '\', \'RADIO_' + fullId
-              + '\', ' + onChange + ',' + Mode + ');' + '">' + (noLabels == true ? '&nbsp;' : v[1]) + '</A>' + edgeFunc(i, false, Values.length) + '\n';
+          if (v != null)
+           Str += edgeFunc(i, true, Values.length) + '<A id="RADIO_'+fullId+'" class="Radio_' + (Default == v[0] ? 'ON' : 'OFF')
+               + '" title="' + (v.length > 2 && v[2]!=null?v[2]:v[1]) + '" href="javascript:Radio.click([\'' + Ids.formId + '\',\'' + Ids.elementId + '\'], \'' + v[0] + '\', \'RADIO_' + fullId
+               + '\', ' + onChange + ',' + Mode + ');' + '">' + (noLabels == true ? '&nbsp;' : v[1]) + '</A>' + edgeFunc(i, false, Values.length) + '\n';
+          else
+            {
+              
+            }
         }
       else 
         for (var i = 0; i < Values.length; ++i)
@@ -111,7 +123,7 @@ var Radio = {
          var ClassName = t.className.split("_")[0];
          t.className = ClassName + "_ON";
          ClassName = ClassName + "_OFF";
-         for (var i = 0; i < 20; ++i)
+         for (var i = 0; i < 30; ++i)
           {
             var r = document.getElementById("RADIO_" + Ids.fullId + "_" + i);
             if (r == null)
@@ -124,7 +136,7 @@ var Radio = {
           }
        }
       if (onChange != null)
-        onChange(Ids.fullId);
+       onChange(Ids.fullId, e.value);
       else if (e.form != null)
         SuperDOM.fireEvent(e.form, "change");         
     },
@@ -137,12 +149,14 @@ var Radio = {
 };
 
 var Dropdown = {
-  gen : function(ContainerId, elementId, Values, firstEmpty, onChange, Default)
+  gen : function(ContainerId, elementId, Values, firstEmpty, onChange, Default, Multiple)
     {
       var Ids = makeRelIds(elementId);
       var Str = '<SELECT id="'+Ids.fullId+'" name="' + Ids.elementId + '"';
       if (onChange != null)
         Str += ' onChange="' + onChange + '"';
+      if (Multiple == true)
+        Str += ' multiple';
       Str += '>';
       if (firstEmpty == true)
         Str += '<OPTION value=""></OPTION>';
@@ -160,7 +174,16 @@ var Dropdown = {
     {
       var Ids = makeRelIds(elementId);
       var e = document.getElementById(Ids.fullId);
-      return e.selectedIndex == -1 ? null : e.options[e.selectedIndex].value;
+      if (e.multiple == true)
+        {
+        var a = [];
+        for (var i = 0; i < e.options.length; ++i)
+         if (e.options[i].selected==true)
+          a.push(e.options[i].value);
+        return a;
+        }
+       else
+        return e.selectedIndex == -1 ? null : e.options[e.selectedIndex].value;
     },
   set : function(elementId, Value)
     {
@@ -188,46 +211,147 @@ var Checkbox = {
       
       var Ids = makeRelIds(elementId);
       var Str = '';
+
+      var totalValidElements = 0;
+      for (var i = 0; i < Values.length; ++i)
+       if (Values[i] != null)
+         ++totalValidElements;
+      
+      var noneItem = null;
+      for (var i = 0; i < Values.length; ++i)
+        {
+          var v = Values[i];
+          if (v != null && v[3] == "1")
+           {
+             noneItem = i;
+             break;
+           }
+        }
+
+      var counter = 0;
+      var cells = 0;
       for (var i = 0; i < Values.length; ++i)
       {
         var v = Values[i];
-        var match = Defaults != null && Defaults.indexOfSE(v[0]) != -1;
-        var fullId = Ids.fullId + '_' + i;
-        Str += edgeFunc(i, true, Values.length) + '<A href="javascript:Checkbox.click([\'' + Ids.formId + '\',\'' + Ids.elementId+'_'+i+ '\'], ' + onChange + ');' + '" id="CHECKBOX_'
-            + fullId + '" class="Checkbox_' + (match ? 'ON' : 'OFF') + '" title="' + v[2] + '"><INPUT id="' + fullId
-            + '" name="' + Ids.elementId + v[0] + '" type="hidden" value="' + (match ? '1' : '0') + '">' + (noLabels == true ? '' : v[1])
-            + '</A>' + edgeFunc(i, false, Values.length) + '\n';
+        if (v != null)
+         {
+//           console.log("cells-within: "+cells);
+           var match = Defaults != null && Defaults.indexOfSE(v[0]) != -1;
+           var fullId = Ids.fullId + '_' + counter;
+           Str += edgeFunc(cells, true, totalValidElements) 
+               + '<A href="javascript:Checkbox.click([\'' + Ids.formId + '\',\'' + Ids.elementId+'_'+counter+ '\'], ' 
+               + onChange + ',' + noneItem +');' + '" id="CHECKBOX_'
+               + fullId + '" class="Checkbox_' + (match ? 'ON' : 'OFF') + '" title="' + (v.length > 2 && v[2]!=null?v[2]:v[1]) + '"><INPUT id="' + fullId
+               + '" name="' + Ids.elementId + v[0] + '" type="hidden" value="' + (match ? '1' : '0') + '">' + (noLabels == true ? '' : v[1])
+               + '</A>'
+               + edgeFunc(cells, false, totalValidElements) + '\n';
+           ++counter;
+           ++cells;
+         }
+        else
+         {
+           Str+=edgeFunc(null, null, totalValidElements);
+//           console.log("cells-before: "+cells);
+           var x = edgeFunc(cells, null, totalValidElements, null, true); // advance to first cell of next row.
+           totalValidElements+=x;
+           cells += x;
+//           console.log("cells-after: "+cells);
+         }
       }
       if (ContainerId == null)
         return Str;
       SuperDOM.setInnerHTML(ContainerId, Str);
     },
-  click : function(elementId, onChange)
+  flipNotNoneItems: function(fullId, grey)
+   {
+     var under = fullId.lastIndexOf("_");
+     if (under != -1)
+       {
+         var rootElementId = fullId.substring(0, under);
+         for (var i = 0; i < 50; ++i)
+           {
+             var id = rootElementId + "_" + i;
+             if (id == fullId)
+              continue;
+             var r = SuperDOM.getElement(id);
+             if (r == null)
+              break;
+             r.parentNode.className = r.parentNode.className.split("_")[0] + (grey==true ? "_GREY" : "_OFF");
+             r.value = 0;
+           }
+       }
+   },
+  click : function(elementId, onChange, noneItem)
     {
       var Ids = makeRelIds(elementId);
       var e = SuperDOM.getElement(Ids.fullId);
       if (e == null)
         return;
+      if (e.parentNode.className.endsWith("_GREY") == true)
+       return;
+      var i = Ids.fullId.lastIndexOf("_");
+      if (i != -1)
+       i = +Ids.fullId.substring(i+1);
+
       if (e.value != 0)
-      {
-        e.parentNode.className = e.parentNode.className.split("_")[0] + "_OFF";
-        e.value = 0;
-//        if (e.change != null)
-//         e.change();
-//        else if (e.form != null && e.form.change != null)
-//         e.form.change();
-      }
+       {
+         var c = e.parentNode.className;
+         if (c.endsWith("_ON") == false)
+          return;
+         e.parentNode.className = c.split("_")[0] + "_OFF";
+         e.value = 0;
+         if (i == noneItem)
+           Checkbox.flipNotNoneItems(Ids.fullId, false);
+         var under = Ids.fullId.lastIndexOf("_");
+         if (under != -1)
+           {
+             var rootElementId = Ids.fullId.substring(0, under);
+             var activeCount = 0;
+             for (var i = 0; i < 50; ++i)
+               {
+                 var r = SuperDOM.getElement(rootElementId + "_" + i);
+                 if (r == null)
+                  break;
+                 if (r.value == 1)
+                  ++activeCount;
+               }
+             if (activeCount == 0)
+               {
+                 var r = SuperDOM.getElement(rootElementId + "_" + noneItem);
+                 if (r != null)
+                   {
+                     r.parentNode.className = r.parentNode.className.split("_")[0] + "_OFF";
+                     r.value=0;
+                   }
+               }
+           }
+       }
       else
-      {
-        e.parentNode.className = e.parentNode.className.split("_")[0] + "_ON";
-        e.value = 1;
-//        if (e.change != null)
-//         e.change();
-//        else if (e.form != null && e.form.change != null)
-//         e.form.change();
-      }
+       {
+         var c = e.parentNode.className;
+         if (c.endsWith("_OFF") == false)
+          return;
+         e.parentNode.className = c.split("_")[0] + "_ON";
+         e.value = 1;
+         if (i == noneItem)
+          Checkbox.flipNotNoneItems(Ids.fullId, true);
+         else // this is not a noneItem, so we have to grey out the noneItem
+           {
+             var r = Ids.fullId.lastIndexOf("_");
+             if (r != -1)
+              {
+                r = Ids.fullId.substring(0, r);
+                r = SuperDOM.getElement(r + "_" + noneItem);
+                if (r != null)
+                  {
+                    r.parentNode.className = r.parentNode.className.split("_")[0] + "_GREY";
+                    r.value = 0;
+                  }
+              } 
+           }
+       }
       if (onChange != null)
-        onChange(Ids.fullId);
+       onChange(Ids.fullId, e.value);
       else if (e.form != null)
        SuperDOM.fireEvent(e.form, "change");         
       
@@ -272,7 +396,8 @@ var GeneralControl = {
            }
           else if (e.tagName == "SELECT")
            {
-             return [Dropdown.get([Ids.formId, Ids.elementId])];
+             var res = Dropdown.get([Ids.formId, Ids.elementId]);
+             return e.multiple == false ? [res]:res;
            }
         }
 

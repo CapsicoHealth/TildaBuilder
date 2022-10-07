@@ -57,20 +57,6 @@ public class Starter
       }
 
     public static String _RUNTIME_CODE = null;
-    public static Config _CONF;
-    static
-      {
-        try
-          {
-            _CONF = Config.getInstance();
-          }
-        catch (IOException E)
-          {
-            LOG.error(E);
-            System.exit(-1);
-          }
-      }
-
 
     //
     // SEE ALSO: /CapsicoWebMLCatalog/src/main/java/com/capsico/ServerMain.java
