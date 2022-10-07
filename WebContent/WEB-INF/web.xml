@@ -4107,7 +4107,7 @@
       
   <filter>
     <filter-name>SessionFilter</filter-name>
-    <filter-class>com.capsico.people.web.SessionFilter</filter-class>
+    <filter-class>wanda.web.SessionFilter</filter-class>
   </filter>
   <filter-mapping>
     <filter-name>SessionFilter</filter-name>

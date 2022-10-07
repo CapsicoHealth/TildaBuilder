@@ -1,6 +1,10 @@
 package tildabuilder;
 
+import java.awt.Desktop;
 import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+
 import org.apache.catalina.Context;
 import org.apache.catalina.WebResourceRoot;
 import org.apache.catalina.WebResourceSet;
@@ -12,7 +16,9 @@ import org.apache.catalina.webresources.StandardRoot;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import tilda.utils.EncryptionUtil;
 import tilda.utils.TextUtil;
+import tildabuilder.config.Config;
 
 
 public class Starter
@@ -23,8 +29,6 @@ public class Starter
     throws Exception
       {
         Connector secureConnector = new Connector();
-        if (TextUtil.isNullOrEmpty(webPort) == true)
-          webPort = "8843";
         LOG.info("Listening on port " + webPort);
         boolean Error = false;
         if (TextUtil.isNullOrEmpty(keystoreFile) == true)
@@ -52,6 +56,26 @@ public class Starter
 
       }
 
+    public static String _RUNTIME_CODE = null;
+    public static Config _CONF;
+    static
+      {
+        try
+          {
+            _CONF = Config.getInstance();
+          }
+        catch (IOException E)
+          {
+            LOG.error(E);
+            System.exit(-1);
+          }
+      }
+
+
+    //
+    // SEE ALSO: /CapsicoWebMLCatalog/src/main/java/com/capsico/ServerMain.java
+    //
+
     public static void main(String[] args)
     throws Exception
       {
@@ -59,11 +83,14 @@ public class Starter
         Tomcat tomcat = new Tomcat();
 
         String webPort = System.getenv("PORT");
+        if (TextUtil.isNullOrEmpty(webPort) == true)
+          webPort = "8843";
+
         String keystoreFile = "..//tilda.bin"; // System.getenv("keystoreFile");
         String keystorePass = "tildaxyz123"; // System.getenv("keystorePass");
 
         tomcat.setConnector(getSecureConnector(webPort, keystoreFile, keystorePass));
-        Context context = tomcat.addWebapp("/TildaBuilder", WebappPath);
+        Context context = tomcat.addWebapp("/", WebappPath);
         // Path to Servlet classes
         File additionWebInfClassesFolder = new File("bin");
         WebResourceRoot resources = new StandardRoot(context);
@@ -71,7 +98,7 @@ public class Starter
         if (additionWebInfClassesFolder.exists())
           {
             resourceSet = new DirResourceSet(resources, "/WEB-INF/classes", additionWebInfClassesFolder.getAbsolutePath(), "/");
-            LOG.debug("loading WEB-INF resources from as '" + additionWebInfClassesFolder.getAbsolutePath() + "'");
+            LOG.debug("loading WEB-INF resources from '" + additionWebInfClassesFolder.getAbsolutePath() + "'");
           }
         else
           {
@@ -80,6 +107,15 @@ public class Starter
         resources.addPreResources(resourceSet);
         context.setResources(resources);
         tomcat.start();
+
+        if (Desktop.isDesktopSupported() == true && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE) == true)
+          {
+            _RUNTIME_CODE = EncryptionUtil.getToken(32, true);
+            Desktop.getDesktop().browse(new URI("https://localhost:" + webPort + "?code=" + _RUNTIME_CODE));
+          }
+
+
+
         tomcat.getServer().await();
       }
   }

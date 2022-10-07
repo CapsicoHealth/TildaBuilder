@@ -7,13 +7,13 @@ import javax.servlet.annotation.WebServlet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.capsico.people.data.User_Data;
-import com.capsico.people.web.RequestUtil;
-import com.capsico.people.web.ResponseUtil;
-import com.capsico.people.web.SimpleServlet;
+import wanda.data.User_Data;
+import wanda.web.RequestUtil;
+import wanda.web.ResponseUtil;
+import wanda.web.SimpleServlet;
 
 import tilda.db.Connection;
-import tilda.utils.JSONUtil;
+import tilda.utils.json.JSONUtil;
 
 @WebServlet("/svc/test")
 public class Test extends SimpleServlet
@@ -36,7 +36,7 @@ public class Test extends SimpleServlet
         
         PrintWriter Out = Res.setContentType(ResponseUtil.ContentType.JSON);
         JSONUtil.startOK(Out, '{');
-        JSONUtil.Print(Out, "str", true, str);
+        JSONUtil.print(Out, "str", true, str);
         JSONUtil.end(Out, '}');
       }
   }
