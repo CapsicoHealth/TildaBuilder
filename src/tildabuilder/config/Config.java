@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.SystemUtils;
@@ -24,7 +25,7 @@ public class Config
     protected static final Logger           LOG          = LogManager.getLogger(Config.class.getName());
 
     /*@formatter:off*/
-    @SerializedName("projects"    ) public List<Project> _projects   = null;
+    @SerializedName("projects"    ) public List<Project> _projects   = new ArrayList<Project>();
     /*@formatter:on*/
 
 

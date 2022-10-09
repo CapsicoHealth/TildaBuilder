@@ -1,79 +1,67 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Tilda Workbench</title>
     <link rel="stylesheet" href="/static/dojo-release-1.16.4/dijit/themes/claro/claro.css"/>
     <link rel="stylesheet" href="/static/css/dojoSimple.css"/>
-    <STYLE>
-    html {
-      height: 100%;
-    }
-    @media only screen and (device-width: 768px) {
-        html {
-          font-size: 11px;
-        }
-    }
-    body {
-      height: 100%;
-      overflow: hidden;
-      border: 0px;
-      padding: 0px;
-      margin: 0px;
-      background-color: #FFFFFF;
-    }
-    </STYLE>
     <link rel="stylesheet" href="/static/css/tilda.css"/>
     
 </head>
 <body class="claro">
 
-<div id="CAPSCONTAINER">
+<div id="MAINCONTAINER">
 
-<HEADER id="CAPSCONTAINER_HEADER">
-  <TABLE width="100%" border="0px" cellspacing="0px" cellpadding="0px">
-    <TR><TD id="HEADER_LOGO"><A href="/index.html"><IMG src="/static/img/tilda-logo.gif"></A></TD>
-        <TD id="HEADER_TITLE">Tilda Workbench</TD>
-        <TD id="HEADER_ACCOUNT">&nbsp;</TD>
-    </TR>
-  </TABLE>
-</HEADER>
-<MAIN id="CAPSCONTAINER_BODY">
-  <DIV class="column left"  style="top:100px; bottom:10px; left:15%; width:70%; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin;">
-    <DIV class="tileHeader360g">Projects</DIV>
-    <DIV id="PROJECT_LIST" class="tileGroup360g"></DIV>
-  </DIV>
-</MAIN>
+  <HEADER id="MAINCONTAINER_HEADER">
+    <TABLE width="100%" border="0px" cellspacing="0px" cellpadding="0px">
+      <TR><TD id="HEADER_LOGO"><A href="/index.html"><IMG src="/static/img/tilda-logo.gif"></A></TD>
+          <TD id="HEADER_TITLE">Tilda Workbench</TD>
+      </TR>
+    </TABLE>
+  </HEADER>
 
-<FOOTER id="CAPSCONTAINER_FOOTER">
-  <TABLE WIDTH=100% style="font-size: 80%;">
-    <TR><TD ALIGN="LEFT">Powered by <IMG align="absmiddle" src="/static/img/CapsicoHealth.small.png" height="14px" hspace="5px"></TD>
-        <TD ALIGN="RIGHT">Copyright &copy; 2021 CapsicoHealth Inc.</TD>
-    </TR>
-  </TABLE>
-</FOOTER>
+  <MAIN id="MAINCONTAINER_BODY">
+    <DIV class="column left"  style="top:75px; bottom:75px; left:15%; width:70%; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin;">
+      <DIV class="tileHeader360g">Projects <A href="javascript:TILDA_GLOBAL.projects.addProject();"><IMG src="/static/img/add.gif"></A>
+                                           <span class="searchBox">
+                                              <input class="searchInput" type="text" name="" placeholder="Search">
+                                           </span>
+<!--                                            <A href="javascript:TILDA_GLOBAL.projects.searchProject();"><IMG src="/static/img/search.gif"></A>
+ -->
+      </DIV>
+      <DIV id="PROJECT_LIST" class="tileGroup360g"><IMG src="/static/img/progress.gif"></DIV>
+    </DIV>
+  </MAIN>
+  
+  <FOOTER id="MAINCONTAINER_FOOTER">
+    <TABLE WIDTH=100% style="font-size: 80%;">
+      <TR><TD ALIGN="LEFT">Powered by <IMG align="absmiddle" src="/static/img/CapsicoHealth.small.png" height="14px" hspace="5px"></TD>
+          <TD ALIGN="RIGHT">Copyright &copy; 2021 CapsicoHealth Inc.</TD>
+      </TR>
+    </TABLE>
+  </FOOTER>
 
 </div>
 
 
 <SCRIPT> var djConfig = { isDebug: false, locale: 'en-us', parseOnLoad: false, disableFlashStorage:true, parseWidgets:false, baseUrl: "/static/",
-                          packages: [ { name: "dojo", location: "dojo-1.16.4/dojo" },
-                                      { name: "dijit", location: "dojo-1.16.4/dijit" },
-                                      { name: "dojox", location: "dojo-1.16.4/dojox" },
+                          packages: [ { name: "dojo", location: "dojo-release-1.16.4/dojo" },
+                                      { name: "dijit", location: "dojo-release-1.16.4/dijit" },
+                                      { name: "dojox", location: "dojo-release-1.16.4/dojox" },
                                       { name: "floria", location: "floria" },
                                       { name: "js", location: "js" },
                                       { name: "json", location: "json" }
                                     ]
                         };
+window.CapsicoDojoSimpleLibJS = "floria/dojoSimple";
 </SCRIPT>
 <script src="/static/dojo-release-1.16.4/dojo/dojo.js"></script>
-<script type="module">
-  import { projects } from "./static/js/module-projects.js";
-  projects.paint("PROJECT_LIST");
+<SCRIPT type="module">
+import { projects } from "/static/js/module-projects.js";
+window.TILDA_GLOBAL = {};
+window.TILDA_GLOBAL.projects=projects;
+projects.paint("PROJECT_LIST");
 </SCRIPT>
-
-
-<DIV id="DLG_POPUPLOGIN" style="display:none;"></DIV>
 
 </body>
 </html>

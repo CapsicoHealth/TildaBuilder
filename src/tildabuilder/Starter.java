@@ -2,7 +2,6 @@ package tildabuilder;
 
 import java.awt.Desktop;
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 
 import org.apache.catalina.Context;
@@ -18,7 +17,6 @@ import org.apache.logging.log4j.Logger;
 
 import tilda.utils.EncryptionUtil;
 import tilda.utils.TextUtil;
-import tildabuilder.config.Config;
 
 
 public class Starter
@@ -65,7 +63,6 @@ public class Starter
     public static void main(String[] args)
     throws Exception
       {
-        String WebappPath = new File("WebContent").getAbsolutePath();
         Tomcat tomcat = new Tomcat();
 
         String webPort = System.getenv("PORT");
@@ -76,6 +73,7 @@ public class Starter
         String keystorePass = "tildaxyz123"; // System.getenv("keystorePass");
 
         tomcat.setConnector(getSecureConnector(webPort, keystoreFile, keystorePass));
+        String WebappPath = new File("WebContent").getAbsolutePath();
         Context context = tomcat.addWebapp("/", WebappPath);
         // Path to Servlet classes
         File additionWebInfClassesFolder = new File("bin");

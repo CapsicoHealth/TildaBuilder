@@ -1,0 +1,112 @@
+{ "code": 200,"data": {
+      "name"     :"Contract Filter Form"
+     ,"owner"    :"CapsicoHealth Inc."
+     ,"version"  :"2017-05-22"
+     ,"copyright":"CapsicoHealth Inc. &copy; 2017 All Rights Reserved"
+ 	 ,"enums": [{"name":"Populations"   , "values": [["BPCI-A: Acute Myocardial Infarction","Acute Myocardial Infarction (AMI)"]
+                                                    ,["BPCI-A: CABG","CABG"]
+                                                    ,["BPCI-A: Cardiac Arrhythmia","Cardiac Arrhythmia"]
+                                                    ,["BPCI-A: Cardiac Valve","Cardiac Valve"]
+                                                    ,["BPCI-A: Cellulitis","Cellulitis"]
+                                                    ,["BPCI-A: Cervical Spinal","Cervical Spinal"]
+                                                    ,["BPCI-A: COPD","COPD"]
+                                                    ,["BPCI-A: Combined Anterior Posterior Spinal Fusion","Combined Anterior Posterior Spinal Fusion"]
+                                                    ,["BPCI-A: Congestive Heart Failure","Congestive Heart Failure"]
+                                                    ,["BPCI: Diabetes","Diabetes - DRG"]
+                                                    ,["BPCI: Diabetes - Type 2 - ICD10","Diabetes - ICD10"]
+                                                    ,["BPCI-A: Disorders of Liver except Malignancy, Cirrhosis or Alcoholic Hepatitis","Disorders of Liver except Malignancy, Cirrhosis or Alcoholic Hepatitis"]
+                                                    ,["BPCI-A: Double Joint Replacement of the Lower Extremity","Double Joint Replacement of the Lower Extremity"]
+                                                    ,["BPCI-A: Fractures Femur and Hip/Pelvis","Fractures Femur and Hip/Pelvis"]
+                                                    ,["BPCI-A: Gastrointestinal Hemorrhage","Gastrointestinal Hemorrhage"]
+                                                    ,["BPCI-A: Gastrointestinal Obstruction","Gastrointestinal Obstruction"]
+                                                    ,["BPCI-A: Hip and Femur Procedures except Major Joint","Hip and Femur Procedures except Major Joint"]
+                                                    ,["BPCI-A: Lower Extremity and Humerus Procedure except Hip, Foot, Femur","Lower Extremity and Humerus Procedure except Hip, Foot, Femur"]
+                                                    ,["BPCI-A: Major Bowel Procedure","Major Bowel Procedure"]
+                                                    ,["BPCI-A: Major Joint Replacement of the Lower Extremity","Major Joint Replacement of the Lower Extremity"]
+                                                    ,["BPCI-A: Major Joint Replacement of Upper Extremity","Major Joint Replacement of the Upper Extremity"]
+                                                    ,["BPCI-A: Pacemaker","Pacemaker"] 
+                                                    ,["BPCI-A: Percutaneous Coronary Intervention","Percutaneous Coronary Intervention"]
+                                                    ,["BPCI-A: Renal Failure","Renal Failure"]
+                                                    ,["BPCI-A: Sepsis","Sepsis"]
+                                                    ,["BPCI-A: Simple Pneumonia and Respiratory Infections","Simple Pneumonia and Respiratory Infections"]
+                                                    ,["BPCI-A: Spinal Fusion - Non Cervical","Spinal Fusion - Non Cervical"]
+                                                    ,["BPCI-A: Stroke","Stroke"]
+                                                    ,["BPCI-A: Urinary Tract Infection","Urinary Tract Infection"]
+                                                    ]}
+               ,{"name":"Socials"       , "values": [["PSF_alcoholic", "Alcohol Abuse"]
+                                                    ,["PSF_anxiery", "Anxiety"]
+                                                    ,["PSF_depression", "Depression"]
+                                                    ,["PSF_domesticIssues", "Domestic Issues"]
+                                                    ,["PSF_highCopay", "High Copay"]
+                                                    ,["PSF_homelessness", "Homelessness"]
+                                                    ,["PSF_lackOfTransport", "Lack Of Transport"]
+                                                    ,["PSF_limitedAccessToGroceryStores", "Limited Access To Grocery Stores"]
+                                                    ,["PSF_limitedSupport", "Limited Support"]
+                                                    ,["PSF_povertyLine", "Poverty Line"]
+                                                    ,["PSF_smoker", "Tobacco Use"]
+                                                    ,["PSF_substanceAbuse", "Substance Abuse"]
+                                                    ]}
+               ,{"name":"Utils"         , "values": [["MARGINS_PCT", "Margins (%)", "Margin less than 5%"]
+                                                    ,["READMISSIONS", "30-Day Readmissions", "At least one 30-day Hospital readmission"]
+                                                    ,["LOS_HO", "Hospital LOS", "A combined Hospital length of stay of at least 5 days"]
+                                                    ,["VISITS_HO", "Hospital Stays", "At least two Hospital stays"]
+                                                    ,["LOS_ER", "ER LOS", "A combined Emergency Room length of stay of at least 2 days"]
+                                                    ,["VISITS_ER", "ER Visits", "At least 1 Emergency Room stay"]
+                                                    ,["LOS_SNF", "SNF LOS", "A combined Skilled Nursing Facility length of stay of at least 1 day"]
+                                                    ,["VISITS_SNF", "SNF Stays", "At least 1 Skilled Nursing Facility stay"]
+                                                    ,["LOS_HH", "HomeHealth LOS", "A combined Home Health length of stay of at least 1 day"]
+                                                    ,["VISITS_HH", "HomeHealth Stays", "At least 1 Home Health stay"]
+                                                    ]}
+               ,{"name":"CoMorbids"     , "values": [["DX_dxAsthma", "Asthma"]
+                                                    ,["DX_dxAtrialFibrillation", "Atrial Fibrillation"]
+                                                    ,["DX_dxChronicHeartFailure","Chronic Heart Failure"]
+                                                    ,["DX_dxChronicKidneyDisease","Chronic Kidney Disease"]
+                                                    ,["DX_dxChronicPulmonaryDisease","Chronic Pulmonary Disease"]
+                                                    ,["DX_dxDementia","Dementia"]
+                                                    ,["DX_dxDepression","Depression"]
+                                                    ,["DX_dxDiabetes","Diabetes"]
+                                                    ,["DX_dxHypertension","Hypertension"]
+                                                    ]}
+               ,{"name":"Genders"       , "values": [["DEM_MALE", "Male"]
+                                                    ,["DEM_FEMALE", "Female"]
+                                                    ]}
+               ,{"name":"AgeGroups"     , "values": [["DEM_80","80 & ABOVE"]
+                                                    ,["DEM_75_79","75-79Y"]
+                                                    ,["DEM_70_74","70-74Y"]
+                                                    ,["DEM_65_69","65-69Y"]
+                                                    ,["DEM_50_64","50-64Y"]
+                                                    ,["DEM_35_49","35-49Y"]
+                                                    ,["DEM_18_34","18-34Y"]
+                                                    ,["DEM_0_17","0-17Y"]
+                                                    ]}
+               ,{"name":"Payors"        , "values": [["PYR_MCR_TRAD", "Medicare"]
+                                                    ,["PYR_MCD"     , "Medicaid"]
+                                                    ]}
+               ,{"name":"Scores"        , "values": [["RS_score1h", "Higher Readmission Risk"      , "Top 2 Readmission Risk Quintiles"]
+                                                    ,["RS_score1m", "Moderate Readmission Risk"    , "Mid Readmission Risk Quintile"]
+                                                    ,["RS_score2h", "Higher ER Admission Risk"     , "Top 2 ER Risk Admission Quintiles"]
+                                                    ,["RS_score2m", "Moderate Admission ER Risk"   , "Mid ER Admission Risk Quintile"]
+                                                    ,["RS_score3h", "Higher Hospitalization Risk"  , "Top 2 Hospitalization Risk Quintiles"]
+                                                    ,["RS_score3m", "Moderate Hospitalization Risk", "Mid Hospitalization Risk Quintiles"]
+                                                    ,["RS_score4h", "Higher Non-Adherence Risk"    , "Top 2 Adherence Risk Quintiles"]
+                                                    ,["RS_score4m", "Moderate Non-Adherence Risk"  , "Mid Adherence Risk Quintiles"]
+                                                    ,["RS_score5h", "Higher Utilization Risk"      , "Top 2 Utilization Risk Quintiles"]
+                                                    ,["RS_score5m", "Moderate Utilization Risk"    , "Mid Utilization Risk Quintiles"]
+                                                    ,["RS_score6h", "Higher Denial Risk"           , "Top 2 Denial Risk Quintiles"]
+                                                    ,["RS_score6m", "Moderate Denial Risk"         , "Mid Denial Risk Quintiles"]
+                                                    ]}
+               ]
+     ,"sections": [{"id":"Filter", "label":"Select"
+                   ,"formDef": [{"name":"disease"    , "label":"Population"    , "type":"dropdown", "values":"Populations"  }
+                               ,{"name":"states"     , "label":"States"        , "type":"States"      , "multi":true , "simple":true, "params":{"countryCodeISO2":"US", "stateType":"S"} }
+                               ,{"name":"providers"  , "label":"Providers"     , "type":"ProviderOrgs", "multi":true , "simple":true }
+                               ,{"name":"payors"     , "label":"Payors"        , "type":"checkbox"    , "values":"Payors"   , "cols":2 }
+                               ,{"name":"utilization", "label":"Utilization"   , "type":"checkbox", "values":"Utils"     , "cols":2 }
+                               ,{"name":"scores"     , "label":"Risks"         , "type":"radio"   , "values":"Scores"    , "cols":2 }
+                               ,{"name":"comos"      , "label":"Co-Morbidities", "type":"checkbox", "values":"CoMorbids" , "cols":2 }
+                               ,{"name":"social"     , "label":"Social"        , "type":"checkbox", "values":"Socials"   , "cols":2 }
+                               ,{"name":"genders"    , "label":"Gender"        , "type":"checkbox", "values":"Genders"   , "cols":2 }
+                               ,{"name":"agegroups"  , "label":"Age Group"     , "type":"checkbox", "values":"AgeGroups" , "cols":2 }
+                               ]}
+                  ]
+}}
