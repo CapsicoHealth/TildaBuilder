@@ -62,7 +62,7 @@ A[target="_other"]::after {
   overflow: visible;
   line-height: 1;
 }
-#MAINCONTAINER_BODY {
+.mainContainerBody {
  flex: 1;
 }
 #MAINCONTAINER_FOOTER_POWERED IMG {
@@ -114,6 +114,15 @@ A[target="_other"]::after {
   }
 }
 
+.innerFlowedDiv {
+  position: absolute;
+  bottom: 0px; 
+  left: 0px; 
+  width: 100%; 
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
 
 
 
@@ -1281,9 +1290,8 @@ select {
 }
 .formContainer {
    top: 0px;
-   bottom: 60px;
+   bottom: 2em;
    width: 99%;
-//   padding: 20px;
    margin-left: 1%;
    font-size: 100%;
 }
@@ -1658,6 +1666,7 @@ IMG.icon.single.badgeRed {
     background-color: rgba(0, 0, 0, 0.8);
     opacity: 0;
     transition: opacity 0.25s cubic-bezier(.55,.06,.68,.19);    
+    z-index: 10;
 }
 .modalDialog {
    position: absolute;
@@ -2010,10 +2019,11 @@ select {
 
 
 
-.formContainer {
-   bottom: 0;
-   font-size: 90%;
-}
+//.formContainer {
+//   bottom: 0;
+//   font-size: 90%;
+//}
+
 .formDiv {
    position: absolute;
    top: 15px;
@@ -2404,11 +2414,28 @@ table.centered {
   background-color: #FaFaFa;
   box-shadow: 0px 0px 2px #777;
 }
-.tile360g img {
+.tile360g IMG {
   width: 50px;
   height: 50px;
   float: left;
   padding-right: 20px;
+}
+.tile360g SPAN {
+    position:relative;
+}
+.tile360g SPAN[data-badge]::after {
+    content: attr(data-badge);
+    position: absolute;
+    top: 38px;
+    right: 35px;
+    font-size: 14px;
+    background: #5D93B7;
+    color: white;
+    width: 18px;
+    height: 18px;
+    text-align: center;
+    line-height: 18px;
+    border-radius: 15%;
 }
 .tile360g div:nth-child(2) {
   position: relative;

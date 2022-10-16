@@ -36,7 +36,7 @@ function createNavEvents(form)
    if (form._customNav == true)
     return;
     
-   if (form._popupTitle==null)
+   if (form._popupTitle==null || form._submitButton == true)
     FloriaDOM.addEvent(form._elementId+'_F_SUBMIT', "click", function() { form.updatePage(null); });
 
    if (form._cancelButton == true)
@@ -263,7 +263,7 @@ function fillGroup(d, elementId, pageId, rowId, descriptions, data, widgets, pic
  };
 
 
-export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, processCallbackFunc, popupTitle, wizardMode, liveOnChange, persist, validationErrMsg, cancelButton)
+export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, processCallbackFunc, popupTitle, wizardMode, liveOnChange, persist, validationErrMsg, cancelButton, submitButton)
  { 
 //   console.log("=>=>=> Forms2.constructor (data): ", data);
    formDefs = FloriaDOM.clone(formDefs);
@@ -349,12 +349,13 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
    this._popupTitle = popupTitle;
    this._liveOnChange = liveOnChange;
    this._cancelButton = cancelButton;
+   this._submitButton = submitButton;
    this._pickersLoading = 0;
    if (popupTitle != null)
     {
       this._dlg = new DojoSimple.Dialog(elementId+"_DLG");
       var that = this;
-      this._dlg.setOnHide(function() { that.updatePage(null, null, true); });
+      this._dlg.setOnHide(function() { if (that._cancelButton != true) that.updatePage(null, null, true); });
     }
     
    this.setCollapser = function(collapserClassName, collapseHTML, collapseTitle, expandHTML, expandTitle)
@@ -449,13 +450,13 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
     }
 
 
-   this.setContentOrShowDialog = function(pageId, frameContentCallbackFunc, Str, isCreateNavEvents)
+   this.setContentOrShowDialog = function(pageId, frameContentCallbackFunc, Str, isCreateNavEvents, widthPct, heightPct)
    {
      var that = this;
      if (this._popupTitle != null)
        {
          
-         this._dlg.show(this._popupTitle, null, 0.9, 0.9, function(cntId) { 
+         this._dlg.show(this._popupTitle, null, widthPct||0.9, heightPct||0.9, function(cntId) { 
            FloriaDOM.setInnerHTML(cntId ,Str);
            if (isCreateNavEvents == true)
              createNavEvents(that);
@@ -473,6 +474,12 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
          return false;
        }
    }
+   
+   this.closeDialog = function()
+    {
+      if (this._dlg != null)
+       this._dlg.hide();
+    }
    
    this.getWizardModeMarkup = function(pageId)
    {
@@ -496,7 +503,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
            Str+= '<DIV class="formNavFooter">'
                    +'<CENTER><BUTTON class="formButton" id="'+this._elementId+'_F_PREV">Previous</BUTTON>'
                            +'&nbsp;&nbsp;&nbsp;&nbsp;<BUTTON class="formButton" id="'+this._elementId+'_F_NEXT">Next</BUTTON>'
-                           +(this._popupTitle   == null?'&nbsp;&nbsp;&nbsp;&nbsp;<BUTTON class="formButton" id="'+this._elementId+'_F_SUBMIT" style="display:none;" data-forms2="1">Submit</BUTTON>':'')
+                           +(this._popupTitle   == null || this._submitButton == true?'&nbsp;&nbsp;&nbsp;&nbsp;<BUTTON class="formButton" id="'+this._elementId+'_F_SUBMIT" style="display:none;" data-forms2="1">Submit</BUTTON>':'')
                            +(this._cancelButton == true?'&nbsp;&nbsp;&nbsp;&nbsp;<BUTTON class="formButton" id="'+this._elementId+'_F_CANCEL">Cancel</BUTTON>':'')
                    +'</CENTER>'
                  +'</DIV>'
@@ -519,12 +526,14 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
          {
            Str+='<DIV class="formNavFooter">'
                 +'<CENTER>'
-                  +(this._popupTitle==null?'<BUTTON class="formButton" id="'+this._elementId+'_F_SUBMIT" data-forms2="1">Submit</BUTTON>'
-                                          +(this._cancelButton == true?'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<BUTTON class="formButton" id="'+this._elementId+'_F_CANCEL">Cancel</BUTTON>'
-                                                                      :''
-                                           )
-                                          :''
-                    )
+                  +(this._popupTitle==null || this._submitButton == true
+                      ?'<BUTTON class="formButton" id="'+this._elementId+'_F_SUBMIT" data-forms2="1">Submit</BUTTON>'
+                      :''
+                   )
+                  +(this._cancelButton == true
+                      ?'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<BUTTON class="formButton" id="'+this._elementId+'_F_CANCEL">Cancel</BUTTON>'
+                      :''
+                   )
                 +'</CENTER>'
               +'</DIV>'
               ;
@@ -537,7 +546,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
      return Str;
    }
    
-   this.paint = function(pageId, frameContentOverride, frameContentCallbackFunc)
+   this.paint = function(pageId, frameContentOverride, frameContentCallbackFunc, widthPct, heightPct)
     {
       if(this._widgets != null) 
         for (var i = 0; i < this._widgets.length; ++i)
@@ -553,13 +562,13 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
       if (this._wizardMode == true)
        {
          var Str = this.getWizardModeMarkup(pageId);
-         var exit = this.setContentOrShowDialog(pageId, frameContentCallbackFunc, Str, true)
+         var exit = this.setContentOrShowDialog(pageId, frameContentCallbackFunc, Str, true, widthPct, heightPct)
          if(exit == true)
            return;
        }
       else if (frameContentOverride != null)
        {
-         var exit = this.setContentOrShowDialog(pageId, frameContentCallbackFunc, frameContentOverride, false);
+         var exit = this.setContentOrShowDialog(pageId, frameContentCallbackFunc, frameContentOverride, false, widthPct, heightPct);
          if (exit == true)
            return;
        }

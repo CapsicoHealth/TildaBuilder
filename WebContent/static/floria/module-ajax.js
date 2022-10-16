@@ -11,7 +11,7 @@ ajaxUrl: function(url, method, errorMsg, successFunc, errorFunc, postContents, t
      {
         if (method != 'POST')
          return FloriaDOM.alertThrow("Error: you cannot post data in a non POST ajax request");
-        url = url + "?" + FloriaDOM.isObject(postContents) == true ? FloriaDOM.makeUrlParams(postContents) : postContents;
+        url = url + "?" + (FloriaDOM.isObject(postContents) == true ? FloriaDOM.makeUrlParams(postContents) : postContents);
      }
          
      
@@ -39,7 +39,7 @@ ajaxUrl: function(url, method, errorMsg, successFunc, errorFunc, postContents, t
             alert("FYI THAT YOU CANCELED ANOTHER REQUEST!\n\nYou (or another user on the same account) was running a request you interrupted.");
 
           let data = xhr.response;
-          if (xhr.status != 200)
+          if (data?.code != 200 || xhr.status != 200)
            return xhr.onerror({code: data?.code||xhr.status, message : data?.msg||xhr.statusText, errors: data?.errors, type: data?.type });
           if (data == null)
             throw ("An error occurred: no data for " + FloriaDOM.truncateUrl(url));

@@ -31,7 +31,7 @@ DojoSimple.HeaderBodyFooterLayout = function(MainId, initFunc)
           FloriaDOM.alertException(e);
         }
     });
-   require(["dojox/widget/Dialog","dojo/fx/easing"], function(Dialog, Easing) {});
+//   require(["dojox/widget/Dialog","dojo/fx/easing"], function(Dialog, Easing) {});
   }
 
 
@@ -69,7 +69,7 @@ DojoSimple.Dialog = function(elementId)
                          ;
       this._e.appendChild(this._md);
     }
-    
+
    var that = this;
    FloriaDOM.addEvent(elementId+"_MD_CLOSE", "click", function() {
      that.hide();

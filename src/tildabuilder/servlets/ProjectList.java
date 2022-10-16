@@ -20,7 +20,7 @@ import wanda.web.SimpleServletNonTransactional;
 public class ProjectList extends SimpleServletNonTransactional
   {
     private static final long     serialVersionUID = 1018123535563202342L;
-    protected static final Logger LOG              = LogManager.getLogger(Test.class.getName());
+    protected static final Logger LOG              = LogManager.getLogger(ProjectList.class.getName());
 
     public ProjectList()
       {

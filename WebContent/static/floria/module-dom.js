@@ -210,6 +210,11 @@ export var FloriaDOM = {
         if (e != null)
           e.style.display=e.style.display=="" ? "none" : "";
       },
+    switchVisibility: function(divId1, divId2, str)
+     {
+       FloriaDOM.showHide(divId1, str);
+       FloriaDOM.showHide(divId2, str);
+     },
     parentWidth: function(e, Str)
       {
         return FloriaDOM.getElement(e, Str).parentNode.offsetWidth;

@@ -7,8 +7,8 @@ import { FloriaForms } from "/static/floria/module-forms2.js";
 
 function paintProjectTile(p)
  {
-   return `<DIV class="tile360g" data-projectName="${p.name}">
-             <img src="/static/img/briefcase.jpg"/>
+   return `<DIV class="tile360g" data-project-name="${p.name}">
+             <SPAN ${p?.schemas?.length > 0 ? 'data-badge="'+p?.schemas?.length+'"':''}><img src="/static/img/${p?.schemas?.length > 0 ? 'folder-blue-full.70x70.png':'folder-blue-empty.70x70.png'}"/></SPAN>
              <div>${p.name}</div>
              <div>${p.rootPath}</div>
              <div>${p.description}</div>
@@ -20,9 +20,9 @@ function paintProjectTile(p)
 
 var _SAMPLE_PROJECTS = [
      { "name":"FHIR Model"  , "description":"Operational FHIR-inspired Model"  , "rootPath":"C:\\Projects\\repos-hmhn\\hmh-da-fhir-datamodel\\HMHN_FHIR\\src" }
-    ,{ "name":"Capsico Base", "description":"Capsico Base Models"              , "rootPath":"C:\\Projects\\repos\\CapsicoBase" }
+    ,{ "name":"Capsico Base", "description":"Capsico Base Models"              , "rootPath":"C:\\Projects\\repos\\CapsicoBase", "schemaCount":4 }
     ,{ "name":"Capsico Main", "description":"Capsico Main Models"              , "rootPath":"C:\\Projects\\repos\\Capsico"     }
-    ,{ "name":"FHIR Model"  , "description":"Operational FHIR-inspired Model"  , "rootPath":"C:\\Projects\\repos-hmhn\\hmh-da-fhir-datamodel\\HMHN_FHIR\\src" }
+    ,{ "name":"FHIR Model"  , "description":"Operational FHIR-inspired Model"  , "rootPath":"C:\\Projects\\repos-hmhn\\hmh-da-fhir-datamodel\\HMHN_FHIR\\src", "schemaCount":58 }
     ,{ "name":"Capsico Base", "description":"Capsico Base Models"              , "rootPath":"C:\\Projects\\repos\\CapsicoBase" }
     ,{ "name":"Capsico Main", "description":"Capsico Main Models"              , "rootPath":"C:\\Projects\\repos\\Capsico"     }
     ,{ "name":"FHIR Model"  , "description":"Operational FHIR-inspired Model"  , "rootPath":"C:\\Projects\\repos-hmhn\\hmh-da-fhir-datamodel\\HMHN_FHIR\\src" }
@@ -40,30 +40,92 @@ var _SAMPLE_PROJECTS = [
 
 var projects = {};
 
-projects.paint = function(divId)
+var currentProjectList = null;
+var currentDivId = null;
+
+function getProject(projectList, name)
  {
-   FloriaAjax.ajaxUrl("/svc/project/list", "GET", "Cannot get projects", function(data) {
-       let str = "";
-       if (data == null || data.length == 0)
-        {
-          str+="No projects have been found. Create one!";
-        } 
-       else for (let i = 0; i < data.length; ++i)
-        str+=paintProjectTile(data[i], true)+"\n";
-       FloriaDOM.setInnerHTML(divId, str);
+   if (projectList != null)
+    for (let i = 0; i < projectList.length; ++i)
+     if (projectList[i].name == name)
+      return projectList[i];
+   return null;
+ }
+
+
+projects.getProjectList = function(callbackFunc, errorFunc)
+ {
+   FloriaAjax.ajaxUrl("/svc/project/list", "GET", "Cannot get projects", function(projectList) {
+       currentProjectList = projectList;
+       callbackFunc(projectList);
    }, function() {
-       alert("ERROR!");
+       if (errorFunc != null)
+        errorFunc();
+       else
+        FloriaDOM.alertThrow("ERROR getting the project list.");
+       currentProjectList = null;
    });
 
  };
- 
-projects.addProject = function()
+
+projects.paintProjectList = function(divId, projectList)
  {
-   FloriaAjax.ajaxUrl("/static/json/ProjectForm.json", "GET", "Cannot get project form definition", function(formDef) {
-      let f = new FloriaForms(null, { }, formDef, 4, function(data, refresh) {
-          alert("Hello!");
-      }, "AI Workbench - Model Builder", true)//, null, null, null, true);
-      f.paint(0);
+   currentDivId = divId;
+   let str = "";
+   if (projectList == null || projectList.length == 0)
+    str = "No projects projectList been found. Create one!";
+   for (let i = 0; i < projectList.length; ++i)
+    str+=paintProjectTile(projectList[i], true)+"\n";
+   FloriaDOM.setInnerHTML(divId, str);
+   FloriaDOM.addEvent(divId, "click", projects.selectProject)
+ };
+
+projects.selectProject = function(e, event, target)
+ {
+   while (target != null && target != e && target.dataset.projectName == null)
+    target = target.parentNode;
+   
+   if (target?.dataset?.projectName == null)
+    return;
+
+   projects.paintProject(target?.dataset?.projectName);
+    
+//   FloriaAjax.ajaxUrl("/svc/project/open?"+FloriaDOM.makeUrlParams({name:target.dataset.projectName}), "GET", "Cannot open the project", function() { } );   
+ }
+
+projects.paintProject = function(name)
+ {
+   var title = FloriaDOM.getElement("HEADER_TITLE");
+   title.innerHTML = "TIDE - "+name;
+   
+   let p = getProject(currentProjectList, name);
+   FloriaDOM.switchVisibility("MAINCONTAINER_PROJECTS", "MAINCONTAINER_SCHEMAS");
+ }
+
+
+projects.start = function(divId)
+ {
+   projects.getProjectList(function(projectList) {
+        projects.paintProjectList(divId, projectList);
+   }, function() {
+        FloriaDOM.setInnerHTML(divId, "An error occurred getting the project list");
+   });
+ }
+
+
+projects.addProject = function(divId)
+ {
+   FloriaAjax.ajaxUrl("/static/json/ProjectForm.json?"+new Date(), "GET", "Cannot get project form definition", function(formDef) {
+      let f = new FloriaForms("ProjectForm", { }, formDef, 4, function(data, refresh) {
+          if (refresh == true)
+           {
+             FloriaAjax.ajaxUrl("/svc/project/add", "POST", "Cannot create project", function(projectList) { 
+                 f.closeDialog();
+                 projects.paintProjectList(divId, projectList);
+             }, null, data);
+           }
+      }, "New Project", true, null, null, null, true, true);
+      f.paint(0, null, null, 0.6, 0.4);
    });
  }
 
