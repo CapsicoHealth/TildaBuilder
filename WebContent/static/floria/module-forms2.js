@@ -928,7 +928,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
                else if (d.type=="text" || d.type=="hidden" || d.type=="textarea" || d.type=="number" || d.type=="radio" || d.type=="date")
                  {
 //                   console.log("FORM VALUE --> d.name: "+d.name+"; f[d.name].value: "+f[d.name].value+"; typeof f[d.name].value: "+typeof f[d.name].value);
-                   console.log("d.name: "+ d.name);
+//                   console.log("d.name: "+ d.name);
                    this._data[d.name] = f[d.name].value;
                  }
                else

@@ -96,7 +96,7 @@ public class Project
           src.mkdirs();
 
         TildaFileProcessor FP = new TildaFileProcessor(src);
-        FileUtil.iterate(src, FP, new String[] { "_Tilda", ".git", "*.java"
+        FileUtil.iterate(src, FP, new String[] { "_Tilda", ".git", "*.java", "bin", "lib"
         });
         _schemas = CollectionUtil.toStringArray(FP._tildaFiles);
 

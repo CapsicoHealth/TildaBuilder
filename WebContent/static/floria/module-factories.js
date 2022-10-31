@@ -367,6 +367,48 @@ function createNestedFunc(fetcher, prevFetcher, previousFunc)
      }
  }
 
+function createRunnAllCallbackFunc(finalCallback, lastFetcher)
+ {
+   return function(data, errorMsg, errorType, cached)
+     { 
+//       console.log("DataFetcherRegistry.runAll.f() >> Fetcher list\n"+_FL.printFetcherList());
+//       console.log("DataFetcherRegistry.runAll.f() >> Fetcher "+lastFetcher.name+": "+errorMsg);
+       saveFetcherResults(data, errorMsg, errorType, lastFetcher, cached);
+       console.log("Running all callbacks.");
+       for (var i = 0; i < _FL.getCallbackCount(); ++i)
+        {
+          let callbackDef = _FL.getCallback(i);
+          if (callbackDef == null || callbackDef.callback == null)
+           continue;
+          let Params = createParamList([], callbackDef.fetchers);
+          try { 
+	            let executed = true;
+                let str = "";
+                for (let x = 0; x < callbackDef.fetchers.length; ++x)
+                 {
+	               str+=(str.length==0?"":", ")+callbackDef.fetchers[x].name+"/"+callbackDef.fetchers[x].executed;
+                   if (callbackDef.fetchers[x].executed == false)
+                    executed = false;
+                 }
+                if (executed == false)
+                 {
+	               console.error("Callbacks are being called while at least one fetcher hasn't completed: "+str);
+                   return;
+                 }
+                console.log("Invoking the callback '"+callbackDef.callbackName+"' for fetchers '"+str+"' and with ", Params);
+                callbackDef.callback.apply(null, Params.params);
+              }
+          catch (e) { console.error(e); }
+        }
+       console.log("Running finalCallback (in DataFetcherRegistry.runAll.f()).");
+       if (finalCallback != null)
+        finalCallback();
+       _FL._Callbacks = [ ];
+       
+       console.log("RPJ: Fetchers Count: %s after runAll", _FL.getFetcherCount());       
+     };
+ }
+
 DataFetcherRegistry.runAll = function(finalCallback)
  {
    console.log("RPJ: Fetchers Count: %s before runAll", _FL.getFetcherCount());
@@ -377,28 +419,7 @@ DataFetcherRegistry.runAll = function(finalCallback)
 
 //   console.log("DataFetcherRegistry.runAll() >> creating f(): Fetcher list\n"+_FL.printFetcherList());
    var lastFetcher = _FL.getFetcher(_FL.getFetcherCount()-1);
-   var f = function(data, errorMsg, errorType, cached)
-     { 
-//       console.log("DataFetcherRegistry.runAll.f() >> Fetcher list\n"+_FL.printFetcherList());
-//       console.log("DataFetcherRegistry.runAll.f() >> Fetcher "+lastFetcher.name+": "+errorMsg);
-       saveFetcherResults(data, errorMsg, errorType, lastFetcher, cached);
-       console.log("Running all callbacks.");
-       for (var i = 0; i < _FL.getCallbackCount(); ++i)
-        {
-          var callbackDef = _FL.getCallback(i);
-          if (callbackDef == null || callbackDef.callback == null)
-           continue;
-          var Params = createParamList([], callbackDef.fetchers);
-          console.log("Invoking the callback '"+callbackDef.callbackName+"' with "+Params.str+".");
-          try { callbackDef.callback.apply(null, Params.params); } catch (e) { console.error(e); }
-        }
-       console.log("Running finalCallback (in DataFetcherRegistry.runAll.f()).");
-       if (finalCallback != null)
-        finalCallback();
-       _FL._Callbacks = [ ];
-       
-       console.log("RPJ: Fetchers Count: %s after runAll", _FL.getFetcherCount());       
-     };
+   var f = createRunnAllCallbackFunc(finalCallback, lastFetcher);
      
     for(var i = _FL.getFetcherCount()-1; i >= 0; --i)
      {
@@ -931,7 +952,7 @@ PickerRegistry.render = function(pickerDefs, Inline, afterRenderCallbackFunc, on
           if (Inline == true)
             Str+='<DIV id="'+p.elementId+'_PICKER" style="width:100% !important; padding:15px;"><BR><CENTER><IMG align="center" src="/static/img/progress.gif" height="75px"></CENTER></DIV>';
           else
-            Str+='<A href="javascript:FloriaFactories.PickerRegistry.show(\''+p.elementId+'\')">Pick...</A><SPAN class="codesSelectionBox" id="'+p.elementId+'_VALUES">&nbsp;<img height="10px" src="/static/img/progress_dots.gif"></SPAN>';
+            Str+='<A href="javascript:FloriaFactories.PickerRegistry.show(\''+p.elementId+'\')">Pick</A><SPAN class="codesSelectionBox" id="'+p.elementId+'_VALUES">&nbsp;<img height="10px" src="/static/img/progress_dots.gif"></SPAN>';
             
           FloriaDOM.setInnerHTML(p.elementId, Str);
 
@@ -1166,7 +1187,9 @@ function writeValuesToDisplayDiv(picker)
           for (var i = 0; i < picker._internal.values.length; ++i)
             {          
               var v = picker._internal.values[i];
-              temp = "<span title=\""+(v.descr != null ? v.descr : v.label).printFuncParam()+"\">"+v.label+"";
+              if (v == null)
+               continue;
+              temp = "<span title=\""+(v.descr || v.label || 'N/A').printFuncParam()+"\">"+v.label+"";
               Str1 += temp + '&nbsp;<A href="javascript:FloriaFactories.PickerRegistry.remove(\''+picker._internal.elementId+'\', \''+v.value+'\', true)"><img src="/static/img/delete.gif" height="15px"></A></span>&nbsp;&nbsp;&nbsp;&nbsp;';
               Str2 += temp + '&nbsp;<A href="javascript:FloriaFactories.PickerRegistry.remove(\''+picker._internal.elementId+'\', \''+v.value+'\')"><img src="/static/img/delete.gif" height="15px"></A></span>&nbsp;&nbsp;&nbsp;&nbsp;';
             }
@@ -1174,7 +1197,7 @@ function writeValuesToDisplayDiv(picker)
     }
    else
      {
-       temp = '<IMG src="/static/img/warning.gif" height="20px" align="absmiddle">&nbsp;No value selected.';
+       temp = '<IMG src="/static/img/warning.gif" height="20px" align="absmiddle">No selection';
        Str1 = temp;
        Str2 = temp;
      }       
