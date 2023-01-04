@@ -1,7 +1,13 @@
 "use strict";
 
-define(["floria/textutil", "floria/superdom", "floria/charttheme", "jslibs/popper", "d3/d3.min", "dojo/text!json/floria-config.json"]
-     , function(FloriaText, SuperDOM, Colors, Popper, d3, FloriaConfig)
+import { FloriaText } from "./module-text.js";
+import { FloriaDOM } from "./module-dom.js";
+import { ChartTheme } from "./module-charttheme.js";
+//import { DojoSimple } from "./module-dojosimple.js";
+
+
+define(["jslibs/popper", "d3/d3.min", "dojo/text!json/floria-config.json"]
+     , function(Popper, d3, FloriaConfig)
 {
   FloriaConfig = JSON.parse(FloriaConfig).data;
   var charts = {};
@@ -9,7 +15,7 @@ define(["floria/textutil", "floria/superdom", "floria/charttheme", "jslibs/poppe
 // ///////////////// Legend Logic
   function setLegend(tileId, data, current, horizontal, pie, offsetValue){
     var chart = current;
-    var e = SuperDOM.getElement(tileId);
+    var e = FloriaDOM.getElement(tileId);
     var offset = (typeof offsetValue == 'undefined' || offsetValue == null) ? 40 : offsetValue;
     chart.legend4 = d3.select("#"+tileId).append("div").attr("class", "legend")
     if(typeof data != 'undefined'){
@@ -71,10 +77,10 @@ define(["floria/textutil", "floria/superdom", "floria/charttheme", "jslibs/poppe
 /////////////pie chart initiater  
   charts.PieChart = function(tileId, isDonut, isLabelInside) {
      var chart = this; chart.id = tileId;
-    var e = SuperDOM.getElement(tileId); chart.isDonut = isDonut; chart.legend4; chart.isLabelInside = isLabelInside;
+    var e = FloriaDOM.getElement(tileId); chart.isDonut = isDonut; chart.legend4; chart.isLabelInside = isLabelInside;
     chart.width = e.offsetWidth;
     chart.height = e.offsetHeight;
-     chart.color = d3.scaleOrdinal().range(Colors.colors); 
+     chart.color = d3.scaleOrdinal().range(ChartTheme.colors); 
      ///radius of all the pie charts     
      chart.pie = d3.pie().sort(null).value(function(d){return +d.y;});
      if(isDonut) chart.pie.padAngle(.01);
@@ -210,9 +216,9 @@ define(["floria/textutil", "floria/superdom", "floria/charttheme", "jslibs/poppe
                                chart.tooltip.style("display", "block")
                                     .attr("class","back-shadow tooltip")
                                     .html(d.data.tooltip);
-                               var tooltip = SuperDOM.getElement(chart.id+"tool"); 
-                               var rect = SuperDOM.getElement(txt) ;//SuperDOM.getElement(chart.series[i].tooltip+i+"topSlice") ;
-                               var container = SuperDOM.getElement(chart.id);
+                               var tooltip = FloriaDOM.getElement(chart.id+"tool"); 
+                               var rect = FloriaDOM.getElement(txt) ;//FloriaDOM.getElement(chart.series[i].tooltip+i+"topSlice") ;
+                               var container = FloriaDOM.getElement(chart.id);
                                var popper = Popper.createPopper(rect, tooltip, {
                                                 placement: 'top-end',
                                                 modifiers: { 
@@ -446,12 +452,12 @@ define(["floria/textutil", "floria/superdom", "floria/charttheme", "jslibs/poppe
 // ///////////// Chart basic setup functions
     
     function mainLayout(chart){
-      var e = SuperDOM.getElement(chart.id);
+      var e = FloriaDOM.getElement(chart.id);
       chart.margin = {top: 25, right: 20, bottom: (50+(chart.maxXLayout+20)), left: (50+chart.maxYLayout+25), front: 0, back: 0};
       chart.width = e.offsetWidth - chart.margin.left - chart.margin.right - 7; 
       chart.height = e.offsetHeight - chart.margin.top - chart.margin.bottom;
       chart.depth = 100 - chart.margin.front - chart.margin.back; chart.padding = 100;         
-      chart.color = d3.scaleOrdinal().range(Colors.colors);         
+      chart.color = d3.scaleOrdinal().range(ChartTheme.colors);         
     }
     
     function drawLayout(chart, type, horizontal) {      
@@ -647,7 +653,7 @@ define(["floria/textutil", "floria/superdom", "floria/charttheme", "jslibs/poppe
         chart.overridecolor.push(overrideColor);
        chart.colorOvr = d3.scaleOrdinal().range(chart.overridecolor); 
       }else{
-          chart.colorOvr = d3.scaleOrdinal().range(Colors.colors);         
+          chart.colorOvr = d3.scaleOrdinal().range(ChartTheme.colors);         
       }
       chart.seriesLineData.push(setSeriesData(chart, seriesData, seriesName, tooltip, null));
       chart.type.push("Line");
@@ -826,7 +832,7 @@ define(["floria/textutil", "floria/superdom", "floria/charttheme", "jslibs/poppe
       chart.overridecolor.push(overrideColor);
     chart.colorOvr = d3.scaleOrdinal().range(chart.overridecolor); 
     }else{
-        chart.colorOvr = d3.scaleOrdinal().range(Colors.colors);        
+        chart.colorOvr = d3.scaleOrdinal().range(ChartTheme.colors);        
     }
     var count = 0;
     chart.seriesCount = (typeof chart.seriesCount == 'undefined') ? 0 : chart.seriesCount;
@@ -912,7 +918,7 @@ charts.ChartBase.prototype.drawBar = function(horizontal)
     chart.x1.domain(d3.range(chart.seriesbarData.length)).rangeRound([0, (chart.x.bandwidth()-5)]);       
    chart.rect = chart.svg.append("g").selectAll("g")
                      .data(chart.seriesbarData).enter().append("g")
-                     .style("fill", function(d, i) { return chart.colorOvr(i); /*Colors.colors[i];*/ })
+                     .style("fill", function(d, i) { return chart.colorOvr(i); /*ChartTheme.colors[i];*/ })
                      .style("stroke-width", 0.5)
                      .attr("transform", function(d, i) {
                                return (horizontal) ? "translate(0, " + chart.y1(i) + ")"
@@ -993,17 +999,17 @@ charts.ChartBase.prototype.drawBar = function(horizontal)
                        //popper.disableEventListeners();
                 })
              .on("mouseout", function(d, i) {
-                      d3.select(this).transition().duration(500).style("fill", /*chart.colorOvr(d)*/ Colors.colors[d])
+                      d3.select(this).transition().duration(500).style("fill", /*chart.colorOvr(d)*/ ChartTheme.colors[d])
                       chart.tooltip.style("position", "absolute").style("display", "none");}
                 );
    chart.topLayer = chart.svg.append("g").selectAll("g")
                          .data(chart.seriesbarData).enter().append("g")
                          .style("fill", function(d, i) {
-                                             var c=d3.hsl(chart.colorOvr(i)/*Colors.colors[i]*/);
+                                             var c=d3.hsl(chart.colorOvr(i)/*ChartTheme.colors[i]*/);
                                              return d3.hsl((c.h+5), (c.s -.07), (c.l -.15));
                                })
                          .style("stroke", function(d, i) {
-                                             var c=d3.hsl(chart.colorOvr(i)/*Colors.colors[i]*/);
+                                             var c=d3.hsl(chart.colorOvr(i)/*ChartTheme.colors[i]*/);
                                              return d3.hsl((c.h+5), (c.s -.07), (c.l -.15));
                                })
                          .style("stroke-width", 0.5)
@@ -1044,7 +1050,7 @@ charts.ChartBase.prototype.addBarClickHandler = function(handlerFunc) {
         chart.overridecolor = overrideColor;
          chart.colorOvr = d3.scaleOrdinal().range(chart.overridecolor); 
       }else{
-        chart.colorOvr = d3.scaleOrdinal().range(Colors.colors);         
+        chart.colorOvr = d3.scaleOrdinal().range(ChartTheme.colors);         
       }
   
     if (maxlimit != null) {

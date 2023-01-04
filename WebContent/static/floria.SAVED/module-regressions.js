@@ -1,8 +1,5 @@
 "use strict";
 
-define([], function() {
-
-
 // Taken from https://github.com/Tom-Alexander/regression-js and lightly adapted to match the current
 // package manager (fron Dojo) for Floria.
   
@@ -113,7 +110,7 @@ function round(number, precision) {
 *
 * @namespace
 */
-const methods = {
+export var Regressions = {
   linear(data, options) {
     const sum = [0, 0, 0, 0, 0];
     let len = 0;
@@ -318,5 +315,3 @@ const methods = {
 };
 
 
-return methods;
-});
