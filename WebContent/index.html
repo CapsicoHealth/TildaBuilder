@@ -1,11 +1,83 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-  <title>Tilda Builder</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>TIDE: Tilda Workbench</title>
+    <link rel="stylesheet" href="/static/dojo-release-1.16.4/dijit/themes/claro/claro.css"/>
+    <link rel="stylesheet" href="/static/css/dojoSimple.css"/>
+    <link rel="stylesheet" href="/static/css/tilda.css"/>
+    
 </head>
-<body>
-Hello
+<body class="claro">
+
+<div id="MAINCONTAINER">
+
+  <HEADER id="MAINCONTAINER_HEADER">
+    <TABLE width="100%" border="0px" cellspacing="0px" cellpadding="0px">
+      <TR><TD id="HEADER_LOGO"><A href="/index.html"><IMG src="/static/img/tilda-logo.gif"></A></TD>
+          <TD id="HEADER_TITLE">TIDE</TD>
+      </TR>
+    </TABLE>
+  </HEADER>
+
+  <MAIN id="MAINCONTAINER_PROJECTS" class="mainContainerBody">
+    <DIV id="PROJECTS" class="column left"  style="top:75px; bottom:75px; left:15%; width:70%; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin;">
+      <DIV class="tileHeader360g">
+         Projects <A href="javascript:TILDA_GLOBAL.addProject();"><IMG src="/static/img/add.gif"></A>
+                  <span class="searchBox"><input class="searchInput" type="text" name="" placeholder="Search"></span>
+      </DIV>
+      <DIV id="PROJECT_LIST" class="tileGroup360g"><IMG src="/static/img/progress.gif"></DIV>
+    </DIV>
+  </MAIN>
+
+  <MAIN id="MAINCONTAINER_SCHEMAS"  class="mainContainerBody" style="display:none;">
+    <DIV id="SCHEMAS" class="column left"  style="top:75px; bottom:75px; left:5px; width:18%; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin;">
+      <DIV class="tileHeader360g">
+         Entities <A href="javascript:TILDA_GLOBAL.addProject();"><IMG src="/static/img/add.gif"></A>
+                  <span class="searchBox"><input class="searchInput" type="text" name="" placeholder="Search"></span>
+      </DIV>
+      <DIV id="ENTITY_LIST"><IMG src="/static/img/progress.gif"></DIV>
+    </DIV>
+    <DIV id="EDITORS" class="column right"  style="top:75px; bottom:75px; left:20%; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin;">
+      <DIV id="EDITOR"></DIV>
+    </DIV>
+  </MAIN>
+  
+  <FOOTER id="MAINCONTAINER_FOOTER">
+    <TABLE WIDTH=100% style="font-size: 80%;">
+      <TR><TD ALIGN="LEFT">Powered by <IMG align="absmiddle" src="/static/img/CapsicoHealth.small.png" height="14px" hspace="5px"></TD>
+          <TD ALIGN="RIGHT">Copyright &copy; 2021 CapsicoHealth Inc.</TD>
+      </TR>
+    </TABLE>
+  </FOOTER>
+
+</div>
+
+
+<SCRIPT> var djConfig = { isDebug: false, locale: 'en-us', parseOnLoad: false, disableFlashStorage:true, parseWidgets:false, baseUrl: "/static/",
+                          packages: [ { name: "dojo", location: "dojo-release-1.16.4/dojo" },
+                                      { name: "dijit", location: "dojo-release-1.16.4/dijit" },
+                                      { name: "dojox", location: "dojo-release-1.16.4/dojox" },
+                                      { name: "floria", location: "floria.v2.0" },
+                                      { name: "js", location: "js" },
+                                      { name: "json", location: "json" }
+                                    ]
+                        };
+window.CapsicoDojoSimpleLibJS = "floria.v2.0/dojoSimple";
+</SCRIPT>
+<script src="/static/dojo-release-1.16.4/dojo/dojo.js"></script>
+<SCRIPT type="module">
+import { projects } from "/static/js/module-projects.js";
+window.TILDA_GLOBAL = {
+  addProject: function()
+    {
+       projects.addProject("PROJECT_LIST");
+    }
+};
+projects.start("PROJECT_LIST");
+
+</SCRIPT>
+
 </body>
 </html>
 

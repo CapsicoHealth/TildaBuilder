@@ -1,0 +1,296 @@
+/*************************************************************************
+   DOJO CLARO THEME
+**************************************************************************/
+
+/*
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Lato Regular'), local('Lato-Regular'), url(/static/css/LatoRegular.woff2) format('woff2');
+}
+*/
+
+.claro {
+    font-family: arial, sans-serif;
+    letter-spacing: -0.33px;
+    color: #567;
+}
+
+@media all and (max-width: 1175px) {
+  .claro {
+    font-size: 14px;
+  }
+}
+
+@media all and (min-width: 1175px) {
+  .claro {
+    font-size: 18px;
+  }
+}
+
+@media all and (min-width: 1650px) {
+  .claro {
+    font-size: 20px;
+  }
+}
+
+
+/*************************************************************************
+   DIJIT DIALOG
+**************************************************************************/
+.claro .dijitDialogUnderlay {
+    background: #000000;
+    opacity: 0.80;
+}
+.dj_ie claro .dijitDialogUnderlay {
+    filter: alpha(opacity=50);
+}
+
+.claro .dojoxDialog {
+  background-color: #FFFFFF;
+  outline-style: none;
+  padding: 0px 0px 4px 0px;
+}
+.claro .dojoxDialogTitleBar {
+  padding: 0px 3px 10px 5px;
+  font-size: 125%;
+  color: #456;
+  font-weight: bold;
+  background-color: #EEE;
+  background-image: none;
+}
+.claro .dojoxDialogPaneContent, .dojoxDialogPaneContent {
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  scrollbar-width: thin;
+  height: 96%;
+  background-color: #FFF;
+}
+.claro .dojoxDialogCloseIcon {
+  background: url(/static/img/cross_icon.png) no-repeat;
+  background-size: 20px;
+  position: absolute;
+  right: 10px; top: 7px;
+  width: 20px; height: 20px;
+  cursor: pointer;
+}
+
+.dojoFloatingPaneMinimizeIcon, .dojoFloatingPaneMaximizeIcon, .dojoFloatingPaneRestoreIcon, .dojoFloatingPaneCloseIcon {
+ vertical-align: middle;
+ float: right;
+ background-repeat: no-repeat;
+}
+
+.claro #DLG_POPUPLOGIN  .dojoxDialogTitleBar {
+   background-color: RGBA(231, 93, 93, 0.8);
+//   background-image: url('/static/img/loginBanner.lighter.gif');
+//   background-size: 450px;
+   color: #000000;
+   font-weight: bolder;
+   font-size: 175%;
+   border-bottom: 1px #EEE solid !important;
+}
+
+.claro #DLG_POPUPLOGIN  .dojoxDialogPaneContent, #DLG_POPUPLOGIN  .dojoxDialogPaneContent {
+//   background-color: #FF6785;
+//   background-image: url('/static/img/specialBackgroundInverted-red.gif');
+//   background-size: 500px;
+}
+
+.claro #DLG_POPUPLOGIN .dojoxDialogTitleBar {
+    border: 2px outset RGBA(231, 93, 93, 1) !important;
+}
+
+
+/*************************************************************************
+  DIJIT EDITOR
+**************************************************************************/
+.claro .dijitEditor {
+  border: 1px #000000 groove;
+  background: none;
+}
+.claro .dijitEditor .dijitToolbar {
+  border: #ffffff groove;
+  border-width: 0px 0px 2px 0px;
+  background: #efefef;
+  align: left;
+}
+.claro .dijitEditor .dijitEditorIFrameContainer {
+  background-color: #ffffff;
+}
+.claro .dijitEditorIFrame {
+  background: none;
+}
+.claro .dijitEditorHover .dijitEditorIFrame {
+  background-color: none;
+}
+
+.toolbarContainer {
+  border-width: 2px 1px 0px 1px;
+  border-color: #888;
+  border-style: solid;
+  padding : 0 0 0 0;
+  min-height : 26px;
+  width: 95%;
+}
+
+.EditorToolbarSmallBg {
+  border-width: 2px 1px 0px 1px;
+  border-color: #888;
+  border-style: solid;
+  padding : 0 0 0 0;
+}
+
+/*************************************************************************
+  DIJIT CHARTS
+**************************************************************************/
+
+.ChartLabel {
+  position: absolute; 
+  left: 50px; 
+  font-size: 120%;
+}
+
+.ChartLabel LABEL {
+  margin: 0px 10px 0px 5px;
+}
+
+
+
+/*************************************************************************
+  DIJIT CALENDAR
+**************************************************************************/
+
+.claro .dijitCalendarContainer TH SPAN {
+  position: relative;
+  right: 0px;
+  padding: 0px;
+  margin: 0px;
+}
+
+.claro .dijitCalendarContainer TH {
+  font-size: 85%;
+  background-color: #E3F0FF;
+  padding: 0px;
+  margin: 0px;
+}
+
+.claro .dijitCalendarDateTemplate { 
+  height: 10px; 
+  width: 10px; 
+  border: 0px;
+  vertical-align: top;
+  padding: 0px;
+  margin: 0px;
+}
+
+.claro .dijitCalendarDateLabel {
+  font-size: 80%;
+  padding: 0px;
+  margin: 0px;
+}
+
+.claro .dijitCalendarSelectedYear {
+  font-size: 105%;
+}
+.claro .dijitCalendarNextYear, .claro .dijitCalendarPreviousYear {
+  font-size: 75%;
+}
+.claro .dijitCalendarYearLabel {
+  padding: 0px;
+  margin: 0px;
+}
+.claro .dijitCalendarDateLabel {
+  font-size: 80%;
+  font-weight: normal;
+}
+.claro .dijitCalendarSelectedDate .dijitCalendarDateLabel {
+  font-size: 100%;
+  font-weight: bold;
+}
+
+
+
+.claro .dijitTooltipContainer {
+    position: relative;
+    top: -18px;
+    right: 4px;
+    max-height: 600px;
+    max-width: 400px;
+    overflow: auto;
+    scrollbar-width: thin;
+    border: outset 1px #999;
+    -webkit-border-radius: 0px 0px 10px 10px;
+    border-radius: 0px 0px 10px 10px;
+    box-shadow: 5px 5px 5px 0px rgba(0,0,0,0.5);
+}
+.claro .dijitTooltipConnector {
+  display: none;
+}
+
+/***************the below lines are added for the d3 charts **************/
+.axis--x path {
+  display: none;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}s
+
+rect {
+  fill: transparent;
+  shape-rendering: crispEdges;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke-width: 1px;
+  stroke: rgba(200, 200, 200, 0.5);
+  shape-rendering: crispEdges;
+}
+
+.axisLine {
+  fill: none;
+  shape-rendering: crispEdges;
+  stroke: rgba(0, 0, 0, 0.5);
+  stroke-width: 2px;
+}
+
+.dot {
+  fill-opacity: .8;
+}
+
+/*********** title line and hightlighting *****************/
+.subtitle {
+  margin: 0 0 2em 0;
+}
+.fancy {
+  line-height: 0.5;
+  text-align: center;
+}
+.fancy span {
+  display: inline-block;
+  position: relative;  
+}
+.fancy span:before,
+.fancy span:after {
+  content: "";
+  position: absolute;
+  height: 5px;
+  border-bottom: 1px solid white;
+  border-top: 1px solid white;
+  top: 0;
+  width: 600px;
+}
+.fancy span:before {
+  right: 100%;
+  margin-right: 15px;
+}
+.fancy span:after {
+  left: 100%;
+  margin-left: 15px;
+}
