@@ -2529,3 +2529,42 @@ table.centered {
 .searchBox:hover > .searchInput {
     width: 250px !important;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+.schema {
+  background-color: #FbFbFb;
+  margin: 20px 1% 30px 1%;
+  padding: 10px;
+  border-radius: 3px 3px 0px 0px;
+  box-shadow: 0px 0px 2px #BBB;
+  background-repeat: no-repeat;
+  background-size: 60px;
+  background-position: 5px 12px;
+  cursor: pointer;
+}
+.schema:hover {
+  background-color: #F5F5F5;
+  box-shadow: 0px 0px 3px #999;
+}
+.schema div:nth-child(1) {
+  color: #666;
+  font-weight: bold;
+  margin-bottom: 10px;  
+}
+.schema div:nth-child(2) {
+  color: #888;
+  font-size: 80%;
+}
+
+

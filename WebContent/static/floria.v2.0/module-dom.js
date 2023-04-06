@@ -590,6 +590,7 @@ export var FloriaDOM = {
                                            : function(event) { FloriaDOM.DelayedEvent.register(elementId, delayedMillis, function() { handlerFunc(e, event, event.target); }); }
                                            ;
         e.addEventListener(eventName, func);
+
         return func;
       },
      fireEvent: function(elementId, eventName)

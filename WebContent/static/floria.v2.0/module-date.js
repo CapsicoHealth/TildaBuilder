@@ -55,6 +55,16 @@ import { FloriaText } from "./module-text.js";
    }
 
   /**
+   * Returns the number of minutes (with decimal) between this date and otherDate. If otherDate is
+   * after this date, the value returned will be positive. If it's before, the value
+   * will be negative:
+   */
+  Date.prototype.diffMinutes = function(otherDate)
+   {
+     return Math.round((otherDate - this) / (1000 * 60));
+   }
+
+  /**
    * Returns the number of hours (with decimal) between this date and otherDate. If otherDate is
    * after this date, the value returned will be positive. If it's before, the value
    * will be negative:

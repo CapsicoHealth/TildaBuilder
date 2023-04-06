@@ -1,32 +1,36 @@
 package tildabuilder.servlets;
 
-import java.io.File;
+import java.io.PrintWriter;
 
 import javax.servlet.annotation.WebServlet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import tilda.utils.json.JSONUtil;
 import tildabuilder.config.Config;
 import tildabuilder.config.Project;
 import wanda.web.RequestUtil;
 import wanda.web.ResponseUtil;
 import wanda.web.SimpleServletNonTransactional;
 
-@WebServlet("/svc/project/open")
-public class ProjectOpen extends SimpleServletNonTransactional
+@WebServlet("/svc/project/schemas")
+public class ProjectSchemas extends SimpleServletNonTransactional
   {
     private static final long     serialVersionUID = 1018123535563202342L;
     protected static final Logger LOG              = LogManager.getLogger(ProjectOpen.class.getName());
 
-    public ProjectOpen()
+    public ProjectSchemas()
       {
         super(false);
       }
 
     @Override
     protected void justDo(RequestUtil req, ResponseUtil res)
-      throws Exception
+    throws Exception
       {
         String projectName = req.getParamString("projectName", true);
 
@@ -34,17 +38,13 @@ public class ProjectOpen extends SimpleServletNonTransactional
         Project p = conf.getProject(projectName);
         if (p == null)
           req.addError("projectName", "Cannot find project.");
-        else
-          {
-            File folder = new File(p.getFullSrcPath());
-            if (folder.exists() == false)
-              req.addError("projectName", "The project's home folder doesn't exist.");
-            else 
-              Runtime.getRuntime().exec("explorer.exe /select," + folder.getAbsolutePath());
-          }
 
         req.throwIfErrors();
 
-        res.success();
+        PrintWriter Out = res.setContentType(ResponseUtil.ContentType.JSON);
+        JSONUtil.startOK(Out, ' ');
+        Gson gson = new GsonBuilder().create();
+        gson.toJson(p._schemas, Out);
+        JSONUtil.end(Out, ' ');
       }
   }
