@@ -24,7 +24,7 @@ function paintSchemaTile(projectName, fullSchemaPath)
    console.log(fullSchemaPath+": ", matches);
    if (matches == null || matches.length != 3)
     return window.alert("Cannot parse '"+fullSchemaPath+"' as a Tilda schema ful path.");
-   return `<DIV class="schema" data-project-name="${projectName}" data-schema-name="${fullSchemaPath}">
+   return `<DIV class="schema" data-project-name="${projectName}" data-full-schema-path="${fullSchemaPath}">
              <div>${matches[2]}</div>
              <div>${matches[1]}</div>
            </DIV>
@@ -127,6 +127,25 @@ projects.paintProject = function(projectName)
        FloriaDOM.addEvent("ENTITY_LIST", "click", projects.selectSchema)
     })  
  }
+
+projects.selectSchema = function(e, event, target)
+ {
+   while (target != null && target != e && target.dataset.projectName == null && target.dataset.schemaFullPath == null)
+    target = target.parentNode;
+   
+   if (target?.dataset?.projectName == null)
+    return;
+   projects.paintSchema(target, target.dataset.projectName, target.dataset.fullSchemaPath);
+ }
+
+projects.paintSchema = function(div, projectName, fullSchemaPath)
+ {
+   FloriaDOM.toggleCSS(div, "selected");
+   FloriaAjax.ajaxUrl("/svc/project/schema/details?projectName="+encodeURIComponent(projectName)+"&fullSchemaPath="+encodeURIComponent(fullSchemaPath)+"&ts="+new Date(), "GET", "Cannot get the schema for this project", function(tildaJson) {
+       FloriaDOM.setInnerHTML("EDITOR", tildaJson);
+    })  
+ }
+
 
 
 projects.start = function(divId)

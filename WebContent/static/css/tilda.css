@@ -2566,5 +2566,13 @@ table.centered {
   color: #888;
   font-size: 80%;
 }
+.schema .selected {
+  background-color: #F5F5F5;
+  box-shadow: 0px 0px 3px #999;
+}
+
+
+
+
 
 
