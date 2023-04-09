@@ -17,7 +17,7 @@ function paintProjectTile(p)
          ;
  }
 
-const schemaRegex = /(.*)\\_tilda\.(.*)\.json/;
+const schemaRegex = /(.*)[\\/]_tilda\.(.*)\.json/;
 function paintSchemaTile(projectName, fullSchemaPath)
  {
    let matches = fullSchemaPath.match(schemaRegex);
