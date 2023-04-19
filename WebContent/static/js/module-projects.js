@@ -5,6 +5,7 @@ import { FloriaAjax } from "/static/floria.v2.0/module-ajax.js";
 import { FloriaForms } from "/static/floria.v2.0/module-forms2.js";
 
 
+
 function paintProjectTile(p)
  {
    return `<DIV class="tile360g" data-project-name="${p.name}">
@@ -142,7 +143,8 @@ projects.paintSchema = function(div, projectName, fullSchemaPath)
  {
    FloriaDOM.toggleCSS(div, "selected");
    FloriaAjax.ajaxUrl("/svc/project/schema/details?projectName="+encodeURIComponent(projectName)+"&fullSchemaPath="+encodeURIComponent(fullSchemaPath)+"&ts="+new Date(), "GET", "Cannot get the schema for this project", function(tildaJson) {
-       FloriaDOM.setInnerHTML("EDITOR", tildaJson);
+       //FloriaDOM.setInnerHTML("EDITOR", tildaJson);
+       initializemonaco(tildaJson);
     })  
  }
 
