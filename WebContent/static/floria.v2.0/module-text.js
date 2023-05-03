@@ -90,7 +90,7 @@ import { FloriaCollections } from "./module-collections.js";
     REGEX_SPACES : /\s/g,
     REGEX_TRIM : /^\s+|\s+$/g,
     REGEX_NL : /\s*(\r\n|(\n?)<\s*\/?\s*BR\s*>|\n|\\n)\s*/g,
-    spanNA   : '<SPAN class="NA"/>',
+    spanNA   : '<SPAN class="NA"></SPAN>',
     printFuncParam : function(Str)
     {
       return Str == null ? "" 

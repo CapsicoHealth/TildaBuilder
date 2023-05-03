@@ -2,7 +2,8 @@
 
 import { FloriaDOM } from "./module-dom.js";
 import { FloriaText } from "./module-text.js";
-import { DojoSimple } from "./module-dojosimple.js";
+import { FloriaDialog  } from "./module-dialog.js";
+import { FloriaAjax    } from "./module-ajax.js";
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -972,7 +973,7 @@ PickerRegistry.render = function(pickerDefs, Inline, afterRenderCallbackFunc, on
            };
           
           picker._onChange = onChangeCallbackFunc;
-          picker._internal.dlg = new DojoSimple.Dialog(p.elementId+"_POPUP");
+          picker._internal.dlg = new FloriaDialog(p.elementId+"_POPUP");
           picker._internal.dlg.setOnHide(prepareHiderFunc(p.elementId));
           picker._obj._picker = picker;
           picker._obj._pickerName = p.pickerName;
@@ -1335,7 +1336,7 @@ PickerRegistry.showTemplates = function(elementId)
    var picker = getPickerInstance(elementId);
    var templateDivId = elementId+"_TEMPLATE";
    DataFetcherRegistry.addAndRunFetchers([{ name: "pickerTemplates", params: {"type": picker._obj.getPickerId() ,"text": "", "search": 1, "owner": ""} , optional: true }], function(data) {
-     var templateDlg = new DojoSimple.Dialog(templateDivId+"_POPUP");
+     var templateDlg = new FloriaDialog(templateDivId+"_POPUP");
      picker._internal.templateDlg = templateDlg;
      var Str = '<DIV id="'+templateDivId+'" style="width:100% !important; padding:15px;">&nbsp;</DIV>';
      templateDlg.setContent(Str);
@@ -1377,7 +1378,7 @@ PickerRegistry.updateTemplate = function(elementId)
     var url = '/web/svc/cms/templates/update'+"?name=" + params.name + "&description=" + params.description 
             + "&refnum=" + params.refnum + "&values=" + params.values.join('&values=');
     
-    DojoSimple.ajaxUrl(url, "POST", ErrorMsg, function(data) {
+    FloriaAjax.ajaxUrl(url, "POST", ErrorMsg, function(data) {
         if (data == null)
          FloriaDOM.alertThrow(ErrorMsg);
         var index = picker._obj.templates.indexOfSE(params.refnum, "refnum");
@@ -1401,7 +1402,7 @@ PickerRegistry.createTemplate = function(elementId)
     }
     var url = '/web/svc/cms/templates/create' + "?name=" + params.name + "&description=" + params.description + "&type=" + params.type
             + "&values=" + params.values.join('&values=');;
-    DojoSimple.ajaxUrl(url,"POST", ErrorMsg, function(data) {
+    FloriaAjax.ajaxUrl(url,"POST", ErrorMsg, function(data) {
         if (data == null)
          FloriaDOM.alertThrow(ErrorMsg);
         picker._obj.templates.push(data);
@@ -1419,7 +1420,7 @@ PickerRegistry.deleteTemplate = function(elementId, refnum)
    var picker = pickers[elementId];
    var ErrorMsg = "An error has occurred: cannot delete the Template.";
    var url = "/web/svc/cms/templates/delete?refnum=" + refnum;
-   DojoSimple.ajaxUrl(url, "GET", ErrorMsg, function(data) {
+   FloriaAjax.ajaxUrl(url, "GET", ErrorMsg, function(data) {
        console.log(data);
        if (data == null)
         FloriaDOM.alertThrow(ErrorMsg);

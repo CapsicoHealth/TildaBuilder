@@ -5,6 +5,7 @@ import { FloriaControls } from "./module-controls.js";
 import { FloriaText } from "./module-text.js";
 import { FloriaFactories } from "./module-factories.js";
 import { FloriaDate } from "./module-date.js";
+import { FloriaDialog  } from "./module-dialog.js";
 import { DojoSimple } from "./module-dojosimple.js";
 
 
@@ -67,8 +68,8 @@ function getFieldMarkup(parentD, d, elementId, pageId, rowId, subRowId, groupId,
     {
       Str+='<TR class="bottomPadded withIndenting" valign="top" id="'+elementId+'_'+pageId+'_ROW_'+xid+'">'
       if (d.inline == true || verticalLayout == true)
-        Str+='<TD colspan="10"><DIV class="fieldQuestion'+(d.mandatory == true ? " mandatory":"")+'">'+d.label+'</DIV>'
-            +'<TABLE border="0px" width="90%"><TR><TD>&nbsp;&nbsp;&nbsp;</TD><TD id="'+elementId+'_'+pageId+'_PH'+xid+'">';
+        Str+='<TD colspan="10" '+(d.description==null?"":'title="'+d.description+'"')+'><DIV class="fieldQuestion'+(d.mandatory == true ? " mandatory":"")+'">'+d.label+'</DIV>'
+            +'<TABLE border="0px" width="90%"><TR><TD width="1px">&nbsp;&nbsp;&nbsp;</TD><TD id="'+elementId+'_'+pageId+'_PH'+xid+'">';
       else
         Str+='<TD class="fieldName'+(d.mandatory == true ? " mandatory":"")+'">'+(d.label==null?'':d.label)+'</TD><TD colspan="9" id="'+elementId+'_'+pageId+'_PH'+xid+'">';
     }
@@ -353,7 +354,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
    this._pickersLoading = 0;
    if (popupTitle != null)
     {
-      this._dlg = new DojoSimple.Dialog(elementId+"_DLG");
+      this._dlg = new FloriaDialog(elementId+"_DLG");
       var that = this;
       this._dlg.setOnHide(function() { if (that._cancelButton != true) that.updatePage(null, null, true); });
     }
@@ -413,6 +414,21 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
 
       return null;
     }
+   this.getMultiValueLabels = function(fieldName, values)
+    {
+      var f = this._getField(fieldName);
+      if (f == null || f.values == null || Array.isArray(f.values) == false || values == null)
+       return [];
+
+      var results = [];
+      for (var i = 0; i < values.length; ++i)
+       for (var k = 0; k < f.values.length; ++k)
+        if (f.values[k][0] == values[i])
+         results.push(f.values[k][1]);
+
+      return results;
+    }
+    
    this.getValueImg = function(fieldName, value)
     {
       var f = this._getField(fieldName);

@@ -1,5 +1,6 @@
 "use strict";
 
+import { FloriaAjax    } from "./module-ajax.js";
   
 if (!String.prototype.isEmpty)
  String.prototype.isEmpty = function()
@@ -636,7 +637,7 @@ export var FloriaDOM = {
              var ajaxUrlStr = ajaxUrlFunc(target); // Additional check and returns URL string if a call is necessary.
              if (ajaxUrlStr == null)
               return;
-             dojoSimple.ajaxUrl(ajaxUrlStr, "GET", "No data could be fetched", function(data) {
+             FloriaAjax.ajaxUrl(ajaxUrlStr, "GET", "No data could be fetched", function(data) {
                var node = document.createElement("SPAN");
                node.classList.add(tooltipTextClassName);
                node.innerHTML = contentsFunc(data);
@@ -863,7 +864,6 @@ export var FloriaDOM = {
         return url.split(/[?#]/)[0];
       },
      // Checking event target selectors with event bubbling
-     // Similar to https://dojotoolkit.org/reference-guide/1.10/dojo/on.html
      on: function(eventName, parentId, childSelector, callbackFn)
      {
        var parentElement = FloriaDOM.getElement(parentId, "Cannot find Element with id='"+parentId+"'");
@@ -1069,6 +1069,29 @@ export var FloriaDOM = {
           FloriaDOM.showImgFullScreen(divId+'_popup', target.src)
         });
       }
+      
+    ,getCookie: function(name)
+      {
+        const cookies = document.cookie.split(/\s*;\s*/);
+        for (var i = cookies.length - 1; i >= 0; i--)
+         {
+           const c = cookies[i].split(/\s*=\s*/);
+           if (c[0] == name)
+            return c[1];
+         }
+        return null;
+      }
+    ,setCookie: function(name, value, expiryDays)
+      {
+        const d = new Date();
+        d.setTime(d.getTime() + (expiryDays*24*60*60*1000));
+        let expires = "expires="+ d.toUTCString();
+        document.cookie = name + "=" + value + ";" + expires + ";path=/";
+      }
+    ,removeCookie: function(name)
+      {
+        document.cookie = name+'=; Max-Age=-99999999;path=/';
+      }      
   };
 
 window.DelayedEvent = FloriaDOM.DelayedEvent;

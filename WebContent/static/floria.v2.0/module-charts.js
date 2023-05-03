@@ -921,7 +921,7 @@ FloriaCharts.ChartBase.prototype.drawBar = function(horizontal)
     chart.x1.domain(d3.range(chart.seriesbarData.length)).rangeRound([0, (chart.x.bandwidth()-5)]);       
    chart.rect = chart.svg.append("g").selectAll("g")
                      .data(chart.seriesbarData).enter().append("g")
-                     .style("fill", function(d, i) { return chart.colorOvr(i); /*ChartTheme.colors[i];*/ })
+                     .style("fill", function(d, i) { return /*d[i].color || */ chart.colorOvr(i); /*ChartTheme.colors[i];*/ })
                      .style("stroke-width", 0.5)
                      .attr("transform", function(d, i) {
                                return (horizontal) ? "translate(0, " + chart.y1(i) + ")"
@@ -1051,7 +1051,7 @@ FloriaCharts.ChartBase.prototype.addBarClickHandler = function(handlerFunc) {
     if(overrideColor != "undefined" && overrideColor != null && overrideColor != []){
         chart.overrideTheColor = true;
         chart.overridecolor = overrideColor;
-         chart.colorOvr = d3.scaleOrdinal().range(chart.overridecolor); 
+         chart.colorOvr = d3.scaleOrdinal().range(chart.overridecolor);
       }else{
         chart.colorOvr = d3.scaleOrdinal().range(ChartTheme.colors);         
       }

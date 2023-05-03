@@ -1,7 +1,7 @@
 'use strict';
 
 import { FloriaDOM } from "./module-dom.js";
-import { DojoSimple } from "./module-dojosimple.js";
+import { FloriaLogin } from "./module-login.js";
 
 export var FloriaAjax = {
 
@@ -60,10 +60,10 @@ ajaxUrl: function(url, method, errorMsg, successFunc, errorFunc, postContents, t
       console.error("ajaxUrl error: ", error);
       try
         {
-          if (error != null && error.status||error.code == 401 && DojoSimple.PopupLogin.isAuthPassthrough(url) == false)
+          if (error != null && error.status||error.code == 401 && FloriaLogin.PopupLogin.isAuthPassthrough(url) == false)
            {
 //             return alert("NO ACL!");
-             return DojoSimple.PopupLogin.show(true, function() { FloriaAjax.ajaxUrl(url, method, errorMsg, successFunc, errorFunc, postContents, timeout, handleAs) });
+             return FloriaLogin.PopupLogin.show(true, function() { FloriaAjax.ajaxUrl(url, method, errorMsg, successFunc, errorFunc, postContents, timeout, handleAs) });
            }
           else
             {
