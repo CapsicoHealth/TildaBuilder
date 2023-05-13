@@ -1,6 +1,7 @@
 "use strict";
 
 import { FloriaDOM   } from "./module-dom.js";
+import { createPopper } from "/static/jslibs/popperjs/popper.js";
 
 
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -70,7 +71,7 @@ export function FloriaDialog(elementId)
           repaint = true;
          else
           {
-            lastDialog._md.style.top = "110%";
+            lastDialog._md.style.top = "75%";
             lastDialog._md.style.opacity="";
             lastDialog._md.style.zIndex=0;
           }
@@ -89,7 +90,7 @@ export function FloriaDialog(elementId)
          this._md.style.width=this._w+"%";
          this._md.style.height=this._h+"%";
          this._md.style.left=((100-this._w)/2)+"%";
-         this._md.style.top = "-25%"; //((100-this._h)/2)+"%"; // new comes from the top
+         this._md.style.top = "-10%"; //((100-this._h)/2)+"%"; // new comes from the top
          this._md.style.zIndex=1000+__DIALOGS.length;
            
          // Unhide everything as a setTimeout to trigger animations if any
@@ -152,12 +153,12 @@ export function FloriaDialog(elementId)
        that._onHideHandler();
 
       // It's possible for someone to close a dialog and re-open a new one right away.
-      // Because of the timeouts below for animation effects, we hve to "capture" this._md
+      // Because of the timeouts below for animation effects, we have to "capture" this._md
       // before it gets overwritten by the following show().
       var that_md = that._md;       
       // Reset items to default (from css)
       setTimeout(function(){
-        that_md.style.top="-25%";
+        that_md.style.top="-10%";
         that_md.style.opacity="0";
         that_md.style.zIndex=0;
         __hiding = false;
@@ -186,3 +187,72 @@ export function FloriaDialog(elementId)
  };
   
 
+
+
+
+
+
+
+// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Tooltip dialog
+// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export function FloriaTooltipDialog(elementId, content)
+ {
+   var that = this;
+   
+      that._e = document.getElementById(elementId);
+      that._tt = document.getElementById(elementId+"_TD");
+      if (that._tt == null)
+       {
+         that._tt = document.createElement('div');
+         that._tt.setAttribute("id", elementId+"_TD");
+         that._tt.setAttribute("fade-in-popper", "");
+         that._tt.classList.add("popperTooltip");
+         document.body.appendChild(that._tt);
+       }
+      that._tt.innerHTML=content;
+      that._popper = createPopper(that._e, that._tt);
+      var onclick=function(evt) { that._clickHandler(evt); };
+      that._e.addEventListener("click", onclick);
+      var onmouseleave=function(evt) { that.hide(evt); };
+      var onmouseleave2=function(evt) { setTimeout(function(){that.hide();},100); };
+      that._tt.addEventListener("mouseleave", onmouseleave);
+      that._tt.addEventListener("click", onmouseleave2);
+      
+      that._clickHandler = function (evt)
+       {
+         if (evt != null)
+          evt.preventDefault();
+         if (this._tt.hasAttribute("show-popper"))
+          this._tt.removeAttribute("show-popper");
+         else
+          this._tt.setAttribute("show-popper", "");
+         this._popper.update();
+       }
+      that.destroy = function()
+       {
+         if (this._popper)
+          {
+            this._popper.destroy();
+            this._e.removeEventListener("click", onclick);
+            this._tt.removeEventListener("mouseleave", onmouseleave);
+            this._tt.removeEventListener("click", onmouseleave2);
+            this._popper = null;
+          }
+       }
+      that.hide = function (evt)
+       {
+         if (evt != null)
+          evt.preventDefault();
+         this._tt.removeAttribute("show-popper");
+         this._popper.update();
+       }
+      that.show = function (evt)
+       {
+         if (evt != null)
+          evt.preventDefault();
+         this._tt.setAttribute("show-popper", "");
+         this._popper.update();
+       }
+ };

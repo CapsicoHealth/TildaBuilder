@@ -14,14 +14,10 @@ ajaxUrl: function(url, method, errorMsg, successFunc, errorFunc, postContents, t
         url = url + "?" + (FloriaDOM.isObject(postContents) == true ? FloriaDOM.makeUrlParams(postContents) : postContents);
      }
          
-     
-    if (handleAs == null)
-     handleAs = 'json';
-     
     // Is this used at all anymore?????
-    if (handleAs != 'json')
+    if (handleAs != null && handleAs != 'json' && handleAs != 'jsonX')
      {
-       alert("AjaxRequest.ajaxUrl called with handleAs: '"+handleAs+"'. Check consle logs for stack trace.\n\nThis was deprecated!");
+       alert("FloriaAjax.ajaxUrl called with handleAs: '"+handleAs+"'. Check consle logs for stack trace.\n\nThis was deprecated!");
        console.trace();
        return;
      }
@@ -30,15 +26,18 @@ ajaxUrl: function(url, method, errorMsg, successFunc, errorFunc, postContents, t
     xhr.open(method, url);
     xhr.timeout = timeout
     xhr.setRequestHeader("Content-type", "application/"+(handleAs||'json')+"; charset=utf-8");
-    if (handleAs==null||handleAs=='json')
+    if (handleAs==null || handleAs=='json')
      xhr.responseType = 'json';
+    else if (handleAs=='jsonX')
+     xhr.responseType = 'text';
+    
     xhr.onload = function() {
       try
         {
           if (xhr.getResponseHeader("x-wanda-canceler") == "1")
             alert("FYI THAT YOU CANCELED ANOTHER REQUEST!\n\nYou (or another user on the same account) was running a request you interrupted.");
 
-          let data = xhr.response;
+          let data = handleAs=='jsonX' ? FloriaDOM.jsonParseWithComments(xhr.response) : xhr.response;
           if (data?.code != 200 || xhr.status != 200)
            return xhr.onerror({code: data?.code||xhr.status, message : data?.msg||xhr.statusText, errors: data?.errors, type: data?.type });
           if (data == null)

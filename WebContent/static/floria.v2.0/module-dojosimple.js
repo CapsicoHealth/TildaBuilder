@@ -4,105 +4,23 @@
 //DojoSimple
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*
-import { FloriaDOM    } from "./module-dom.js";
-import { FloriaText   } from "./module-text.js";
-import { FloriaDate   } from "./module-date.js";
-import { FloriaLogin  } from "./module-login.js";
-import { FloriaDialog } from "./module-dialog.js";
 
-import { createPopper } from "/static/jslibs/popperjs/popper.js";
-*/
+import { FloriaDOM    } from "./module-dom.js";
+//import { FloriaLogin  } from "./module-login.js";
 
 export var DojoSimple = { };
 
-/*
-DojoSimple.PopupLogin    = FloriaLogin.PopupLogin;
-DojoSimple.PopupSignup   = FloriaLogin.PopupSignup;
-DojoSimple.ForgotPswd    = FloriaLogin.ForgotPswd;
-DojoSimple.SetPassword   = FloriaLogin.SetPassword;
-DojoSimple.Account       = FloriaLogin.Account;
-DojoSimple.Verifications = FloriaLogin.Verifications;
-
-DojoSimple.Dialog    = FloriaDialog;
+//DojoSimple.PopupLogin    = FloriaLogin.PopupLogin;
+//DojoSimple.PopupSignup   = FloriaLogin.PopupSignup;
+//DojoSimple.ForgotPswd    = FloriaLogin.ForgotPswd;
+//DojoSimple.SetPassword   = FloriaLogin.SetPassword;
+//DojoSimple.Account       = FloriaLogin.Account;
+//DojoSimple.Verifications = FloriaLogin.Verifications;
 
 
-require(["dijit/dijit", "dojo/dom", "dojo/dom-construct"], function(dojoDijit, dojoDom, domConstruct) {
-
-DojoSimple.HeaderBodyFooterLayout = function(MainId, initFunc)
- {
-   require(["dijit/layout/BorderContainer", "dijit/layout/ContentPane"], function (BorderContainer, ContentPane) {
-       try
-        {
-          var MainContainer   = new BorderContainer({ gutters : false  }, dojoDom.byId(MainId));
-          var HeaderContainer = new ContentPane    ({ region : 'top'   }, dojoDom.byId(MainId+"_HEADER"));
-          var FooterContainer = new ContentPane    ({ region : 'bottom'}, dojoDom.byId(MainId+"_FOOTER"));
-          var ClientContainer = new ContentPane    ({ region : 'center'}, dojoDom.byId(MainId+"_BODY"  ));
-          MainContainer.startup();
-          if (initFunc != null)
-           initFunc();
-        }
-       catch (e)
-        {
-          FloriaDOM.alertException(e);
-        }
-    });
-//   require(["dojox/widget/Dialog","dojo/fx/easing"], function(Dialog, Easing) {});
-  }
-
-
-  
-
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// DojoSimple Calendar
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-DojoSimple.Calendar = function(containerId, elementId, onValueSelectedFunc, min, datePattern, v, fieldName)
-  {
-    this.elementId = elementId;
-    var that = this;
-
-    var newItem = document.createElement("INPUT");
-    newItem.setAttribute("type","hidden");
-    newItem.setAttribute("id",elementId);
-    newItem.setAttribute("name",fieldName);
-    newItem.setAttribute("value",v==null?"":v);
-    var e = document.getElementById(containerId);
-    e.parentNode.insertBefore(newItem, e);
-    
-    require(["dojo/parser", "dijit/form/DateTextBox"
-        ], function(Parser, Calendar){
-           that.cal = dojoDijit.byId(containerId);
-           if (that.cal != null)
-             that.cal.destroy();
-           that.cal = new Calendar({
-                 value: FloriaDate.parseDateTime(v),
-                 constraints: {min:min, datePattern : datePattern==null?'yyyy-MMM-dd':datePattern},
-                 onChange : function(d) {
-//                   alert("d: "+d+"; typeof d: "+typeof d+";");
-                   document.getElementById(elementId).value= d==null?'':d.toISOString();
-                 if (onValueSelectedFunc)
-                    onValueSelectedFunc(d);
-                 }
-             }, containerId);
-           that.cal.startup();
-       });
-     this.destroy = function()
-      {
-        this.cal.destroy();
-      }
-     this.setValue = function(val)
-      {
-        if (val == null)
-         val = FloriaDOM.getElement(elementId, "Cannot find calendar element '"+elementId+"'.").value;
-        this.cal.set('value', FloriaDate.parseDateTime(val));
-      }
-  };
-
-
-
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// DojoSimple ajaxUrl
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  DojoSimple ajaxUrl
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 DojoSimple.ajaxUrl = function(Url, Method, ErrorMsg, SuccessFunc, ErrorFunc, PostContents, Timeout, handleAs)
   {
     if (PostContents != null && Method != 'POST')
@@ -126,10 +44,10 @@ DojoSimple.ajaxUrl = function(Url, Method, ErrorMsg, SuccessFunc, ErrorFunc, Pos
               if (data.code == undefined)
                 throw ("An error occurred: invalid JSON data for " + this.url);
               
-              if (data.code == 401 && DojoSimple.PopupLogin.isAuthPassthrough(Url) == false)
+              if (data.code == 401 && FloriaLogin.PopupLogin.isAuthPassthrough(Url) == false)
                 {
                   var lthis = this;
-                  DojoSimple.PopupLogin.show(true, function() { dojo.xhr(lthis.method, lthis); });
+                  FloriaLogin.PopupLogin.show(true, function() { dojo.xhr(lthis.method, lthis); });
                 }
               else if (data.code != 200)
                 this.error({ code: data.code, message : data.msg, errors: data.errors, type: data.type }, ioArgs);
@@ -151,10 +69,10 @@ DojoSimple.ajaxUrl = function(Url, Method, ErrorMsg, SuccessFunc, ErrorFunc, Pos
           console.error("DojoSimple.ajaxUrl error: ", error);
           try
             {
-              if (error != null && error.status == 401 && DojoSimple.PopupLogin.isAuthPassthrough(Url) == false)
+              if (error != null && error.status == 401 && FloriaLogin.PopupLogin.isAuthPassthrough(Url) == false)
                {
                  var lthis = this;
-                 DojoSimple.PopupLogin.show(true, function() { dojo.xhr(lthis.method, lthis); });
+                 FloriaLogin.PopupLogin.show(true, function() { dojo.xhr(lthis.method, lthis); });
                }
               else
                 {
@@ -261,10 +179,10 @@ DojoSimple.ajaxForm = function(FormId, ErrorMsg, SuccessFunc, ErrorFunc)
                   throw ("An error occurred: no JSON data from the form" + FormId);
                 if (data.code == undefined)
                   throw ("An error occurred: invalid JSON data from the form " + FormId);
-                if (data.code == 401 && DojoSimple.PopupLogin.isAuthPassthrough(f.action) == false)
+                if (data.code == 401 && FloriaLogin.PopupLogin.isAuthPassthrough(f.action) == false)
                   {
                     var lthis = this;
-                    DojoSimple.PopupLogin.show(true, function()
+                    FloriaLogin.PopupLogin.show(true, function()
                       { 
                         if (f.enctype == "multipart/form-data")
                          dojoIFrame.send(lthis);                            
@@ -287,10 +205,10 @@ DojoSimple.ajaxForm = function(FormId, ErrorMsg, SuccessFunc, ErrorFunc)
             try
               {
                 console.error("DojoSimple.ajaxForm error: ", error);
-                if (error != null && error.status == 401 && DojoSimple.PopupLogin.isAuthPassthrough(f.action) == false)
+                if (error != null && error.status == 401 && FloriaLogin.PopupLogin.isAuthPassthrough(f.action) == false)
                  {
                     var lthis = this;
-                    DojoSimple.PopupLogin.show(true, function()
+                    FloriaLogin.PopupLogin.show(true, function()
                         { 
                           if (f.encoding == "multipart/form-data")
                             dojoIFrame.send(lthis);
@@ -332,139 +250,9 @@ DojoSimple.ajaxForm = function(FormId, ErrorMsg, SuccessFunc, ErrorFunc)
 
 
 
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// DojoSimple URIParameters
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-DojoSimple.URIParameters = function()
-  {
-    var i = window.location.href.indexOf("?");
-    this.params = i == -1 ? { } : dojo.queryToObject(p.substring(i + 1, p.length));
-  };
-DojoSimple.URIParameters.prototype.get = function(name)
-  {
-    return this.params[name];
-  };
-
-  
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// DojoSimple Editor
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-DojoSimple.Editor = function(elementId, h, formId, formElementName)
-  {
-    this.rte = dojoDijit.byId(elementId);
-    if (this.rte != null)
-     this.rte.destroy();
-    var that = this;
-    require(["dijit/Editor", "dijit/_editor/plugins/AlwaysShowToolbar", "dijit/_editor/plugins/LinkDialog", "dojo/domReady!"],
-        function(Editor, AlwaysShowToolbar, LinkDialog){
-                that.rte = new Editor({
-                    height: h,
-                    extraPlugins: [AlwaysShowToolbar],
-                    plugins : [ 'undo', 'redo', 'cut', 'copy', 'paste', '|', 'bold', 'italic', 'underline', 'strikethrough', '|', 'insertOrderedList', 'insertUnorderedList', 'indent', 'outdent', '|', 'justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull', '|', 'insertHorizontalRule', 'createLink', 'insertImage' ]
-                }, dojoDom.byId(elementId));
-                dojo.connect(rte, 'onChange', function()
-                      {
-                        var e = dojoDom.byId(formId)[formElementName];
-                        var v = rte.attr("value");
-                        e.value = FloriaText.isNullOrEmpty(v) == true || v.match(/^\s*\<\s*br[^\/]*\/\>\s*$/) != null ? "" : v;
-                        if (e.onchange)
-                          e.onchange();
-                        return true;
-                      });
-                that.rte.startup();
-        });
-  };
-  
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// DojoSimple Misc
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-DojoSimple.FadeOut = function(elementId, millis, func)
- {
-   require(["dojo/_base/fx", "dojo/on"], function(fx, on)
-    { 
-      var a = fx.fadeOut({node: document.getElementById(elementId), duration: millis==null ? 200 : millis});
-      if (func != null)
-       on(a, "End", func);
-      a.play();
-    });
- };
-
-DojoSimple.getViewport = function(elementId, millis, func)
- {
-      return dojoDijit.getViewport();
- };
 
  
- 
- 
- 
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Tooltip dialog
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DojoSimple.TooltipDialog = function(elementId, content)
- {
-   var that = this;
-   
-      that._e = document.getElementById(elementId);
-      that._tt = document.getElementById(elementId+"_TD");
-      if (that._tt == null)
-       {
-         that._tt = document.createElement('div');
-         that._tt.setAttribute("id", elementId+"_TD");
-         that._tt.setAttribute("fade-in-popper", "");
-         that._tt.classList.add("popperTooltip");
-         document.body.appendChild(that._tt);
-       }
-      that._tt.innerHTML=content;
-      that._popper = createPopper(that._e, that._tt);
-      var onclick=function(evt) { that._clickHandler(evt); };
-      that._e.addEventListener("click", onclick);
-      var onmouseleave=function(evt) { that.hide(evt); };
-      var onmouseleave2=function(evt) { setTimeout(function(){that.hide();},100); };
-      that._tt.addEventListener("mouseleave", onmouseleave);
-      that._tt.addEventListener("click", onmouseleave2);
-      
-      that._clickHandler = function (evt)
-       {
-         if (evt != null)
-          evt.preventDefault();
-         if (this._tt.hasAttribute("show-popper"))
-          this._tt.removeAttribute("show-popper");
-         else
-          this._tt.setAttribute("show-popper", "");
-         this._popper.update();
-       }
-      that.destroy = function()
-       {
-         if (this._popper)
-          {
-            this._popper.destroy();
-            this._e.removeEventListener("click", onclick);
-            this._tt.removeEventListener("mouseleave", onmouseleave);
-            this._tt.removeEventListener("click", onmouseleave2);
-            this._popper = null;
-          }
-       }
-      that.hide = function (evt)
-       {
-         if (evt != null)
-          evt.preventDefault();
-         this._tt.removeAttribute("show-popper");
-         this._popper.update();
-       }
-      that.show = function (evt)
-       {
-         if (evt != null)
-          evt.preventDefault();
-         this._tt.setAttribute("show-popper", "");
-         this._popper.update();
-       }
- };
- 
+window.DojoSimple = DojoSimple;
 
- window.DojoSimple = DojoSimple;
 
-});
-
-*/

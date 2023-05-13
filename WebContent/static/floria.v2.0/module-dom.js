@@ -1091,7 +1091,13 @@ export var FloriaDOM = {
     ,removeCookie: function(name)
       {
         document.cookie = name+'=; Max-Age=-99999999;path=/';
-      }      
+      }
+    ,_jsonCommentRegex: /\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g
+    ,jsonParseWithComments: function(str)
+      {
+        str = str.replace(FloriaDOM._jsonCommentRegex, (m, g) => g ? "" : m);
+        return JSON.parse(str);
+      }
   };
 
 window.DelayedEvent = FloriaDOM.DelayedEvent;

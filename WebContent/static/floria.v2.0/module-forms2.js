@@ -6,7 +6,6 @@ import { FloriaText } from "./module-text.js";
 import { FloriaFactories } from "./module-factories.js";
 import { FloriaDate } from "./module-date.js";
 import { FloriaDialog  } from "./module-dialog.js";
-import { DojoSimple } from "./module-dojosimple.js";
 
 
 function makeUpdatePageFunc(that, toPageId) 
@@ -94,7 +93,20 @@ function getFieldMarkup(parentD, d, elementId, pageId, rowId, subRowId, groupId,
                                                                                                                        +' '+(d.placeHolder==null?'':'placeholder="'+d.placeHolder+'"')
                                                                                                                        +'>';
    else if (d.type=="date")
-     Str+='<DIV id="'+elementId+'_b_'+xid+'"><DIV>';
+    {
+        
+      if ((v == null || v == 'NOW') && v != '---')
+       v = new Date().toISOString();
+      else
+       v = v.substring(0, 10);
+
+      Str+='<INPUT name="'+fieldName+'" type="date" value="'+FloriaText.TextUtil.printFuncParam(v)+'" style="width:'+(d.width==null?'150px':d.width)+'" '+(d.min==null?'min="0"':'min="'+d.min+'"')
+                                                                                                                         +' '+(d.max==null?'':'max="'+d.max+'"')
+                                                                                                                         +' step="1"'
+                                                                                                                         +' '+(d.placeHolder==null?'':'placeholder="'+d.placeHolder+'"')
+                                                                                                                         +'>';
+    }
+//     Str+='<DIV id="'+elementId+'_b_'+xid+'"><DIV>';
 //     Str+='<INPUT type="hidden" id="'+elementId+'_a_'+xid+'" name="'+fieldName+'" value="'+FloriaText.TextUtil.printFuncParam(v)+'"><DIV id="'+elementId+'_b_'+xid+'"><DIV>';
    else if (d.type=="radio")
     Str+=FloriaControls.Radio.gen(null, formElementIds, d.values, d.cols == null ? edgeFunc : FloriaControls.TableEdgeFunc(d.cols), null, v);
@@ -195,11 +207,11 @@ function getGroupMarkup(d, elementId, pageId, rowId, data, edgeFunc, heading)
    return Str;
  }
 
-function fillField(d, elementId, pageId, rowId, subRowId, descriptions, data, widgets, pickers, groupCount)
+function fillField(d, elementId, pageId, rowId, subRowId, descriptions, data, pickers, groupCount)
  {
    var fieldName = d.name+(groupCount!=null?"_"+groupCount : subRowId!=null?"_"+subRowId : "");
    var xid = rowId+(subRowId==null?'':'_'+subRowId);
-   if (d.name == null || d.type=="textarea" || d.type=="hidden" || d.type=="file" || d.type=="number" || d.type=="boolean" || d.type=="rating" || d.type=="int" || d.type=="radio" || d.type=="checkbox" || d.type=="dropdown")
+   if (d.name == null || d.type=="textarea" || d.type=="hidden" || d.type=="file" || d.type=="number" || d.type=="boolean" || d.type=="rating" || d.type=="int" || d.type=="radio" || d.type=="checkbox" || d.type=="dropdown" || d.type=="date")
     return;
    if (d.type=="text")
     {
@@ -214,16 +226,6 @@ function fillField(d, elementId, pageId, rowId, subRowId, descriptions, data, wi
            });
         }
     }
-   else if (d.type=="date")
-     {
-       var v = data==null?null:data[d.name];
-       if (v == null)
-        v = d.defaultValue;
-       if ((v == null || v == 'NOW') && v != '---')
-        v = new Date().toISOString();
-       
-       widgets.push(new DojoSimple.Calendar(elementId+'_b_'+xid, elementId+'_a_'+xid, null, null, null, v, fieldName));
-     }
    else
     {
 //      console.log("Picker "+d.type+" on "+fieldName+"= ", data==null?null:data[fieldName]);
@@ -240,7 +242,7 @@ function fillField(d, elementId, pageId, rowId, subRowId, descriptions, data, wi
     }
  }
 
-function fillGroup(d, elementId, pageId, rowId, descriptions, data, widgets, pickers)
+function fillGroup(d, elementId, pageId, rowId, descriptions, data, pickers)
  {
    var values = data[d.name];
    var groupCount = -1;
@@ -252,14 +254,14 @@ function fillGroup(d, elementId, pageId, rowId, descriptions, data, widgets, pic
         continue;
        ++groupCount;
        for (var k = 0; k < d.group.length; ++k)
-        fillField(d.group[k], elementId, pageId, rowId, groupCount*d.group.length+k, descriptions, val, widgets, pickers, groupCount);
+        fillField(d.group[k], elementId, pageId, rowId, groupCount*d.group.length+k, descriptions, val, pickers, groupCount);
     }
    if (groupCount == -1)
     for (var j = 0; j < 2; ++j)
      {
        ++groupCount;
        for (var k = 0; k < d.group.length; ++k)
-        fillField(d.group[k], elementId, pageId, rowId, groupCount*d.group.length+k, descriptions, null, widgets, pickers, groupCount);
+        fillField(d.group[k], elementId, pageId, rowId, groupCount*d.group.length+k, descriptions, null, pickers, groupCount);
      }
  };
 
@@ -564,11 +566,6 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
    
    this.paint = function(pageId, frameContentOverride, frameContentCallbackFunc, widthPct, heightPct)
     {
-      if(this._widgets != null) 
-        for (var i = 0; i < this._widgets.length; ++i)
-          this._widgets[i].destroy();
-      this._widgets = [];
-      
       if (pageId == null)
         {
           this._pageId = null;
@@ -783,7 +780,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
                     var Pickers = [];
                     for (var k = 0; k < d.group.length; ++k)
                       {
-                        fillField(d.group[k], that._elementId, that._pageId, parts[1], d.group.length*(e.rows.length-1)+k, that._descriptions, null, that._widgets, Pickers, e.rows.length-1);
+                        fillField(d.group[k], that._elementId, that._pageId, parts[1], d.group.length*(e.rows.length-1)+k, that._descriptions, null, Pickers, e.rows.length-1);
                       }
                     if (Pickers.length > 0)
                       {
@@ -815,9 +812,9 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
        {
          var d = p[i];
          if (d.group != null)
-          fillGroup(d, this._elementId, this._pageId, i, this._descriptions, this._data, this._widgets, Pickers);
+          fillGroup(d, this._elementId, this._pageId, i, this._descriptions, this._data, Pickers);
          else
-          fillField(d, this._elementId, this._pageId, i, null, this._descriptions, this._data, this._widgets, Pickers);
+          fillField(d, this._elementId, this._pageId, i, null, this._descriptions, this._data, Pickers);
        }
       if (Pickers.length > 0)
         {
