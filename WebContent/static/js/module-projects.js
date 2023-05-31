@@ -145,8 +145,8 @@ projects.paintSchema = function(div, projectName, fullSchemaPath)
    FloriaDOM.toggleCSS(div, "selected");
    FloriaAjax.ajaxUrl("/svc/project/schema/details?projectName="+encodeURIComponent(projectName)+"&fullSchemaPath="+encodeURIComponent(fullSchemaPath)+"&ts="+new Date(), "GET", "Cannot get the schema for this project", function(tildaJson) {
 
-       //FloriaDOM.setInnerHTML("EDITOR", tildaJson);
-//       initializemonaco(tildaJson);
+       FloriaDOM.setInnerHTML("EDITOR", tildaJson);
+       //initializemonaco(tildaJson);
 
        schemas.paint(tildaJson);
     })  
