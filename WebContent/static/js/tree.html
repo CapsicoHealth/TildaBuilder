@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tree View Example</title>
+    <style>
+        .treeNode_schemaNode {
+          cursor: pointer;
+          display: block;
+          padding: 3px;
+          margin-top: 3px;
+          margin-bottom: 3px;
+          position: relative;
+        }
+      
+        .treeNode_schemaNode > span:nth-child(1){
+            font-weight: bold;
+        }
+        .treeNode_schemaNode > span:nth-child(2){
+            font-style: italic;
+            margin-left: '5px';
+        }
+        
+        .treeNode_schemaNode:hover {
+          background-color: #f1f1f1;
+        }
+      
+        .child-nodes {
+          display: none;
+          margin-left: 20px;
+        }
+      </style>
+      
+      
+      
+      
+</head>
+<body>
+    <input type="text" id="searchBar" placeholder="Search..." />
+    <div id="tree-container"></div>
+    <div id="output"></div>
+
+    <script src="tree.js"></script> 
+</body>
+</html>

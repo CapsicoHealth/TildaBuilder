@@ -1,12 +1,19 @@
+"use strict";
+
+import {  } from "/static/jslibs/sceditor/sceditor.js";
+
+//import * as monaco from "/static/jslibs/monaco-editor/vs/editor/editor.main.js";
+
+
 let monacoinit = false;
 let scinit = false;
 let seditor = null;
 let moneditor = null;
-function initializemonaco(tildaJson){
-    output = "hello";
-    if (output == "html"){
-      openEditor()
 
+export function InitializeMonaco(tildaJson){
+    let output = "hello";
+    if (output == "html"){
+      openEditor();
     }
     else {
       if (output == "hello"){
@@ -68,10 +75,6 @@ function initializemonaco(tildaJson){
 
 
                       
-                        
-                      
-
-          
             moneditor = monaco.editor.create(container, {
                 value: tildaJson, 
                 // language for editor
@@ -88,8 +91,6 @@ function initializemonaco(tildaJson){
       }
 
     }
-
-
 
   }
 

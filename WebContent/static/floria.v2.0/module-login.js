@@ -7,6 +7,8 @@ import { FloriaAjax    } from "./module-ajax.js";
 
 export var FloriaLogin = { };
 
+window.FloriaLogin = FloriaLogin;
+
 var cacheBuster = new Date().getTime();
 
 
@@ -86,9 +88,12 @@ FloriaLogin.PopupLogin = {
       if (onSuccessFunc != null)
        FloriaLogin.PopupLogin.dlgHandle.setOnHide(onSuccessFunc);
       // There seems to be an issue sometimes with caching of HTML pages... So we are doing these shenanigans.
-      if (url.indexOf("?") == -1)
-       url += "?";
-      url+="&ts="+cacheBuster;
+      if (url != null)
+       {
+         if (url.indexOf("?") == -1)
+          url += "?";
+         url+="&ts="+cacheBuster;
+       }
       FloriaLogin.PopupLogin.dlgHandle.show(title, url, width, height, Contents);
     },
   hide : function()
@@ -210,17 +215,20 @@ FloriaLogin.PopupLogin = {
     
    eula: function(data)
     {
-      require(["dojo/text!"+data.eulaUrl], function(eulaHtml) {
-         eulaHtml+='<HR/><CENTER><FORM id="EULA_FORM" onSubmit="return FloriaLogin.PopupLogin.acceptEula(\'EULA_FORM\');">'
-                  +'<input type="hidden" name="tenantUserRefnum" value="'+data.tenantUserRefnum+'">'
-                  +'<input type="hidden" name="eulaToken" value="'+encodeURIComponent(data.eulaToken)+'">'
-//                  +'Sign your name: <input type="text" name="name"><BR>'
-                  +'I accept this EULA: <input type="checkbox" name="accept" value="1" width="50%"><BR><BR>'
-                  +'<BUTTON id="login-Eula" type="submit" title="Submit">Submit</BUTTON><BR><BR>'
-                  ;
-         FloriaLogin.PopupLogin.dlgHandle.setTitle("End User License Agreement");
-         FloriaLogin.PopupLogin.dlgHandle.setContent(eulaHtml);
-      });
+      FloriaAjax.ajaxUrl(data.eulaUrl, "GET", "Cannot get EULA HTML"
+         , function(eulaHtml) {
+             eulaHtml+='<HR/><CENTER><FORM id="EULA_FORM" onSubmit="return FloriaLogin.PopupLogin.acceptEula(\'EULA_FORM\');">'
+                      +'<input type="hidden" name="tenantUserRefnum" value="'+data.tenantUserRefnum+'">'
+                      +'<input type="hidden" name="eulaToken" value="'+encodeURIComponent(data.eulaToken)+'">'
+    //                  +'Sign your name: <input type="text" name="name"><BR>'
+                      +'I accept this EULA: <input type="checkbox" name="accept" value="1" width="50%"><BR><BR>'
+                      +'<BUTTON id="login-Eula" type="submit" title="Submit">Submit</BUTTON><BR><BR>'
+                      ;
+             FloriaLogin.PopupLogin.dlgHandle.setTitle("End User License Agreement");
+             FloriaLogin.PopupLogin.dlgHandle.setContent(eulaHtml);
+           }
+         ,null, null, null, 'text'
+      );
     },
    acceptEula: function(formId)
     {
@@ -429,9 +437,9 @@ FloriaLogin.SetPassword = {
         alert("Please enter an email address");
         return false;
       }
-
     if(!this.passwordUI.isValid())
       {
+        alert("Your password doesn't match the rules'");
         return false;
       }
     if(password == confirmPswd)
@@ -441,7 +449,8 @@ FloriaLogin.SetPassword = {
       }
     else
       {
-        FloriaLogin.PopupLogin.showError(400, "Password and confirm password do not match", null);
+        alert("Your password doesn't match the rules'");
+        return false;
       }
     return false;
   },
@@ -577,23 +586,25 @@ FloriaLogin.Verifications = {
 // Password UI
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function PasswordUI(elementId){
-  var that = this;
-  var domParser = new DOMParser();
   var element = document.getElementById(elementId);
-  this.element = element;
-  if(element == null){
-    console.error("Unable to find element with ID = "+elementId+".");
-    return;
-  }
+  if (element == null)
+   {
+     console.error("Unable to find element with ID = "+elementId+".");
+     return;
+   }
   var passwordRules = window.passwordRules || [];
   this.passwordRules = passwordRules;
-  var p = dojo.byId(elementId);
-
-  passwordRules.forEach(function(item, index){
-    var doc = domConstruct.toDom("<TR class=\"passwordRules\"><TD colspan=\"1\" data-index=\""+index+"\" class=\"error\">"+item.description+"</TD></TR>");
-      domConstruct.place(doc, p.closest('tr'), 'after');
-  })
-  element.addEventListener("keyup", function(){
+  var str = "<TABLE>";
+  for (var i = 0; i < this.passwordRules.length; ++i)
+   {
+     var pr = this.passwordRules[i];
+     str+="<TR class=\"passwordRules\"><TD colspan=\"1\" data-index=\""+i+"\" class=\"error\">"+pr.description+"</TD></TR>";
+   }
+  str+="</TABLE>";
+  FloriaDOM.appendInnerHTML(element.parentNode, str);
+  // Gotta re-get the element since it was overwritten by the previous statement, creating a new DOM.
+  this.element = document.getElementById(elementId);
+  this.element.addEventListener("keyup", function(){
     var password = this.value;
     var domRules = document.getElementsByClassName("passwordRules");
     for(var i=0;i<domRules.length;i++){
@@ -618,8 +629,8 @@ function PasswordUI(elementId){
   this.isValid = function(){
     var password = this.element.value;
     var flag = true;
-    for(var i=0;i<passwordRules.length;i++){
-      var item = passwordRules[i];
+    for(var i=0;i<this.passwordRules.length;i++){
+      var item = this.passwordRules[i];
       var regexp = new RegExp(item.rule);
       flag = regexp.test(password)
       if(!flag){
