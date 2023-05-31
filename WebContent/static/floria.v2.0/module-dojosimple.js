@@ -21,6 +21,7 @@ export var DojoSimple = { };
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  DojoSimple ajaxUrl
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 DojoSimple.ajaxUrl = function(Url, Method, ErrorMsg, SuccessFunc, ErrorFunc, PostContents, Timeout, handleAs)
   {
     if (PostContents != null && Method != 'POST')
@@ -105,55 +106,9 @@ DojoSimple.ajaxUrl = function(Url, Method, ErrorMsg, SuccessFunc, ErrorFunc, Pos
       handleAs : handleAs==null?'json':handleAs
     });
   };
-  
-
-DojoSimple.ajaxUrlMulti = function(AjaxInfos, Func)
-  {
-    var results=[];
-    var createNestedFunc = function(ajaxInfo, previousF)
-     {
-       return function(data) { if (data != null) results.push(data); DojoSimple.ajaxUrl(ajaxInfo.url, "GET", ajaxInfo.error, previousF, previousF); };
-     }
-    var f = function(data) { if (data != null) results.push(data); Func(results); };
-    for (var i = AjaxInfos.length-1; i >= 0; --i)
-     f = createNestedFunc(AjaxInfos[i], f);
-    setTimeout(f, 1);
-  }
 
 
-// Launched a Url using the regular AjaxUrl facility but expects it to take some time before it returns (long running Job).
-// While the job is running, launches a secondary Polling URL, with a handler and an interval check in seconds. The PollHandler
-// function takes the result from the PollUrl and is expected to return the next PollUrl. If PollUrl is given NULL, an error
-// occurred.
-DojoSimple.ajaxUrlLongRunningJob = function(Url, ErrorMsg, SuccessFunc, ErrorFunc, PostContents, TimeoutSecs, PollUrl, PollHandler, PollIntervalSecs, canTimeout)
-  {
-    var done = false;
-    var loop = function() {
-      DojoSimple.ajaxUrl(PollUrl, "GET", null
-                        ,function(data) {
-                            if (data != null)
-                             {
-                               PollUrl = PollHandler(data);
-                               if (done == false && PollUrl != null)
-                                setTimeout(loop, PollIntervalSecs*1000);
-                             }
-                            else if (done == false)
-                             {
-                               PollHandler(null);
-                             }
-                          }
-                        ,function(data) {
-                            PollHandler(null);
-                          }
-                        );
-     };
-    DojoSimple.ajaxUrl(Url, "GET", ErrorMsg, function(data) {
-         done = true;
-//         alert("done!!!!");
-         SuccessFunc(data);
-      }, ErrorFunc, PostContents, TimeoutSecs*1000);
-    setTimeout(loop, 1000);
-  }
+
 
   
 

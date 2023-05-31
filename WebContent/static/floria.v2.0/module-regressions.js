@@ -1,7 +1,6 @@
 "use strict";
 
-// Taken from https://github.com/Tom-Alexander/regression-js and lightly adapted to match the current
-// package manager (fron Dojo) for Floria.
+// Taken from https://github.com/Tom-Alexander/regression-js
   
   
 const DEFAULT_OPTIONS = { order: 2, precision: 2, period: null };

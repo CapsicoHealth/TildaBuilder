@@ -13,6 +13,8 @@ if (!String.prototype.isEmpty)
      }
     return true;
   };
+  
+var EVENT_REGISTRY = { };
 
 export var FloriaDOM = {
     SpanNA: '<SPAN class="NA"></SPAN>',
@@ -582,7 +584,7 @@ export var FloriaDOM = {
             return a.href;
           };
       })(),
-     addEvent: function(elementId, eventName, handlerFunc, delayedMillis)
+     addEvent: function(elementId, eventName, handlerFunc, delayedMillis, clearPrevious)
       {
         var e = this.getElement(elementId);
         if (e == null)
@@ -590,8 +592,14 @@ export var FloriaDOM = {
         var func = (delayedMillis == null) ? function(event) { return handlerFunc(e, event, event.target); }
                                            : function(event) { FloriaDOM.DelayedEvent.register(elementId, delayedMillis, function() { handlerFunc(e, event, event.target); }); }
                                            ;
+        if (clearPrevious == true)
+         {
+           var oldFunc = EVENT_REGISTRY[elementId+"_"+eventName];
+           if (oldFunc != null)
+            e.removeEventListener(eventName, oldFunc);
+           EVENT_REGISTRY[elementId+"_"+eventName] = func;
+         }
         e.addEventListener(eventName, func);
-
         return func;
       },
      fireEvent: function(elementId, eventName)
@@ -651,7 +659,7 @@ export var FloriaDOM = {
                node.innerHTML = contentsFunc(data);
                target.appendChild(node);
            }
-        });
+        }, null, true);
       },
 
      toggleNestedRows : function(rows,display)
@@ -892,7 +900,7 @@ export var FloriaDOM = {
           if (!event.target.closest(childSelector)) return;
           callbackFn.apply(null, arguments);
         }
-       parentElement.addEventListener(eventName, eventHandler);
+       parentElement.addEventListener(eventName, eventHandler, null, true);
      },   
      isElementHidden: function(el)
       {
@@ -1067,7 +1075,7 @@ export var FloriaDOM = {
           if (target.nodeName!='IMG')
            return;
           FloriaDOM.showImgFullScreen(divId+'_popup', target.src)
-        });
+        }, null, true);
       }
       
     ,getCookie: function(name)

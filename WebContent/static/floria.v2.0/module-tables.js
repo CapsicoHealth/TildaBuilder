@@ -73,7 +73,7 @@ function paintRows(data, mappings, isTotalRow)
 
 export var BoardManager = { };
 
-BoardManager.paint = function(divId, data, mappings, dataDictionary, timerFunc)
+BoardManager.paint = function(divId, data, mappings, dataDictionary, timerFunc, tableCssClasses)
  {
    var config = mappings==null || mappings.length == 0 ? null : mappings[0].config;
    var idCol = config?.idCol;
@@ -83,9 +83,10 @@ BoardManager.paint = function(divId, data, mappings, dataDictionary, timerFunc)
           ? ""
           : "Refreshed on: "+FloriaDate.toDtStr(data[0][config.dateCol])+' 00:00'
           ;
-
+   if (tableCssClasses == null)
+    tableCssClasses = "tableLayout rowSelectable rowHighlightable stickyHeader";
    var timingDivId = divId+"_TIMING";
-   var str = `<TABLE class="tableLayout rowSelectable rowHighlightable stickyHeader" border="0px" cellpadding="2px">
+   var str = `<TABLE class="${tableCssClasses}" border="0px" cellpadding="2px">
               <TR valign="bottom">
                 <TH colspan="2" style="text-align:left; width:1px;">
                   ${FloriaText.isNoE(toolbarClassName)==true?'':'<DIV id="'+divId+'_MINI_TOOLBAR" class="'+toolbarClassName+'"></DIV><BR>'}
@@ -108,9 +109,9 @@ BoardManager.paint = function(divId, data, mappings, dataDictionary, timerFunc)
 
 export var HeatTable = { };
 
-HeatTable.paint = function(divId, data, mappings, dataDictionary, totalRowFields, title, tableStyleClass, onClickHandler)
+HeatTable.paint = function(divId, data, mappings, dataDictionary, totalRowFields, title, tableCssClasses, onClickHandler)
  {
-   var str = (title||'')+`<TABLE id="${divId}_TABLE" class="${tableStyleClass}"><TR valign="bottom">`;
+   var str = (title||'')+`<TABLE id="${divId}_TABLE" class="${tableCssClasses}"><TR valign="bottom">`;
    str+=paintHeaders(mappings, dataDictionary, 0);
    str+='</TR>';
    str+=paintRows(data, mappings);
@@ -133,7 +134,7 @@ HeatTable.paint = function(divId, data, mappings, dataDictionary, totalRowFields
             FloriaDOM.removeCSS(TABLE.rows[i], "selected");
            FloriaDOM.addCSS(TR, "selected");
            onClickHandler(data[TR.dataset.rowid]);
-      });
+      }, null, true);
     }
 };
 

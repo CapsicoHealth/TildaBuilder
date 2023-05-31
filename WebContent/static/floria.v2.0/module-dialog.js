@@ -42,7 +42,7 @@ export function FloriaDialog(elementId)
    var that = this;
    FloriaDOM.addEvent(elementId+"_MD_CLOSE", "click", function() {
      that.hide();
-   })
+   }, null, true);
        
    this.setOnHide = function(func)
     {
@@ -213,12 +213,16 @@ export function FloriaTooltipDialog(elementId, content)
        }
       that._tt.innerHTML=content;
       that._popper = createPopper(that._e, that._tt);
-      var onclick=function(evt) { that._clickHandler(evt); };
-      that._e.addEventListener("click", onclick);
-      var onmouseleave=function(evt) { that.hide(evt); };
-      var onmouseleave2=function(evt) { setTimeout(function(){that.hide();},100); };
-      that._tt.addEventListener("mouseleave", onmouseleave);
-      that._tt.addEventListener("click", onmouseleave2);
+//      var onclick=function(evt) { that._clickHandler(evt); };
+//      that._e.addEventListener("click", onclick);
+//      var onmouseleave=function(evt) { that.hide(evt); };
+//      var onmouseleave2=function(evt) { setTimeout(function(){that.hide();},100); };
+//      that._tt.addEventListener("mouseleave", onmouseleave, null, true);
+//      that._tt.addEventListener("click", onmouseleave2, null, true);
+
+      FloriaDOM.addEvent(that._e , "click"     , function(e, event, target) { that._clickHandler(event); }, null, true);
+      FloriaDOM.addEvent(that._tt, "mouseleave", function(e, event, target) { setTimeout(function(){that.hide(event);},250); }, null, true);
+//      FloriaDOM.addEvent(that._tt, "click"     , function(e, event, target) { setTimeout(function(){that.hide(event);},250); }, null, true);
       
       that._clickHandler = function (evt)
        {
@@ -256,3 +260,62 @@ export function FloriaTooltipDialog(elementId, content)
          this._popper.update();
        }
  };
+
+
+
+
+/**
+ tabs ia an array:
+    { label:"", onHideHanler: function, onSelectHandler: function }
+ */
+export function FloriaTabs(elementId, tabs)
+ {
+   this._elementId = elementId;
+   this._tabs = tabs;
+   this._currentTabId = null;
+   
+   this.show = function()
+    {
+      var str = '<DIV class="tabContainer"><DIV id="'+elementId+'_TABHEADERS" class="tabHeader">';
+      for (var i = 0; i < this._tabs.length; ++i)
+       {
+         var t = this._tabs[i];
+         str+='<SPAN id="'+elementId+'_TABHEADER_'+i+'" data-tabid="'+i+'">'+t.label+'</SPAN>';
+       }
+      str+='</DIV><DIV class="tabBody">';
+      for (var i = 0; i < this._tabs.length; ++i)
+       {
+         var t = this._tabs[i];
+         t._renderCount = 0;
+         str+='<DIV id="'+elementId+'_TABPANEL_'+i+'"></DIV>';
+       }
+      str+='</DIV></DIV>';
+      FloriaDOM.setInnerHTML(elementId, str);
+      var that = this;
+      setTimeout(function() { that.select(0); }, 10);
+      FloriaDOM.addEvent(elementId+"_TABHEADERS", "click", function(e, event, target) {
+        var tabId = target.dataset.tabid;
+        that.select(tabId);
+      }, null, true);
+    }
+    
+   this.select = function(i)
+    {
+      if (this._currentTabId != null)
+       {
+         FloriaDOM.removeCSS(elementId+'_TABHEADER_'+this._currentTabId, "selected");
+         FloriaDOM.removeCSS(elementId+'_TABPANEL_'+this._currentTabId, "selected");
+         var t = this._tabs[this._currentTabId];
+         if (t.onHideHanler != null)
+          t.onHideHanler(elementId+'_TABPANEL_'+this._currentTabId);
+       }
+      FloriaDOM.addCSS(elementId+'_TABHEADER_'+i, "selected");
+      FloriaDOM.addCSS(elementId+'_TABPANEL_'+i, "selected");
+      var t = this._tabs[i];
+      ++t._renderCount;
+      if (t.onSelectHandler != null)
+       t.onSelectHandler(elementId+'_TABPANEL_'+i, t._renderCount==1);
+      this._currentTabId = i;
+    }
+ };
+

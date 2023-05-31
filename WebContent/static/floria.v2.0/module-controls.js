@@ -78,19 +78,37 @@ var Radio = {
         Str += ' value="' + Default + '"';
       Str += ' type="hidden">';
       if (readOnly != true)
-       for (var i = 0; i < Values.length; ++i)
-        {
-          var v = Values[i];
-          var fullId = Ids.fullId+'_'+i;
-          if (v != null)
-           Str += edgeFunc(i, true, Values.length) + '<A id="RADIO_'+fullId+'" class="Radio_' + (Default == v[0] ? 'ON' : 'OFF')
-               + '" title="' + (v.length > 2 && v[2]!=null?v[2]:v[1]) + '" href="javascript:Radio.click([\'' + Ids.formId + '\',\'' + Ids.elementId + '\'], \'' + v[0] + '\', \'RADIO_' + fullId
-               + '\', ' + onChange + ',' + Mode + ');' + '">' + (noLabels == true ? '&nbsp;' : v[1]) + '</A>' + edgeFunc(i, false, Values.length) + '\n';
-          else
-            {
-              
-            }
-        }
+       {
+         var totalValidElements = 0;
+         for (var i = 0; i < Values.length; ++i)
+          if (Values[i] != null)
+           ++totalValidElements;
+         var counter = 0;
+         var cells = 0;
+         for (var i = 0; i < Values.length; ++i)
+          {
+            var v = Values[i];
+            if (v != null)
+             {
+               var fullId = Ids.fullId+'_'+counter;
+               Str += edgeFunc(cells, true, totalValidElements) 
+                   + '<A id="RADIO_'+fullId+'" class="Radio_' + (Default == v[0] ? 'ON' : 'OFF')
+                   + '" title="' + (v.length > 2 && v[2]!=null?v[2]:v[1]) 
+                   + '" href="javascript:Radio.click([\'' + Ids.formId + '\',\'' + Ids.elementId + '\'], \'' + v[0] + '\', \'RADIO_' + fullId
+                   + '\', ' + onChange + ',' + Mode + ');' + '">' + (noLabels == true ? '&nbsp;' : v[1]) + '</A>' 
+                   + edgeFunc(cells, false, totalValidElements) + '\n';
+               ++counter;
+               ++cells;
+             }
+            else
+             {
+               Str+=edgeFunc(null, null, totalValidElements);
+               var x = edgeFunc(cells, null, totalValidElements, null, true); // advance to first cell of next row.
+               totalValidElements+=x;
+               cells += x;
+             }
+          }
+       }
       else 
         for (var i = 0; i < Values.length; ++i)
           {
@@ -212,11 +230,6 @@ var Checkbox = {
       var Ids = makeRelIds(elementId);
       var Str = '';
 
-      var totalValidElements = 0;
-      for (var i = 0; i < Values.length; ++i)
-       if (Values[i] != null)
-         ++totalValidElements;
-      
       var noneItem = null;
       for (var i = 0; i < Values.length; ++i)
         {
@@ -228,36 +241,38 @@ var Checkbox = {
            }
         }
 
+      var totalValidElements = 0;
+      for (var i = 0; i < Values.length; ++i)
+       if (Values[i] != null)
+         ++totalValidElements;
       var counter = 0;
       var cells = 0;
       for (var i = 0; i < Values.length; ++i)
-      {
-        var v = Values[i];
-        if (v != null)
-         {
-//           console.log("cells-within: "+cells);
-           var match = Defaults != null && Defaults.indexOfSE(v[0]) != -1;
-           var fullId = Ids.fullId + '_' + counter;
-           Str += edgeFunc(cells, true, totalValidElements) 
-               + '<A href="javascript:Checkbox.click([\'' + Ids.formId + '\',\'' + Ids.elementId+'_'+counter+ '\'], ' 
-               + onChange + ',' + noneItem +');' + '" id="CHECKBOX_'
-               + fullId + '" class="Checkbox_' + (match ? 'ON' : 'OFF') + '" title="' + (v.length > 2 && v[2]!=null?v[2]:v[1]) + '"><INPUT id="' + fullId
-               + '" name="' + Ids.elementId + v[0] + '" type="hidden" value="' + (match ? '1' : '0') + '">' + (noLabels == true ? '' : v[1])
-               + '</A>'
-               + edgeFunc(cells, false, totalValidElements) + '\n';
-           ++counter;
-           ++cells;
-         }
-        else
-         {
-           Str+=edgeFunc(null, null, totalValidElements);
-//           console.log("cells-before: "+cells);
-           var x = edgeFunc(cells, null, totalValidElements, null, true); // advance to first cell of next row.
-           totalValidElements+=x;
-           cells += x;
-//           console.log("cells-after: "+cells);
-         }
-      }
+       {
+         var v = Values[i];
+         if (v != null)
+          {
+//            console.log("cells-within: "+cells);
+            var match = Defaults != null && Defaults.indexOfSE(v[0]) != -1;
+            var fullId = Ids.fullId + '_' + counter;
+            Str += edgeFunc(cells, true, totalValidElements) 
+                + '<A href="javascript:Checkbox.click([\'' + Ids.formId + '\',\'' + Ids.elementId+'_'+counter+ '\'], ' 
+                + onChange + ',' + noneItem +');' + '" id="CHECKBOX_'
+                + fullId + '" class="Checkbox_' + (match ? 'ON' : 'OFF') + '" title="' + (v.length > 2 && v[2]!=null?v[2]:v[1]) + '"><INPUT id="' + fullId
+                + '" name="' + Ids.elementId + v[0] + '" type="hidden" value="' + (match ? '1' : '0') + '">' + (noLabels == true ? '' : v[1])
+                + '</A>'
+                + edgeFunc(cells, false, totalValidElements) + '\n';
+            ++counter;
+            ++cells;
+          }
+         else
+          {
+            Str+=edgeFunc(null, null, totalValidElements);
+            var x = edgeFunc(cells, null, totalValidElements, null, true); // advance to first cell of next row.
+            totalValidElements+=x;
+            cells += x;
+          }
+       }
       if (ContainerId == null)
         return Str;
       FloriaDOM.setInnerHTML(ContainerId, Str);
@@ -567,4 +582,3 @@ export var FloriaControls = { "Radio": Radio
                             , "Ranking": Ranking
                             , "TableEdgeFunc": tableEdgeFunc
                             };
-  

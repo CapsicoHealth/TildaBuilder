@@ -1,18 +1,19 @@
 "use strict";
 
-import { FloriaDOM } from "./module-dom.js";
+import { FloriaDOM  } from "./module-dom.js";
+import { FloriaAjax } from "./module-ajax.js";
 import { ChartTheme } from "./module-charttheme.js";
 
 import { createPopper } from "/static/jslibs/popperjs/popper.js";
+
+var FloriaConfig = await FloriaAjax.jsonSyncFetch("/static/json/floria-config.json");
 
 // Check https://d3-graph-gallery.com/
 
 export var FloriaCharts = {};
 
-
-require(["jslibs/d3-7.6.1/d3.min", "dojo/text!json/floria-config.json"], function(d3, FloriaConfig)
+require(["jslibs/d3-7.6.1/d3.min"], function(d3)
 {
-  FloriaConfig = JSON.parse(FloriaConfig).data;
   
   var globalLegend = {};
 // ///////////////// Legend Logic

@@ -1157,7 +1157,7 @@ PickerRegistry.show = function(elementId, Inline)
            e = e.parentNode;
          }
       };
-      FloriaDOM.addEvent(picker._internal.elementId+'_PICKER', "click", picker._internal.onClickHandler);
+      FloriaDOM.addEvent(picker._internal.elementId+'_PICKER', "click", picker._internal.onClickHandler, null, true);
     }
    
    DataFetcherRegistry.addAndRunFetchers(picker._dataDef, function() {

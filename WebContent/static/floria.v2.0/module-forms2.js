@@ -10,7 +10,7 @@ import { FloriaDialog  } from "./module-dialog.js";
 
 function makeUpdatePageFunc(that, toPageId) 
   { 
-    return function() { that.updatePage(toPageId); };
+    return function() { that.paint(toPageId); };
   }
   
 var maxLabelLengthBeforeWrapping = 30;
@@ -20,8 +20,8 @@ function createNavEvents(form)
    if (form._formDefs.length > 1)
     {
       for (var i = 0; i < form._formDefs.length; ++i)
-       FloriaDOM.addEvent(form._elementId+'_F_'+i, "click", makeUpdatePageFunc(form, i));
-      FloriaDOM.addEvent(form._elementId+'_F_PREV', "click", function() { form.updatePage(form._pageId-1); });
+       FloriaDOM.addEvent(form._elementId+'_F_'+i, "click", makeUpdatePageFunc(form, i), null, true);
+      FloriaDOM.addEvent(form._elementId+'_F_PREV', "click", function() { form.updatePage(form._pageId-1); }, null, true);
       FloriaDOM.addEvent(form._elementId+'_F_NEXT', "click", function() {
         if (form._pageId == form._formDefs.length-1)
          {
@@ -30,14 +30,14 @@ function createNavEvents(form)
          }
         else
          form.updatePage(form._pageId+1); 
-      });
+      }, null, true);
     }
 
    if (form._customNav == true)
     return;
     
    if (form._popupTitle==null || form._submitButton == true)
-    FloriaDOM.addEvent(form._elementId+'_F_SUBMIT', "click", function() { form.updatePage(null); });
+    FloriaDOM.addEvent(form._elementId+'_F_SUBMIT', "click", function() { form.updatePage(null); }, null, true);
 
    if (form._cancelButton == true)
     FloriaDOM.addEvent(form._elementId+'_F_CANCEL', "click", function() {
@@ -46,7 +46,7 @@ function createNavEvents(form)
        form._dlg.setOnHide(null);
        form._dlg.hide();
        form._dlg.setOnHide(onHideHandler);
-    });
+    }, null, true);
  }
 
 function getFieldMarkup(parentD, d, elementId, pageId, rowId, subRowId, groupId, data, edgeFunc, heading, verticalLayout)
@@ -223,7 +223,7 @@ function fillField(d, elementId, pageId, rowId, subRowId, descriptions, data, pi
              DelayedEvent.register(elementId+'_a_'+xid,500,function() {
                FloriaDOM.fireEvent(f, "change");
              });
-           });
+           }, null, true);
         }
     }
    else
@@ -269,7 +269,12 @@ function fillGroup(d, elementId, pageId, rowId, descriptions, data, pickers)
 export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, processCallbackFunc, popupTitle, wizardMode, liveOnChange, persist, validationErrMsg, cancelButton, submitButton)
  { 
 //   console.log("=>=>=> Forms2.constructor (data): ", data);
-   formDefs = FloriaDOM.clone(formDefs);
+// no await here????
+//   if (typeof formDefs == "string") // Consider it a URL
+//    formDefs = await FloriaAjax.jsonSyncFetch(formDefs);
+//   else
+    formDefs = FloriaDOM.clone(formDefs);
+
    this._elementId = elementId;
    if (typeof persist == "string")
     this._persistId = persist;
@@ -746,7 +751,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
               formElement.style.display = "none";
               FloriaDOM.fitBelow(containerElement, containerNextElement, 0);
             }
-         });
+         }, null, true);
        }
 
       FloriaDOM.addEvent(this._elementId+'_F', "click", function(e, event, target) {
@@ -799,13 +804,13 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
                }
            }
           return false;
-        });
+        }, null, true);
       
       if (this._liveOnChange == true)
         FloriaDOM.addEvent(this._elementId+'_F', "change", function(e, event, target)
           {
             that.updatePage(that._pageId, true);
-          });
+          }, null, true);
 
       var Pickers = [];
       for (var i = 0; i < p.length; ++i)
@@ -850,6 +855,8 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
          if (p != null)
           {
             var f = FloriaDOM.getElement(this._elementId+"_F");
+            if (f == null)
+             return console.error("Form container element '"+this._elementId+"_F' cannot be found.");
             var MissingParams = [];
             p = p.fields != null ? p.fields : p.formDef;
             for (var i = 0; i < p.length; ++i)
@@ -1142,7 +1149,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
                        val = FloriaText.isNoE(val)==true || val=="---" ? null : FloriaDate.parseDateTime(val).printFriendly(true, false);
                      }
                     else if (f.type=="text" || f.type == "textarea")
-                     val = FloriaText.TextUtil.replaceNewLinesWithBreaks(val, false);
+                     val = Array.isArray(val)==true ? val : FloriaText.TextUtil.replaceNewLinesWithBreaks(val, false);
                     else if (f.type=="boolean")
                      val = FloriaText.isNoE(val) ? null : val==1 ? 'Yes' : 'No';
                     else if (Array.isArray(val) == true)
@@ -1194,7 +1201,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
        {
          var that = this;
          for (var i = 0; i < this._formDefs.length; ++i)
-          FloriaDOM.addEvent(this._elementId+'_P'+i, "click", makeUpdatePageFunc(that, i));
+          FloriaDOM.addEvent(this._elementId+'_P'+i, "click", makeUpdatePageFunc(that, i), null, true);
        }
       if (commentElementId != null)
        {
@@ -1206,7 +1213,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
              for (var j = 0; j < def.formDef.length; ++j)
               {
                 var f = def.formDef[j];
-                FloriaDOM.addEvent(this._elementId+'_'+f.name, "click", MakeHandler(f.name));
+                FloriaDOM.addEvent(this._elementId+'_'+f.name, "click", MakeHandler(f.name), null, true);
               }
           }
        }
@@ -1397,8 +1404,8 @@ FloriaForms.paintFieldGenerator = function(elementId, type, callbackFunc, field)
       FloriaDOM.addEvent(elementId+"_F_type", "change", function(e, event, target) {
          that.paintFieldGenerator(elementId, FloriaControls.Dropdown.get([elementId+"_F", "type"]));
          return false;
-      });
-      FloriaDOM.addEvent(elementId+'_F', "submit", makeSubmitHandlerFunc(elementId, callbackFunc));
+      }, null, true);
+      FloriaDOM.addEvent(elementId+'_F', "submit", makeSubmitHandlerFunc(elementId, callbackFunc), null, true);
     }
    if (type != null)
     {
@@ -1503,7 +1510,7 @@ FloriaForms.paintFieldGenerator = function(elementId, type, callbackFunc, field)
                                                  ,'<TD>'+(rowCount+0)+'</TD><TD><INPUT type="text" name="value'+(rowCount-1)+'"></TD><TD><INPUT type="text" name="label'+(rowCount-1)+'"></TD>'
                                                  ,'<TD>'+(rowCount+1)+'</TD><TD><INPUT type="text" name="value'+(rowCount-0)+'"></TD><TD><INPUT type="text" name="label'+(rowCount-0)+'"></TD>'
                                                 ], rowCount-1);          
-         });
+         }, null, true);
          FloriaDOM.addEvent(elementId+'_TBUT', "click", function(e, event, target) {
             oldTypeElement.value=type;
             var txt = target.innerHTML;
@@ -1513,7 +1520,7 @@ FloriaForms.paintFieldGenerator = function(elementId, type, callbackFunc, field)
             target.parentNode.childNodes[2].disabled = txt == "Dropdown";
             event.preventDefault();
             return false;            
-         });
+         }, null, true);
        }
     }
  }
@@ -1580,7 +1587,7 @@ FloriaForms.paintFieldList = function(elementId, fieldDefs, callbackFunc, editCa
          if (id[0] == "up" || id[0] == "down")
           FloriaDOM.flashCSS(FloriaDOM.getElement(elementId+'_LIST').rows[i], "highlight", 250);
       }, 500);
-  });
+  }, null, true);
    
  }
 
