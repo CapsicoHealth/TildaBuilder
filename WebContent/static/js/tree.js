@@ -1,170 +1,7 @@
-class CustomTreeView {
-  constructor(rootNodes) {
-    this.rootNodes = rootNodes;
-  }
+"use strict";
 
-  renderNode1(node) {
-    const div = document.createElement('div');
-    div.className = `treeNode_${node.type}`;
-    div.dataset.nodeId = node.id;  
-
-    const keySpan = document.createElement('span');
-    keySpan.textContent = `${node.label}:`;
-    keySpan.title = node.description;
-
-    // const valueSpan = document.createElement('span');
-    // valueSpan.textContent = node.description;
-
-
-    div.appendChild(keySpan);
-    // div.appendChild(valueSpan);
-
-    if (node.subNodes.length > 0) {
-      div.dataset.expandable = 'true'; 
-    }
-
-    const childNodesDiv = document.createElement('div');
-    childNodesDiv.className = 'child-nodes';
-
-    for (const subNode of node.subNodes) {
-      const subNodeDiv = this.renderNode1(subNode);
-      childNodesDiv.appendChild(subNodeDiv);
-    }
-
-    div.appendChild(childNodesDiv);
-    return div;
-  }
-
-
-  render1(targetElementId) {
-    const targetElement = document.getElementById(targetElementId);
-    if (targetElement) {
-      for (const rootNode of this.rootNodes) {
-        const rootNodeDiv = this.renderNode1(rootNode);
-        targetElement.appendChild(rootNodeDiv);
-      }
-    } else {
-      console.error('Target element not found');
-    }
-  }
-
-
-  renderNode(node) {
-    let str = '';
-    str += `<DIV class="treeNode_${node.type}" data-node-id="${node.id}" data-expandable="${node.subNodes.length > 0}" onclick="console.log(this.getAttribute('title'))">
-                <SPAN title="${node.description}">${node.label}</SPAN> 
-           `;
-
-    if (Array.isArray(node.subNodes)) {
-      str += '<div class="child-nodes">';
-      for (let i = 0; i < node.subNodes.length; i++) {
-        const subNode = node.subNodes[i];
-        str += this.renderNode(subNode);
-      }
-      str += '</div>';
-    } else {
-      str += `<span class="data-field">${node.description}</span>`;
-    }
-  
-    str += '</DIV>';
-    return str;
-  }
-
-
-
-  render(divId) {
-    const e = document.getElementById(divId);
-    if (e) {
-      var str = '';
-      for (const rootNode of this.rootNodes) {
-        str += this.renderNode(rootNode);
-      }
-      e.innerHTML = str;
-  
-      const nodes = e.querySelectorAll('.data-field');
-      for (const node of nodes) {
-        node.addEventListener('click', () => {
-          //console.log(node.textContent);
-        });
-      }
-    } else {
-      console.error('Target element not found');
-    }
-  }
-}
-
-class CustomTreeNode {
-  constructor(id, label, description, type, subNodes = [], data = {}) {
-    this.id = id;
-    this.label = label;
-    this.description = description;
-    this.type = type;
-    this.subNodes = subNodes;
-    this.data = data;  // new attribute to store the full data
-  }
-}
-
-function convertSchemaToTreeNode(schema, key = 'root', depth = 0) {
-  let description = '';
-  let type = typeof schema;
-  let subNodes = [];
-  let nodeSchema = null;
-
-  if (Array.isArray(schema)) {
-    if (schema.length > 0 && typeof schema[0] === 'object') {
-      for (let i = 0; i < schema.length; i++) {
-        const subNodeData = schema[i];
-        const nodeDescription = JSON.stringify(subNodeData, null, 2);
-        const node = new CustomTreeNode(
-          `${key}_${i}`,
-          subNodeData.name,
-          subNodeData.description,
-          'schemaNode',
-          [],
-          subNodeData
-        );
-        subNodes.push(node);
-      }
-    } else {
-      description = schema.join(', ');
-    }
-  } else if (type === 'object' && schema !== null) {
-    description = '';
-    for (const [subKey, subSchema] of Object.entries(schema)) {
-      subNodes.push(convertSchemaToTreeNode(subSchema, subKey, depth + 1));
-    }
-    nodeSchema = schema;
-  } else {
-    description = schema;
-    nodeSchema = schema; 
-  }
-
-  const node = new CustomTreeNode(key, key, description, 'schemaNode', subNodes, nodeSchema);
-  return node;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function showPathToNode(node) {
-  if (node.parentElement) {
-    node.parentElement.style.display = 'block';
-    showPathToNode(node.parentElement);
-  }
-}
+import { FloriaDOM } from "/static/floria.v2.0/module-dom.js";
+import { FloriaTreeView, FloriaTreeNode } from './module-treeview.js';
 
 
 var schema = /* ===========================================================================
@@ -184,7 +21,8 @@ var schema = /* ================================================================
 */
 
 {
-  "package": "tilda.data"
+  "name":"TILDA"
+ ,"package": "tilda.data"
  ,"dependencies":["tilda/data/tmp/_tilda.TildaTmp.json"]
  ,"extraDDL":{
      "before":[]
@@ -783,96 +621,112 @@ var schema = /* ================================================================
    }   
 };
 
-function findNodeById(node, nodeId) {
-  if (node.id === nodeId) {
-    return node;
-  } else {
-    for (let i = 0; i < node.subNodes.length; i++) {
-      const foundNode = findNodeById(node.subNodes[i], nodeId);
-      if (foundNode) {
-        return foundNode;
-      }
-    }
-  }
-  return null;
-}
 
-function TreeViewWrapper(divId) {
-  const customTreeView = new CustomTreeView([]);
 
-  return {
-    setData: function (treeData) {
-      const rootNodes = treeData.map(data => convertSchemaToTreeNode(data, 'root', 0));
-      customTreeView.rootNodes = rootNodes;
-    },
-    draw: function () {
-      customTreeView.render(divId);
+function makeDescription(obj)
+ {
+   if (obj.description != null && typeof obj.description == "string")
+    return obj.description;
+   if (obj.description != null && Array.isArray(obj.description) == true)
+    return obj.description.join(" ");
+   else if (obj.descriptionX != null && Array.isArray(obj.descriptionX) == true)
+    return obj.descriptionX.join(" ");
+   return "";
+ }
 
-      const container = document.getElementById(divId);
-      container.addEventListener('click', (event) => {
-        const nodeDiv = event.target.closest('[data-node-id]');
-        if (!nodeDiv || !nodeDiv.dataset.expandable) return;
 
-        event.stopPropagation();
-        const childNodesDiv = nodeDiv.querySelector('.child-nodes');
-        if (childNodesDiv) {
-          if (childNodesDiv.style.display === 'none') {
-            childNodesDiv.style.display = 'block';
-          } else {
-            childNodesDiv.style.display = 'none';
-          }
-        }
 
-        // Get the nodeId from the clicked element
-        const nodeId = nodeDiv.dataset.nodeId;
+function convertSchemaToTreeNodes(schema)
+ {
+   let rootNode = new FloriaTreeNode('schema_'+schema.name, schema.name, makeDescription(schema), schema, function(node, open) {
+       // do nothing
+    });
+    
+   let subNode = new FloriaTreeNode('schema_package_'+schema.name, "package", "Schema package definition", schema.package, function(node, open) {
+       // Bring up "field editor" to set/update the package name
+   });
+   rootNode.addSubNode(subNode);
 
-        // Find the node in the tree with the corresponding nodeId
-        let node = null;
-        for (let i = 0; i < customTreeView.rootNodes.length; i++) {
-          node = findNodeById(customTreeView.rootNodes[i], nodeId);
-          if (node) {
-            break;
-          }
-        }
-        
-        if (node) {
-          // Print the full data of the node
-          if (node.subNodes.length == 0){
-            const outputDiv = document.getElementById('output');
-            outputDiv.textContent = JSON.stringify(node.data, null, 2);
-          }
-          //console.log(node.data);
-        }
-      });
-    },
+   subNode = new FloriaTreeNode('schema_dependencies_'+schema.name, "dependencies", "Schema dependencies", schema.dependencies, function(node, open) {
+       // Bring up "schema picker editor" to set/update/add/remove the list of dependencies
+   });
+   rootNode.addSubNode(subNode);
+   
+   subNode = new FloriaTreeNode('schema_description_'+schema.nam, "documentation", "Schema description/documentation", schema?.documentation?.description, function(node, open) {
+       // Bring up "HTML editor" to set/update the schema documentation
+   });
+   rootNode.addSubNode(subNode);
+   
+   subNode = new FloriaTreeNode('schema_extraDDL_'+schema.name, "extra DDLs", "Additional DDL files/definitions", schema.extraDDL, function(node, open) {
+       // Bring up "extra DDL definition" to set/update/add/remove the list of dependencies
+       // may require uploading those extra DDL files
+       // These are SQL, so would benefit from SQL editor
+       // .....
+   });
+   rootNode.addSubNode(subNode);
 
-    search: function (searchText) {
-      const nodes = document.querySelectorAll(`#${divId} div.treeNode_schemaNode`);
-      for (const node of nodes) {
-        const nodeText = node.textContent.toLowerCase();
-        if (nodeText.includes(searchText.toLowerCase())) {
-          node.style.display = 'block';
-          showPathToNode(node);
-        } else {
-          node.style.display = 'none';
-        }
-      }
-    },
-  };
-}
-const iterations = 1000;
-let start, end;
-const treeViewWrapper = TreeViewWrapper('tree-container');
-treeViewWrapper.setData([schema]);
-treeViewWrapper.draw();
+   let objectNode = new FloriaTreeNode('schema_objects_'+schema.name, "objects", "Schema Objects", schema.objects, function(node, open) {
+       // do nothing
+    });
+   rootNode.addSubNode(objectNode);
+   if (schema.objects != null)
+    for (var i = 0; i < schema.objects.length; ++i)
+     {
+       var o = schema.objects[i];
+       if (o==null)
+        continue;
+       let objectSubNode = new FloriaTreeNode('schema_'+schema.name+"_object_"+o.name, o.name, makeDescription(o), o, function(node, open) {
+          // Open up object editor... whatever that is. For now, just print.
+       });
+       objectNode.addSubNode(objectSubNode);
+     }
+   
+   let viewNode = new FloriaTreeNode('schema_views_'+schema.name, "views", "Schema Views", schema.views, function(node, open) {
+       // do nothing
+    });
+   rootNode.addSubNode(viewNode);
+   if (schema.views != null)
+    for (var i = 0; i < schema.views.length; ++i)
+     {
+       var v = schema.views[i];
+       if (v==null)
+        continue;
+       let viewSubNode = new FloriaTreeNode('schema_'+schema.name+"_view_"+v.name, v.name, makeDescription(v), v, function(node, open) {
+          // Open up object editor... whatever that is. For now, just print.
+       });
+       viewNode.addSubNode(viewSubNode);
+     }
+       
+   subNode = new FloriaTreeNode('schema_migrations_'+schema.name, "migrations", "Schema migration definitions", schema.migrations, function(node, open) {
+       // Bring up "migrations" editor
+   });
+   rootNode.addSubNode(subNode);
+   
+   return rootNode;
+ }
+
+
+export function setupTree(treeDivId, searchDivId)
+ {
+   const rootNodes = [schema].map(data => convertSchemaToTreeNodes(data));
+   const treeView = new FloriaTreeView(rootNodes);
+
+   treeView.render(treeDivId);
+   
+   const searchBar = document.getElementById(searchDivId);
+   searchBar.addEventListener('input', (event) => {
+     const searchText = event.target.value;
+     treeView.search(searchText);
+   });
+ }
+
+
+
+//const iterations = 1000;
+//let start, end;
 // start = performance.now();
 // for (let i = 0; i < iterations; i++) {
 //   treeViewWrapper.draw();
 // }
 // end = performance.now();
 // console.log(`New render function took ${end - start} milliseconds over ${iterations} iterations`);
-const searchBar = document.getElementById('searchBar');
-searchBar.addEventListener('input', (event) => {
-  const searchText = event.target.value;
-  treeViewWrapper.search(searchText);
-}); 

@@ -39,6 +39,10 @@
     <div id="tree-container"></div>
     <div id="output"></div>
 
-    <script src="tree.js"></script> 
+<script type="module">
+import { setupTree } from './tree.js';
+setupTree("tree-container", "searchBar");
+</script>
+ 
 </body>
 </html>
