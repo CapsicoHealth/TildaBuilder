@@ -634,30 +634,31 @@ function makeDescription(obj)
    return "";
  }
 
+//  constructor(id, label, description, type, data = {}, onClickFunc = null) {
 
 
 function convertSchemaToTreeNodes(schema)
  {
-   let rootNode = new FloriaTreeNode('schema_'+schema.name, schema.name, makeDescription(schema), schema, function(node, open) {
+   let rootNode = new FloriaTreeNode('schema_'+schema.name, schema.name, makeDescription(schema), null, schema, function(node, open) {
        // do nothing
     });
     
-   let subNode = new FloriaTreeNode('schema_package_'+schema.name, "package", "Schema package definition", schema.package, function(node, open) {
+   let subNode = new FloriaTreeNode('schema_package_'+schema.name, "package", "Schema package definition", null, schema.package, function(node, open) {
        // Bring up "field editor" to set/update the package name
    });
    rootNode.addSubNode(subNode);
 
-   subNode = new FloriaTreeNode('schema_dependencies_'+schema.name, "dependencies", "Schema dependencies", schema.dependencies, function(node, open) {
+   subNode = new FloriaTreeNode('schema_dependencies_'+schema.name, "dependencies", "Schema dependencies", null, schema.dependencies, function(node, open) {
        // Bring up "schema picker editor" to set/update/add/remove the list of dependencies
    });
    rootNode.addSubNode(subNode);
    
-   subNode = new FloriaTreeNode('schema_description_'+schema.nam, "documentation", "Schema description/documentation", schema?.documentation?.description, function(node, open) {
+   subNode = new FloriaTreeNode('schema_description_'+schema.nam, "documentation", "Schema description/documentation", null, schema?.documentation?.description, function(node, open) {
        // Bring up "HTML editor" to set/update the schema documentation
    });
    rootNode.addSubNode(subNode);
    
-   subNode = new FloriaTreeNode('schema_extraDDL_'+schema.name, "extra DDLs", "Additional DDL files/definitions", schema.extraDDL, function(node, open) {
+   subNode = new FloriaTreeNode('schema_extraDDL_'+schema.name, "extra DDLs", "Additional DDL files/definitions", null, schema.extraDDL, function(node, open) {
        // Bring up "extra DDL definition" to set/update/add/remove the list of dependencies
        // may require uploading those extra DDL files
        // These are SQL, so would benefit from SQL editor
@@ -665,7 +666,7 @@ function convertSchemaToTreeNodes(schema)
    });
    rootNode.addSubNode(subNode);
 
-   let objectNode = new FloriaTreeNode('schema_objects_'+schema.name, "objects", "Schema Objects", schema.objects, function(node, open) {
+   let objectNode = new FloriaTreeNode('schema_objects_'+schema.name, "objects", "Schema Objects", null, schema.objects, function(node, open) {
        // do nothing
     });
    rootNode.addSubNode(objectNode);
@@ -675,13 +676,14 @@ function convertSchemaToTreeNodes(schema)
        var o = schema.objects[i];
        if (o==null)
         continue;
-       let objectSubNode = new FloriaTreeNode('schema_'+schema.name+"_object_"+o.name, o.name, makeDescription(o), o, function(node, open) {
+       let objectSubNode = new FloriaTreeNode('schema_'+schema.name+"_object_"+o.name, o.name, makeDescription(o), null, o, function(node, open) {
           // Open up object editor... whatever that is. For now, just print.
+          alert("Selected Object '"+node.label+"' -> '"+node.data.name+"'.")
        });
        objectNode.addSubNode(objectSubNode);
      }
    
-   let viewNode = new FloriaTreeNode('schema_views_'+schema.name, "views", "Schema Views", schema.views, function(node, open) {
+   let viewNode = new FloriaTreeNode('schema_views_'+schema.name, "views", "Schema Views", null, schema.views, function(node, open) {
        // do nothing
     });
    rootNode.addSubNode(viewNode);
@@ -691,13 +693,14 @@ function convertSchemaToTreeNodes(schema)
        var v = schema.views[i];
        if (v==null)
         continue;
-       let viewSubNode = new FloriaTreeNode('schema_'+schema.name+"_view_"+v.name, v.name, makeDescription(v), v, function(node, open) {
+       let viewSubNode = new FloriaTreeNode('schema_'+schema.name+"_view_"+v.name, v.name, makeDescription(v), null, v, function(node, open) {
           // Open up object editor... whatever that is. For now, just print.
+          alert("Selected View '"+node.label+"' -> '"+node.data.name+"'.")
        });
        viewNode.addSubNode(viewSubNode);
      }
        
-   subNode = new FloriaTreeNode('schema_migrations_'+schema.name, "migrations", "Schema migration definitions", schema.migrations, function(node, open) {
+   subNode = new FloriaTreeNode('schema_migrations_'+schema.name, "migrations", "Schema migration definitions", null, schema.migrations, function(node, open) {
        // Bring up "migrations" editor
    });
    rootNode.addSubNode(subNode);

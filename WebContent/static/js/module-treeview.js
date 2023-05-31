@@ -56,7 +56,7 @@ export class FloriaTreeView {
 
   renderNode(node) {
     let str = '';
-    str += `<DIV class="treeNode_${node.type||'schemaNode'}" data-node-id="${node.id}" data-expandable="${node.subNodes.length > 0}" onclick="console.log(this.getAttribute('title'))">
+    str += `<DIV class="treeNode_${node.type||'schemaNode'}" data-node-id="${node.id}" data-expandable="${node.subNodes.length > 0}">
                 <SPAN title="${node.description}">${node.label}</SPAN> 
            `;
 
@@ -96,7 +96,7 @@ export class FloriaTreeView {
         event.stopPropagation();
         const childNodesDiv = nodeDiv.querySelector('.child-nodes');
         if (childNodesDiv) {
-          if (childNodesDiv.style.display === 'none') {
+          if (childNodesDiv.style.display === 'none' || childNodesDiv.style.display === '') {
             childNodesDiv.style.display = 'block';
           } else {
             childNodesDiv.style.display = 'none';
