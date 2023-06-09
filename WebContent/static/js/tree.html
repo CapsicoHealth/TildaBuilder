@@ -3,7 +3,8 @@
 <head>
     <title>Tree View Example</title>
     <style>
-        .treeNode_schemaNode {
+
+        .treeNode.schemaNode, .treeNode.pack {
           cursor: pointer;
           display: block;
           padding: 3px;
@@ -11,24 +12,52 @@
           margin-bottom: 3px;
           position: relative;
         }
-      
-        .treeNode_schemaNode > span:nth-child(1){
+        
+        .treeNode.schemaNode > span:nth-child(1){
             font-weight: bold;
         }
-        .treeNode_schemaNode > span:nth-child(2){
+        .treeNode.schemaNode > span:nth-child(2){
             font-style: italic;
             margin-left: '5px';
         }
         
-        .treeNode_schemaNode:hover {
+        .treeNode.schemaNode:hover {
           background-color: #f1f1f1;
         }
-      
+
+        .treeNode.schemaNode[data-expandable="true"] {
+           background-image: url('/static/img/chkon.gif');
+           background-position: 3px 5px;
+           background-size: 15px;
+           background-repeat: no-repeat;
+           padding-left: 25px;
+        }
+
+        .treeNode.schemaNode[data-expandable="true"].expanded  {
+           background-image: url('/static/img/chkoff.gif');
+        }
+        
         .child-nodes {
           display: none;
           margin-left: 20px;
         }
-      </style>
+        
+        .expanded > SPAN {
+        }
+        
+        .expanded > .child-nodes {
+           display: block;
+        }
+        
+        .treeNode.pack {
+           background-image: url('/static/img/cross_icon.png');
+           background-position: 3px 5px;
+           background-size: 15px;
+           background-repeat: no-repeat;
+           padding-left: 25px;
+        }
+        
+</style>
       
       
       

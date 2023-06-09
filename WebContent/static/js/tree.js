@@ -24,6 +24,12 @@ var schema = /* ================================================================
   "name":"TILDA"
  ,"package": "tilda.data"
  ,"dependencies":["tilda/data/tmp/_tilda.TildaTmp.json"]
+ ,"documentation": {
+     "description": [
+         "This schema contains a number of tables and views to support Tilda functionality.<BR>"
+        ,"<B>Copyright (c) 2015, CapsicoHealth Inc., All rights reserved.</B>"
+      ]
+   }
  ,"extraDDL":{
      "before":[]
     ,"after":["_tilda.Tilda.postgres.helpers-after.sql"]
@@ -643,8 +649,7 @@ function convertSchemaToTreeNodes(schema)
        // do nothing
     });
     
-   let subNode = new FloriaTreeNode('schema_package_'+schema.name, "package", "Schema package definition", null, schema.package, function(node, open) {
-       // Bring up "field editor" to set/update the package name
+   let subNode = new FloriaTreeNode('schema_package_'+schema.name, "package", "Schema package definition", "pack", schema.package, function(node, open) {
    });
    rootNode.addSubNode(subNode);
 
@@ -655,6 +660,7 @@ function convertSchemaToTreeNodes(schema)
    
    subNode = new FloriaTreeNode('schema_description_'+schema.nam, "documentation", "Schema description/documentation", null, schema?.documentation?.description, function(node, open) {
        // Bring up "HTML editor" to set/update the schema documentation
+      alert(schema?.documentation?.description);
    });
    rootNode.addSubNode(subNode);
    

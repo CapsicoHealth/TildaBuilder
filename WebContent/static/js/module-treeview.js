@@ -56,7 +56,7 @@ export class FloriaTreeView {
 
   renderNode(node) {
     let str = '';
-    str += `<DIV class="treeNode_${node.type||'schemaNode'}" data-node-id="${node.id}" data-expandable="${node.subNodes.length > 0}">
+    str += `<DIV class="treeNode ${node.type||'schemaNode'}" data-node-id="${node.id}" data-expandable="${node.subNodes.length > 0}">
                 <SPAN title="${node.description}">${node.label}</SPAN> 
            `;
 
@@ -91,32 +91,32 @@ export class FloriaTreeView {
     var that = this;
     FloriaDOM.addEvent(e, 'click', (e, event, target) => {
         const nodeDiv = target.closest('[data-node-id]');
-        if (!nodeDiv || !nodeDiv.dataset.expandable)
+        if (!nodeDiv)
          return;
+        if  (nodeDiv.dataset.expandable == "false")
+         {
+           return that.callHandler(nodeDiv);
+         }
         event.stopPropagation();
-        const childNodesDiv = nodeDiv.querySelector('.child-nodes');
-        if (childNodesDiv) {
-          if (childNodesDiv.style.display === 'none' || childNodesDiv.style.display === '') {
-            childNodesDiv.style.display = 'block';
-          } else {
-            childNodesDiv.style.display = 'none';
-          }
-        }
-
-        // Get the nodeId from the clicked element
-        const nodeId = nodeDiv.dataset.nodeId;
-
-        // Find the node in the tree with the corresponding nodeId
-        let node = null;
-        for (let i = 0; i < that.rootNodes.length; i++) {
-          node = that.findNodeById(that.rootNodes[i], nodeId);
-          if (node != null) {
-            node.handleClick(childNodesDiv.style.display=="block");
-          }
-        }
-      }, null, true);
+        FloriaDOM.toggleCSS(nodeDiv, "expanded")
+        that.callHandler(nodeDiv);
+      }, null /*1000*/, true);
   }
   
+  callHandler(nodeDiv)
+   {
+     const nodeId = nodeDiv.dataset.nodeId
+     const childNodesDiv = nodeDiv.querySelector('.child-nodes');
+     // Find the node in the tree with the corresponding nodeId
+     let node = null;
+     for (let i = 0; i < this.rootNodes.length; i++) {
+       node = this.findNodeById(this.rootNodes[i], nodeId);
+       if (node != null) {
+         node.handleClick(FloriaDOM.hasCSS(childNodesDiv, "expendable"));
+       }
+     }
+     
+   }
   showPathToNode(node) {
     if (node.parentElement) {
       node.parentElement.style.display = 'block';
