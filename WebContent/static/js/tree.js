@@ -655,12 +655,46 @@ function convertSchemaToTreeNodes(schema)
 
    subNode = new FloriaTreeNode('schema_dependencies_'+schema.name, "dependencies", "Schema dependencies", null, schema.dependencies, function(node, open) {
        // Bring up "schema picker editor" to set/update/add/remove the list of dependencies
+       
    });
    rootNode.addSubNode(subNode);
    
    subNode = new FloriaTreeNode('schema_description_'+schema.nam, "documentation", "Schema description/documentation", null, schema?.documentation?.description, function(node, open) {
        // Bring up "HTML editor" to set/update the schema documentation
-      alert(schema?.documentation?.description);
+    
+      var myTextarea = document.getElementById('editor-container');
+      let html = schema?.documentation?.description;
+      var htmlString = html.join("");
+      
+      
+  
+      myTextarea.style.position = 'absolute';
+      myTextarea.style.right = '0'; 
+      myTextarea.style.top = '0'; 
+      myTextarea.style.width = '800px';
+      myTextarea.style.height = '400px';
+      myTextarea.value = htmlString;
+
+
+      let seditor = sceditor.create(myTextarea, {
+          format: 'html', // Set the editor format to HTML
+          //Other configuration options go here
+      });
+	  var editor = sceditor.instance(myTextarea);
+
+	  var editortext = editor.getBody();
+	  FloriaDOM.addEvent(editortext, 'keyup', (editortext, event, target) => {
+        console.log("Waited three seconds");
+        schema.documentation.description = editor.val();
+      }, 3000, true);
+      
+      
+      
+     
+	
+      
+      //alert(schema?.documentation?.description);
+      
    });
    rootNode.addSubNode(subNode);
    
