@@ -37,7 +37,13 @@ function createNavEvents(form)
     return;
     
    if (form._popupTitle==null || form._submitButton == true)
-    FloriaDOM.addEvent(form._elementId+'_F_SUBMIT', "click", function() { form.updatePage(null); }, null, true);
+    FloriaDOM.addEvent(form._elementId+'_F_SUBMIT', "click", function(e, event, target) {
+         e.disabled = 1;
+         FloriaDOM.addCSS(e, "formButtonBusy");
+         try { form.updatePage(null); } catch(e) { console.error(e); }
+//         e.disabled = 0;
+//         FloriaDOM.removeCSS(e, "formButtonBusy");
+    }, null, true);
 
    if (form._cancelButton == true)
     FloriaDOM.addEvent(form._elementId+'_F_CANCEL', "click", function() {

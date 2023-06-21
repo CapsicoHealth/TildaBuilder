@@ -107,6 +107,7 @@ BoardManager.paint = function(divId, data, mappings, dataDictionary, timerFunc, 
  }
 
 
+
 export var HeatTable = { };
 
 HeatTable.paint = function(divId, data, mappings, dataDictionary, totalRowFields, title, tableCssClasses, onClickHandler)

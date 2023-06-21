@@ -399,14 +399,17 @@ export var FloriaDate = {
       }
       return d;
     },
-    printYYYYMMDD: function(DateTimeStr)
+    printYYYYMMDD: function(dtStr)
      {
-       if (DateTimeStr != null)
-         DateTimeStr = this.parseDateTime(DateTimeStr);
-       if (DateTimeStr != null)
-         DateTimeStr = DateTimeStr.printYYYYMMDD();
-       return DateTimeStr;
+       var dt = FloriaDate.parseDateTime(dtStr);
+       return dt = dt==null ? FloriaText.spanNA : dt.printYYYYMMDD();
+     },
+    printContextual: function(dtStr)
+     {
+       var dt = FloriaDate.parseDateTime(dtStr);
+       return dt = dt==null ? FloriaText.spanNA : dt.printContextual();
      }
+     
    ,toDtStr: function(d, friendly)
      {
        if (d != null && typeof d == "string")
