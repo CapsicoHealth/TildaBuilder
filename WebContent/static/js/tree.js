@@ -31,8 +31,8 @@ var schema = /* ================================================================
       ]
    }
  ,"extraDDL":{
-     "before":[]
-    ,"after":["_tilda.Tilda.postgres.helpers-after.sql"]
+     "before":["_tilda.Tilda.postgres.helpers-before.sql"]
+    ,"after":["_tilda.Tilda.postgres.helpers-after.sql","_tilda.Tilda.postgres.helpers-after1.sql","_tilda.Tilda.postgres.helpers-after2.sql"]
    }
   
  ,"enumerations": [
@@ -688,7 +688,7 @@ function convertSchemaToTreeNodes(schema)
         schema.documentation.description = editor.val();
       }, 3000, true);
       
-      
+      //sceditor.instance(myTextarea).destroy();
       
      
 	
@@ -703,6 +703,194 @@ function convertSchemaToTreeNodes(schema)
        // may require uploading those extra DDL files
        // These are SQL, so would benefit from SQL editor
        // .....
+  	    var jsonDataAfter = [];
+	    var jsonDataBefore = [];
+	
+	    function deleteRow(type, index) {
+		    var arrayToModify = type === 'after' ? jsonDataAfter : jsonDataBefore;
+		    arrayToModify[index].deleted = true;
+		    updateTable();
+		}
+	    function insertRow(type, index) {
+		    
+		    var arrayToModify = type === 'after' ? jsonDataAfter : jsonDataBefore;
+		
+		    var itemName = ""; 
+		
+		    var newData = {order: index + 1, dbType: 'postgres', name: itemName};
+		
+		    arrayToModify.splice(index + 1, 0, newData);
+		
+		    for (var i = index + 2; i < arrayToModify.length; i++) {
+		        arrayToModify[i].order = i;
+		    }
+		
+		    updateTable();
+		}
+
+		function createRow(type, data, index) {
+		    var row = document.createElement("tr");
+		
+		    var orderCell = document.createElement("td");
+		    orderCell.innerText = data.order;
+		    row.appendChild(orderCell);
+		
+		    var typeCell = document.createElement("td");
+		    var typeDropdown = document.createElement("select");
+		    var option1 = document.createElement("option");
+		    option1.value = "postgres";
+		    option1.text = "Postgres";
+		    typeDropdown.add(option1);
+		    var option2 = document.createElement("option");
+		    option2.value = "mysql";
+		    option2.text = "MySQL";
+		    typeDropdown.add(option2);
+		    typeDropdown.value = data.dbType;
+		    typeCell.appendChild(typeDropdown);
+		    row.appendChild(typeCell);
+		
+		    var nameCell = document.createElement("td");
+		    var nameInput = document.createElement("input");
+		    nameInput.value = data.name;
+		    nameInput.placeholder = 'Script name';
+		    nameInput.style.border = 'none';
+		    nameInput.style.borderBottom = '1px dashed grey';
+		    nameInput.onfocus = function() {
+		        this.style.border = 'none';
+		        this.style.borderBottom = '1px solid blue';
+		    }
+		    nameInput.onblur = function() {
+		        this.style.border = 'none';
+		        this.style.borderBottom = '1px dashed grey';
+		        this.style.placeholder
+		    }
+		    nameInput.onchange = function() {
+		        var arrayToModify = type === 'after' ? jsonDataAfter : jsonDataBefore;
+		        arrayToModify[index].name = this.value;
+		    };
+		    typeDropdown.onchange = function() {
+			    var arrayToModify = type === 'after' ? jsonDataAfter : jsonDataBefore;
+			    arrayToModify[index].dbType = this.value;
+			};
+		    nameCell.appendChild(nameInput);
+		    row.appendChild(nameCell);
+		
+		    if (data.deleted) {
+		        typeDropdown.disabled = true;
+		        nameInput.disabled = true;
+		        row.style.backgroundColor = '#d3d3d3';
+		    }
+		
+		    var actionCell = document.createElement("td");
+			var deleteButton = document.createElement("button");
+			
+			var deleteImg = document.createElement("img");
+			deleteImg.src = data.deleted ? "/static/img/cross_icon.png" : "/static/img/cross_icon.png";
+			deleteImg.style.height = '15px';  
+			deleteImg.style.width = '15px';   
+			deleteButton.appendChild(deleteImg);
+			
+			deleteButton.dataset.type = type;
+			deleteButton.dataset.index = index;
+			deleteButton.onclick = function() {
+			    if (data.deleted) {
+			        var arrayToModify = type === 'after' ? jsonDataAfter : jsonDataBefore;
+			        arrayToModify[index].deleted = false;
+			        updateTable();
+			    } else {
+			        deleteRow(this.dataset.type, parseInt(this.dataset.index));
+			    }
+			};
+		    actionCell.appendChild(deleteButton);
+		
+		    if (!data.deleted) {
+		    var insertButton = document.createElement("button");
+		    var insertImg = document.createElement("img");
+		    insertImg.src = "/static/img/add.gif";
+		    insertImg.style.height = '15px';
+		    insertImg.style.width = '15px';
+		
+		    insertButton.appendChild(insertImg);
+		
+		    insertButton.dataset.type = type;
+		    insertButton.dataset.index = index;
+		    insertButton.onclick = function() {
+		        insertRow(this.dataset.type, parseInt(this.dataset.index));
+		    };
+		    actionCell.appendChild(insertButton);
+		}
+		
+		    row.appendChild(actionCell);
+		
+		    return row;
+		}
+
+
+
+
+		function updateTable() {
+	        var tableBody = document.getElementById("table-body");
+	        tableBody.innerHTML = ""; 
+	
+	        for (var i = 0; i < jsonDataAfter.length; i++) {
+	            tableBody.appendChild(createRow('after', jsonDataAfter[i], i));
+	        }
+	
+	        for (var i = 0; i < jsonDataBefore.length; i++) {
+	            tableBody.appendChild(createRow('before', jsonDataBefore[i], i));
+	        }
+	    }
+		
+		
+       var tableContainer = document.getElementById("table-container");
+    
+	    // Clear the container
+	    tableContainer.innerHTML = "";
+	
+	    // Create a new table
+	    var table = document.createElement("table");
+	
+	    // Add table header
+	    var header = table.createTHead();
+	    var row = header.insertRow(0);
+	    var orderHeader = document.createElement("th");
+	    orderHeader.innerText = "Order";
+	    row.appendChild(orderHeader);
+	    var typeHeader = document.createElement("th");
+	    typeHeader.innerText = "Type";
+	    row.appendChild(typeHeader);
+	    var nameHeader = document.createElement("th");
+	    nameHeader.innerText = "Name";
+	    row.appendChild(nameHeader);
+	    var actionHeader = document.createElement("th");
+	    actionHeader.innerText = "Action";
+	    row.appendChild(actionHeader);
+	    
+	    // Add table body
+	    var body = table.createTBody();
+	    body.id = "table-body"; 
+	    tableContainer.appendChild(table);
+		let ddl = schema?.extraDDL;
+
+	    for (let i = 0; i < ddl.after.length; i++){
+	        var value = ddl.after[i];
+	        var parts = value.split('.');
+	        var db = parts[2];
+	        var name = parts[3];
+	        jsonDataAfter.push({order: i, dbType: db, name: name,deleted:false});
+	    }
+	
+	    for (let i = 0; i < ddl.before.length; i++){
+	        var value = ddl.before[i];
+	        var parts = value.split('.');
+	        var db = parts[2];
+	        var name = parts[3];
+	        jsonDataBefore.push({order: i, dbType: db, name: name,deleted:false});
+	    }
+	
+	    updateTable();
+	    
+	    
    });
    rootNode.addSubNode(subNode);
 
