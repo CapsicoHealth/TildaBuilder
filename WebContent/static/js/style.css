@@ -19,3 +19,26 @@ body {
     content:attr(data-text);
     color:#888;
 }
+table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      table, th, td {
+        border: 1px solid black;
+      }
+      th, td {
+        padding: 5px;
+        text-align: left;
+      }
+.draggable td:first-child img{
+    visibility:hidden;
+    width: 20px;
+    height: 20px;
+    float: right;
+    padding:5px;
+}
+.draggable td:first-child:hover img{
+	cursor:move;
+    visibility:visible;
+}
+
