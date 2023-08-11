@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JointJS Custom Entity</title>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jointjs/3.4.2/joint.min.css">
+    
+    <style>
+        /* Some minimal styling for the entity attributes */
+        .entity-attrs text {
+            font-size: 12px;
+        }
+
+        /* CSS for the context menu */
+        .context-menu {
+            position: absolute;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            border: 1px solid #ddd;
+        }
+
+        .context-menu li {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .context-menu li:hover {
+            background-color: #eee;
+        }
+
+        #context-menu {
+            position: absolute;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            border: 1px solid #ddd;
+        }
+
+        #context-menu li {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        #context-menu li:hover {
+            background-color: #eee;
+        }
+
+        .hide {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <form id="entity-form">
+        <label for="entity-name">Entity Name:</label>
+        <input type="text" id="entity-name" name="entity-name"><br>
+        <label for="entity-attributes">Attributes (comma-separated):</label>
+        <input type="text" id="entity-attributes" name="entity-attributes"><br>
+        <label for="entity-attributes-fk">Foreign Keys (comma-separated):</label>
+        <input type="text" id="entity-attributes-fk" name="entity-attributes-fk"><br>
+        <label for="entity-attributes-pk">Primary Keys (comma-separated):</label>
+        <input type="text" id="entity-attributes-pk" name="entity-attributes-pk"><br>
+        <input type="submit" value="Add Entity">
+    </form>
+    <form id="edit-entity-form" style="display: none;">
+        <label for="edit-entity-name">Edit Entity Name:</label>
+        <input type="text" id="edit-entity-name" name="edit-entity-name"><br>
+        <label for="edit-entity-attributes">Edit Attributes:</label>
+        <input type="text" id="edit-entity-attributes" name="edit-entity-attributes"><br>
+        <input type="submit" value="Update Entity">
+    </form>
+    <div id="paper"></div>
+    
+    <!-- Context Menu HTML -->
+    <ul class="context-menu hide">
+    </ul>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.4.0/backbone-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jointjs/3.4.2/joint.min.js"></script>
+    <script src="joint.shapes.uml.js"></script>
+    <script src="myapp1.js"></script> 
+</body>
+</html>
