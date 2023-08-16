@@ -1,3 +1,5 @@
+const entitiesMap = {}; 
+
 const jsonData = {
 //     "package": "tilda.data"
 //    ,"dependencies":["tilda/data/tmp/_tilda.TildaTmp.json"]
@@ -488,8 +490,6 @@ const jsonData = {
      }   
   }
 
-
-
 $(document).ready(function() {
     var graph = new joint.dia.Graph();
 
@@ -507,8 +507,8 @@ $(document).ready(function() {
     var paper = new joint.dia.Paper({
         el: $('#paper'),
         model: graph,
-        width: 3000,
-        height: 3000,
+        width: 1000,
+        height: 1000,
         gridSize: 10,
         defaultLink: new CustomLink(),
         interactive: function(cellView) {
@@ -518,8 +518,6 @@ $(document).ready(function() {
             return true;
         }
     });
-
-    
 
     var uml = joint.shapes.uml;
 
@@ -533,17 +531,17 @@ $(document).ready(function() {
                 this.findView(paper).update();
             }, this);
 
-            this.on('change:attributesFk', function() {
+            this.on('change:attributesPk', function() {
                 this.updateRectangles();
                 this.findView(paper).update();
             }, this);
-            this.on('change:attributesPk', function() {
+            this.on('change:attributesFk', function() {
                 this.updateRectangles();
                 this.findView(paper).update();
             }, this);
         },
     });
-
+    
     $('#entity-form').submit(function(e) {
         e.preventDefault();
     
@@ -565,10 +563,11 @@ $(document).ready(function() {
             attributesPk: entityAttributesPk,
             methods: [],
         });
-    
+        
+
+        delete availableEntities[entityName];
         graph.addCells([NewEntity]);
     });
-    
 
     var link = null;
 
@@ -593,6 +592,8 @@ $(document).ready(function() {
             link.addTo(graph);
         }
     });
+
+    
     
     paper.on('blank:pointermove', function(evt, x, y) {
         if (link) {
@@ -606,15 +607,13 @@ $(document).ready(function() {
         var targetElement = paper.findViewsFromPoint(link.getTargetPoint())[0];
     
         if (targetElement) {
+
             link.target({ id: targetElement.model.id });
         }
     
         link = null;
     });
      
-    
-    
-
     paper.on('cell:contextmenu', function(cellView, evt, x, y) { 
         evt.preventDefault();
 
@@ -635,63 +634,96 @@ $(document).ready(function() {
             alert('Could not find an entity with the name "' + destinationName + '"!');
         }
     });
-
-    var contextMenu = $('<ul>', { class: 'context-menu' }).appendTo(document.body);
-
-    var contextMenu = $('<ul>', { class: 'context-menu' }).appendTo(document.body);
-    var options = ['Show Keys', 'Show Columns', 'Show Both', 'Show Entity Name Only'];
-    var currentCellView = null; 
+    function removeEntityFromCanvas(entityModel) {
+        populateEntityList(entityModel.attributes.name);
     
-    options.forEach(function(option) {
-        $('<li>').text(option).appendTo(contextMenu).on('click', function() {
-            if (currentCellView) {
-                var selectedOption = $(this).text();
-                updateEntityAttributesDisplay(selectedOption, currentCellView.model);
-            }
-            contextMenu.hide(); 
+        var links = graph.getConnectedLinks(entityModel);
+        links.forEach(link => {
+            graph.removeCells([link]);
         });
-    });
-    contextMenu.hide(); 
+        graph.removeCells([entityModel]);
+    }
+
+    var contextMenu = $('<ul>', { class: 'context-menu' }).appendTo(document.body);
+
+    var currentCellView = null;
     
-    paper.on('cell:pointerdblclick', function(cellView, evt, x, y) { 
-        evt.stopPropagation(); 
-        contextMenu.css({ left: evt.pageX, top: evt.pageY }).show();
-        
-        currentCellView = cellView;
-    });
+    function getContextOptions(cell) {
+        var hideKeys = cell.get('hideKeys') ? 'Show Keys' : 'Hide Keys';
+        var hideColumns = cell.get('hideColumns') ? 'Show Columns' : 'Hide Columns';
+        return [hideKeys, hideColumns, 'Remove Entity from Canvas'];
+    }
+    
+    function refreshContextMenuForCell(cell) {
+        contextMenu.empty();
+        var options = getContextOptions(cell);
+        options.forEach(function(option) {
+            $('<li>').text(option).appendTo(contextMenu).on('click', function() {
+                var selectedOption = $(this).text();
+                switch (selectedOption) {
+                    case 'Hide Keys':
+                        updateEntityAttributesDisplay('Hide Keys', cell);
+                        cell.set('hideKeys', true);
+                        break;
+                    case 'Show Keys':
+                        updateEntityAttributesDisplay('Show Keys', cell);
+                        cell.set('hideKeys', false);
+                        break;
+                    case 'Hide Columns':
+                        updateEntityAttributesDisplay('Hide Columns', cell);
+                        cell.set('hideColumns', true);
+                        break;
+                    case 'Show Columns':
+                        updateEntityAttributesDisplay('Show Columns', cell);
+                        cell.set('hideColumns', false);
+                        break;
+                    case 'Remove Entity from Canvas':
+                        removeEntityFromCanvas(cell);
+                        break;
+                }
+                contextMenu.hide();
+            });
+        });
+    }
     
     function updateEntityAttributesDisplay(option, cell) {
         if (cell.isLink()) return;
-    
-        if (!cell.get('originalAttributes')) {
+            if (!cell.get('originalAttributes')) {
             cell.set('originalAttributes', cell.get('attributes') || []);
             cell.set('originalAttributesFk', cell.get('attributesFk') || []);
             cell.set('originalAttributesPk', cell.get('attributesPk') || []);
         }
     
+        var originalAttributes = cell.get('originalAttributes');
+        var originalAttributesFk = cell.get('originalAttributesFk');
+        var originalAttributesPk = cell.get('originalAttributesPk');
+    
         switch (option) {
+            case 'Hide Keys':
+                cell.set('attributes', [...originalAttributes]);
+                cell.set('attributesFk', []);
+                cell.set('attributesPk', []);
+                break;
             case 'Show Keys':
-                cell.set('attributes', []);
-                cell.set('attributesFk', [...cell.get('originalAttributesFk')]);
-                cell.set('attributesPk', [...cell.get('originalAttributesPk')]);
+                if(!cell.get('hideColumns')) {
+                    cell.set('attributes', [...originalAttributes]);
+                }
+                cell.set('attributesFk', [...originalAttributesFk]);
+                cell.set('attributesPk', [...originalAttributesPk]);
                 break;
-    
+            case 'Hide Columns':
+                cell.set('attributes', []);
+                if(!cell.get('hideKeys')) {
+                    cell.set('attributesFk', [...originalAttributesFk]);
+                    cell.set('attributesPk', [...originalAttributesPk]);
+                }
+                break;
             case 'Show Columns':
-                cell.set('attributes', [...cell.get('originalAttributes')]);
-                cell.set('attributesFk', []);
-                cell.set('attributesPk', []);
-                break;
-    
-            case 'Show Both':
-                cell.set('attributes', [...cell.get('originalAttributes')]);
-                cell.set('attributesFk', [...cell.get('originalAttributesFk')]);
-                cell.set('attributesPk', [...cell.get('originalAttributesPk')]);
-                break;
-    
-            case 'Show Entity Name Only':
-                cell.set('attributes', []);
-                cell.set('attributesFk', []);
-                cell.set('attributesPk', []);
+                cell.set('attributes', [...originalAttributes]);
+                if(!cell.get('hideKeys')) {
+                    cell.set('attributesFk', [...originalAttributesFk]);
+                    cell.set('attributesPk', [...originalAttributesPk]);
+                }
                 break;
         }
     
@@ -700,9 +732,102 @@ $(document).ready(function() {
     
     
     
-    function createMainEntitiesFromJson(data) {
-        const entitiesMap = {};  
+    contextMenu.hide();
+    
+    paper.on('cell:pointerdblclick', function(cellView, evt, x, y) { 
+        evt.stopPropagation(); 
+        contextMenu.css({ left: evt.pageX, top: evt.pageY });
         
+        currentCellView = cellView;
+        refreshContextMenuForCell(currentCellView.model);
+        contextMenu.show();
+    });
+    
+    function populateEntityList(entityName) {
+        const entityList = document.getElementById('entity-list');
+        const listItem = document.createElement('li');
+        listItem.textContent = entityName;
+        
+        listItem.addEventListener('click', function() {
+
+            showEntityOnCanvas(entityName);
+            console.log(entitiesMap);
+            entityList.removeChild(listItem);
+        });
+        
+        entityList.appendChild(listItem);
+    }
+    
+    function showEntityOnCanvas(entityName) {
+        const entityModel = entitiesMap[entityName];
+        
+    
+        if (entityModel) {
+            graph.addCells([entityModel]);
+        }
+
+        jsonData.objects.forEach(entityData => {
+            if (entityData.foreign) {
+                entityData.foreign.forEach(foreignKey => {
+                    let sourceModel, destinationModel;
+    
+                    if (entityData.name === entityName) {
+                        sourceModel = graph.getCell(entityModel.id);
+                        destinationModel = graph.getCell(entitiesMap[foreignKey.destObject].id);
+                    }
+                    else if (foreignKey.destObject === entityName) {
+                        sourceModel = graph.getCell(entitiesMap[entityData.name].id);
+                        destinationModel = graph.getCell(entityModel.id);
+                    }
+                        if (sourceModel && destinationModel) {
+                        var link = new joint.shapes.standard.Link();
+                        link.source(sourceModel);
+                        link.target(destinationModel);
+                        graph.addCells([link]);
+                    }
+                });
+            }
+        });
+    }
+    
+    function addEntityToCanvas(entityName) {
+        const entity = entitiesMap[entityName];
+        if (entity) {
+            graph.addCells([entity]);
+            
+            const associatedLinks = getAssociatedLinks(entity);
+            graph.addCells(associatedLinks);
+            
+            const listItem = [...document.querySelectorAll("#entity-names li")].find(li => li.textContent === entityName);
+            if (listItem) {
+                listItem.remove();
+            }
+        }
+    }
+
+    function getAssociatedLinks(entity) {
+        return jsonData['objects'].reduce((links, entityData) => {
+            if (entityData.foreign) {
+                entityData.foreign.forEach(foreignKey => {
+                    const sourceModel = entitiesMap[entityData.name];
+                    const destinationModel = entitiesMap[foreignKey.destObject];
+                    if (sourceModel && destinationModel) {
+                        if (graph.getCell(sourceModel.id) && graph.getCell(destinationModel.id)) {
+                            var link = new CustomLink();
+                            link.source(sourceModel);
+                            link.target(destinationModel);
+                            links.push(link);
+                        }
+                    }
+                });
+            }
+            return links;
+        }, []);
+    }
+    
+    
+    function createMainEntitiesFromJson(data) {
+            
         if (data.hasOwnProperty('objects')) {
             data['objects'].forEach(entityData => {
                 const entityName = entityData.name;
@@ -735,7 +860,6 @@ $(document).ready(function() {
                 });
     
                 const primaryKey = (entityData.primary && entityData.primary.columns) ? entityData.primary.columns : [];
-
                 const primaryKeyAttributes = [];
                 primaryKey.forEach(pk => {
                     const foundAttr = allAttributes.find(attr => attr.startsWith(pk + ":"));
@@ -757,7 +881,7 @@ $(document).ready(function() {
                         }
                     });
                 }
-               
+                
                 const NewEntity = new CustomUMLClass({
                     position: { x: Math.random() * 600, y: Math.random() * 400 },
                     size: { width: 200 + longestAttributeLength * 7, height: 100 + allAttributes.length * 15 },
@@ -769,44 +893,34 @@ $(document).ready(function() {
                     methods: [],
                 });
     
-                graph.addCells([NewEntity]);
-                entitiesMap[entityName] = NewEntity; 
+                entitiesMap[entityName] = NewEntity;
+                populateEntityList(entityName);  
             });
-    
-            data['objects'].forEach(entityData => {
+                data['objects'].forEach(entityData => {
                 if (entityData.foreign) {
                     entityData.foreign.forEach(foreignKey => {
                         const sourceModel = entitiesMap[entityData.name];
                         const destinationModel = entitiesMap[foreignKey.destObject];
     
                         if (sourceModel && destinationModel) {
-                            var link = new joint.shapes.standard.Link();
-                            link.source(sourceModel);
-                            link.target(destinationModel);
-                            graph.addCells([link]);
+                            const sourceExistsOnCanvas = graph.getCell(sourceModel.id);
+                            const destinationExistsOnCanvas = graph.getCell(destinationModel.id);
+    
+                            if (sourceExistsOnCanvas && destinationExistsOnCanvas) {
+                                const link = new joint.shapes.standard.Link();
+                                link.source(sourceModel);
+                                link.target(destinationModel);
+                                graph.addCells([link]);
+                            }
                         }
                     });
                 }
             });
         }
+        
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     createMainEntitiesFromJson(jsonData);
-
-
-   
-
     paper.on('link:pointerclick', function(linkView) {
         var verticesTool = new joint.linkTools.Vertices();
         var segmentsTool = new joint.linkTools.Segments();
@@ -815,4 +929,5 @@ $(document).ready(function() {
         });
         linkView.addTools(toolsView);
     });
+
 });

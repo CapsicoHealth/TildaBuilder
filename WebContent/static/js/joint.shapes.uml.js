@@ -84,9 +84,9 @@ this.joint.shapes = this.joint.shapes || {};
         
             var rects = [
                 { type: 'name', text: this.getClassName() },
-                { type: 'attrs', text: (this.get('attributes') || []).map(this.splitAttribute.bind(this)) },
+                { type: 'attributes-pk', text: (this.get('attributesPk') || []).map(this.splitAttribute.bind(this)) },
                 { type: 'attributes-fk', text: (this.get('attributesFk') || []).map(this.splitAttribute.bind(this)) },
-                { type: 'attributes-pk', text: (this.get('attributesPk') || []).map(this.splitAttribute.bind(this)) }
+                { type: 'attrs', text: (this.get('attributes') || []).map(this.splitAttribute.bind(this)) },
             ];
         
             var offsetY = 0;
