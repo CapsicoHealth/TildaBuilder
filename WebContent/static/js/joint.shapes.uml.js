@@ -81,7 +81,7 @@ this.joint.shapes = this.joint.shapes || {};
         },
         updateRectangles: function() {
             var attrs = this.get('attrs');
-        
+            
             var rects = [
                 { type: 'name', text: this.getClassName() },
                 { type: 'attributes-pk', text: (this.get('attributesPk') || []).map(this.splitAttribute.bind(this)) },
@@ -92,21 +92,19 @@ this.joint.shapes = this.joint.shapes || {};
             var offsetY = 0;
         
             rects.forEach(function(rect) {
-        
                 var lines = Array.isArray(rect.text) ? rect.text : [rect.text];
                 var rectHeight = lines.length * 20 + 20;
-        
                 attrs['.uml-class-' + rect.type + '-text'].text = lines.join('\n');
                 attrs['.uml-class-' + rect.type + '-rect'].height = rectHeight;
                 attrs['.uml-class-' + rect.type + '-rect'].transform = 'translate(0,' + offsetY + ')';
-        
-                offsetY += rectHeight;
+                if (attrs['.uml-class-' + rect.type + '-text'].display != "none") {
+                    offsetY += rectHeight;
+                }  
             });
         },
         
         splitAttribute: function(attribute) {
             try{
-
                 var parts = attribute.split(":");
                 var length = parts[0].length;
                 parts[0] = parts[0].length > 25 ? parts[0].substring(0, 25) : parts[0];
@@ -115,53 +113,33 @@ this.joint.shapes = this.joint.shapes || {};
                     if (length > 25){
                         parts[0] = parts[0] + "...";
                         var spacesNeeded = this.get('longestAttributeLength') - parts[0].length - 3;
-                        spacesNeeded = spacesNeeded + 13;
+                        spacesNeeded = spacesNeeded + 12;
                     }
                     else {
                         var spacesNeeded = this.get('longestAttributeLength') - parts[0].length;
                         spacesNeeded = spacesNeeded + 10;
-
                     }
-                    
                     var spaceString = ' '.repeat(Math.max(0, spacesNeeded));
-                    
                 }
                 else {
-                    
                     if (length > 25){
                         parts[0] = parts[0] + "...";
                         var spacesNeeded = this.get('longestAttributeLength') - parts[0].length - 3;
-                        spacesNeeded = spacesNeeded + 13;
+                        spacesNeeded = spacesNeeded + 12;
                     }
                     else {
                         var spacesNeeded = parts[0].length - this.get('longestAttributeLength');
                         spacesNeeded = spacesNeeded + 10;
                     }
-                    
                     var spaceString = ' '.repeat(Math.max(0, spacesNeeded));
                 }
-
-            
                 return parts[0] + spaceString + parts[1] + '   ';
-
             }
             catch(error) {
                 return attribute;
-
             }
-            
-            
         }
-        
-        
-        
-        
-        
-        
-        
-        
-
-    });
+     });
 
     var ClassView = ElementView_mjs.ElementView.extend({
 

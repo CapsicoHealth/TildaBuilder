@@ -1,87 +1,112 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tree View Example</title>
+    <title>JointJS Custom Entity</title>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jointjs/3.4.2/joint.min.css">
+    
     <style>
-
-        .treeNode.schemaNode, .treeNode.pack {
-          cursor: pointer;
-          display: block;
-          padding: 3px;
-          margin-top: 3px;
-          margin-bottom: 3px;
-          position: relative;
-        }
-        
-        .treeNode.schemaNode > span:nth-child(1){
-            font-weight: bold;
-        }
-        .treeNode.schemaNode > span:nth-child(2){
-            font-style: italic;
-            margin-left: '5px';
-        }
-        
-        .treeNode.schemaNode:hover {
-          background-color: #f1f1f1;
+        /* Some minimal styling for the entity attributes */
+        .entity-attrs text {
+            font-size: 12px;
         }
 
-        .treeNode.schemaNode[data-expandable="true"] {
-           background-image: url('/static/img/chkon.gif');
-           background-position: 3px 5px;
-           background-size: 15px;
-           background-repeat: no-repeat;
-           padding-left: 25px;
+        /* CSS for the context menu */
+        .context-menu {
+            position: absolute;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            border: 1px solid #ddd;
         }
 
-        .treeNode.schemaNode[data-expandable="true"].expanded  {
-           background-image: url('/static/img/chkoff.gif');
+        .context-menu li {
+            padding: 10px;
+            cursor: pointer;
         }
-        
-        .child-nodes {
-          display: none;
-          margin-left: 20px;
+
+        .context-menu li:hover {
+            background-color: #eee;
         }
-        
-        .expanded > SPAN {
+        .tab.active {
+            background-color: #ddd;
         }
-        
-        .expanded > .child-nodes {
-           display: block;
+
+        /* Sidebar styles */
+        #sidebar {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            width: 200px;
+            border: 1px solid #ddd;
+            background-color: #f7f7f7;
+            padding: 10px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            max-height: 80vh;
+            overflow-y: auto;
         }
-        
-        .treeNode.pack {
-           background-image: url('/static/img/cross_icon.png');
-           background-position: 3px 5px;
-           background-size: 15px;
-           background-repeat: no-repeat;
-           padding-left: 25px;
+
+        #sidebar h3 {
+            margin-top: 0;
         }
-        
-</style>
-      
-      
-      
-      
+
+        #entity-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        #entity-list li {
+            margin-bottom: 10px;
+        }
+
+        #load-json-btn {
+            margin-top: 20px;
+            display: block;
+        }
+    </style>
 </head>
 <body>
-    <input type="text" id="searchBar" placeholder="Search..." />
-    <div id="tree-container"></div>
-    <div id="output"></div>
-    <div id="editor-container"></div>
-    <div id="table-container"></div>
+    <form id="entity-form">
+        <label for="entity-names">Entity Name:</label>
+        <input type="text" id="entity-name" name="entity-name"><br>
+        <label for="entity-attributes">Attributes (comma-separated):</label>
+        <input type="text" id="entity-attributes" name="entity-attributes"><br>
+        <label for="entity-attributes-fk">Foreign Keys (comma-separated):</label>
+        <input type="text" id="entity-attributes-fk" name="entity-attributes-fk"><br>
+        <label for="entity-attributes-pk">Primary Keys (comma-separated):</label>
+        <input type="text" id="entity-attributes-pk" name="entity-attributes-pk"><br>
+        <input type="submit" value="Add Entity">
+    </form>
+    
+    <div id="paper"></div>
 
-<script type="module">
-import { setupTree } from './tree.js';
-setupTree("tree-container", "searchBar");
-</script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sceditor@3/minified/themes/default.min.css" />
-<script src="https://code.jquery.com/jquery-3.5.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sceditor@3/minified/sceditor.min.js"></script>
+    <button id="addCanvasBtn">Add New Canvas</button>
+
+    <div class="canvas-container">
+    </div>
+
+    <div class="tabs">
+        
+    </div>
 
 
+    <!-- Sidebar for entity list -->
+    <div id="sidebar">
+        <h3>Entities</h3>
+        <ul id="entity-list">
+            <!-- List of entities will appear here -->
+        </ul>
+    </div>
 
+    <!-- Context Menu HTML -->
+    <ul class="context-menu hide"></ul>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.4.0/backbone-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jointjs/3.4.2/joint.min.js"></script>
+    <script src="joint.shapes.uml.js"></script>
+    <script src="myapp1.js"></script> 
 
- 
 </body>
 </html>
