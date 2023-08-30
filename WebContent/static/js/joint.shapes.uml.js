@@ -230,7 +230,7 @@ this.joint.shapes = this.joint.shapes || {};
     }, {
         markup: [
             '<g class="rotatable">',
-            '<g class="scalable">',
+            '<g class="scalablex">',
             '<rect class="uml-state-body"/>',
             '</g>',
             '<path class="uml-state-separator"/>',
@@ -297,7 +297,7 @@ this.joint.shapes = this.joint.shapes || {};
             }
         }
     }, {
-        markup: '<g class="rotatable"><g class="scalable"><circle class="outer"/><circle class="inner"/></g></g>',
+        markup: '<g class="rotatable"><g class="scalablex"><circle class="outer"/><circle class="inner"/></g></g>',
     });
 
     var Transition = Link_mjs.Link.define('uml.Transition', {
