@@ -38,8 +38,14 @@
       <DIV id="ENTITY_LIST"><IMG src="/static/img/progress.gif"></DIV>
     </DIV>
     <DIV id="EDITORS" class="column right"  style="top:75px; bottom:75px; left:20%; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin;">
+<!--
       <textarea id="EDITOR" wrap="off" style="tab-size:4; width:98%; height:98%;"></textarea >
-    </DIV>
+-->
+      <DIV id="ER_EDITOR" style="position: relative; width:98%; height:98%;">
+         <button id="ER_EDITOR_ADD_CANVAS_BUTTON">Add New Canvas</button>
+         <div id="ER_EDITOR_CANVAS_TABS"></DIV>
+         <div id="ER_EDITOR_CANVAS_CONTAINER"></div>
+      </DIV>
   </MAIN>
   
   <FOOTER id="MAINCONTAINER_FOOTER">
@@ -52,10 +58,16 @@
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/loader.js"></script>
+<scriptX src="https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/loader.js"></scriptX>
+<script src="/static/jslibs/jquery/3.6.0/jquery.min.js"></script>
+<script src="/static/jslibs/lodash.js/4.17.21/lodash.min.js"></script>
+<script src="/static/jslibs/backbone.js/1.4.0/backbone-min.js"></script>
+<script src="/static/jslibs/jointjs/3.4.2/joint.min.js"></script>
+<script src="/static/js/joint.shapes.uml.js"></script>
 
 <SCRIPT type="module">
 import { projects } from "/static/js/module-projects.js";
+
 window.TILDA_GLOBAL = {
   addProject: function()
     {

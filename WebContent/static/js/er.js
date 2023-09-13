@@ -758,6 +758,7 @@ $(document).ready(function() {
         canvasStateManager.removeEntity(activeCanvasID,entityName);
         updateShelfDisplay();
     }
+    
     canvasData = {}
     var contextMenu = $('<ul>', { class: 'context-menu' }).appendTo(document.body);
 

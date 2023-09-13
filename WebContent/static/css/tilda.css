@@ -2576,3 +2576,15 @@ table.centered {
 
 
 
+.canvas {
+   position: relative;
+   width: 90%;
+   height: 90%;
+   border: 1px solid grey;
+   background-color: #DDD;
+}
+
+.canvas-container {
+   border: 1px solid grey;
+   background-color: #DDD;
+}

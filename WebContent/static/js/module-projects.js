@@ -5,7 +5,7 @@ import { FloriaAjax } from "/static/floria.v2.0/module-ajax.js";
 import { FloriaForms } from "/static/floria.v2.0/module-forms2.js";
 
 import { schemas } from "./module-schemas.js";
-import { InitializeMonaco } from "./module-monaco.js";
+//import { InitializeMonaco } from "./module-monaco.js";
 
 
 
