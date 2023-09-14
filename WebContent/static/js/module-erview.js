@@ -8,363 +8,387 @@ import { sampleTildaJsonData } from "./module-testtildajson.js";
 
 
 
-const uml = joint.shapes.uml;
-const CustomUMLClass = uml.Class.extend({
-    /*
-        initialize: function() {
-            this.updateRectangles();
-            joint.shapes.basic.Generic.prototype.initialize.apply(this, arguments);
-            
-            this.on('change:attributes', function() {
-                this.updateRectangles();
-                this.findView(paper).update();
-            }, this);
+const CustomUMLClass = joint.shapes.uml.Class.extend({});
+
+
+class CanvasState
+ {
+   constructor()
+    {
+      this._canvasData = [];
+    }
+
+   addCanvas(canvasName)
+    {
+      // add new canvas is needed
+      let canvas = this.getCanvas(canvasName);
+      if (canvas == null)
+       {
+         canvas = { "id":this._canvasData.length, "name": canvasName, "entities": [] };
+         this._canvasData.push(canvas);
+       }
+      // update currnent flag
+      this.setCurrentCanvas(canvasName);
+      return canvas;
+    }
+
+   getCanvas(canvasName)
+    {
+      for (let i = 0; i < this._canvasData.length; ++i)
+       if (this._canvasData[i].name == canvasName)
+        return this._canvasData[i];
+      return null;
+    }
+
+   setCurrentCanvas(canvasName)
+    {
+      for (let i = 0; i < this._canvasData.length; ++i)
+       this._canvasData[i].current = this._canvasData[i].name == canvasName;
+    }
+
+   getCurrentCanvas()
+    {
+      // no canvases at all, return null
+      if (this._canvasData.length == 0)
+       return null;
+      
+      // find current canvas
+      for (let i = 0; i < this._canvasData.length; ++i)
+       if (this._canvasData[i].current == true)
+        return this._canvasData[i];
+      
+      // if none found, make the first one (there is at least one in the array) the current one and return it
+      this._canvasData[0].current = true;
+      return this._canvasData[0];
+    }
     
-            this.on('change:attributesPk', function() {
-                this.updateRectangles();
-                this.findView(paper).update();
-            }, this);
-            this.on('change:attributesFk', function() {
-                this.updateRectangles();
-                this.findView(paper).update();
-            }, this);
-        }
-    */
-});
-
-
-class CanvasState {
-    constructor() {
-        this._canvasData = [];
+   addEntity(canvasName, entityName, x, y, hideColumns, hideKeys)
+    {
+      let entity = this.getEntity(canvasName, entityName);
+      console.log(entity);
+      if (entity == null) // entity is being actually added
+       {
+         let canvas = this.getCanvas(canvasName);
+         if (canvas == null)
+          return console.error("Canvas '" + canvasName + "' not found");
+         console.log("new entity");
+         canvas.entities.push({ "name": entityName, "x": x, "y": y, "hideColumns": hideColumns, "hideKeys": hideKeys });
+       }
+      else // entity is being updated
+       {
+          console.log("updated entity--> x: ", x, "; y: ", y, "; hideColumns: ", hideColumns, "; hideKeys: ", hideKeys, ";");
+          entity.x = x;
+          entity.y = y;
+          entity.hideColumns = hideColumns;
+          entity.hideKeys = hideKeys;
+       }
+      this.saveState();
     }
 
-    addCanvas(canvasName) {
-        let canvas = this.getCanvas(canvasName);
-        if (canvas == null) {
-            this._canvasData.push({ "name": canvasName, "entities": [], "current": true });
-        }
-        else {
-            canvas.current = true;
-        }
+   hasEntity(canvasName, entityName)
+    {
+      let canvas = this.getCanvas(canvasName);
+      if (canvas != null)
+       for (let i = 0; i < canvas.entities.length; i++)
+        if (canvas.entities[i].name == entityName)
+         return canvas.entities[i];
+      return null;
     }
-    getCanvas(canvasName) {
-        for (let i = 0; i < this._canvasData.length; ++i) {
-            if (this._canvasData[i].name == canvasName) {
-                return this._canvasData[i];
-            }
-        }
-        return null;
-    }
-    showCanvas(canvasName) {
-        for (let i = 0; i < this._canvasData.length; ++i) {
-            this._canvasData[i].current = this._canvasData[i].name == canvasName;
-        }
-    }
+    
+   getEntity(canvasName, entityName)
+    {
+      let canvas = this.getCanvas(canvasName);
+      if (canvas != null)
+       for (let i = 0; i < canvas.entities.length; i++)
+        if (canvas.entities[i].name == entityName)
+         return canvas.entities[i];
 
-    addEntity(canvasName, entityName, x, y, hideColumns, hideKeys) {
+      if (canvas == null)
+       console.error("Cannot find entity '" + entityName + "' because canvas '" + canvasName + "' cannot be found");
+      else
+       console.warn("Cannot find entity '" + entityName + "' in canvas '" + canvasName);
 
-        let entity = this.getEntity(canvasName, entityName);
-        console.log(entity);
-        if (entity == null) {
-            let canvas = this.getCanvas(canvasName);
-            if (canvas == null) {
-                console.error("Canvas '" + canvasName + "' not found");
-                return;
-            }
-            console.log("new");
-            canvas.entities.push({ "name": entityName, "x": x, "y": y, "hideColumns": hideColumns, "hideKeys": hideKeys });
-        }
-        else {
-            console.log(x, y);
-            console.log(hideColumns, hideKeys);
-            entity.x = x;
-            entity.y = y;
-            entity.hideColumns = hideColumns;
-            entity.hideKeys = hideKeys;
-
-        }
-        this.saveState();
+      return null;
     }
 
-    getEntity(canvasName, entityName) {
-        let canvas = this.getCanvas(canvasName);
-        if (canvas != null) {
-            for (let i = 0; i < canvas.entities.length; i++) {
-                if (canvas.entities[i].name == entityName) {
-                    return canvas.entities[i];
-                }
-            }
-        }
-        if (canvas == null) {
-            console.error("Cannot find entity '" + entityName + "' because canvas '" + canvasName + "' cannot be found");
-        }
-        else {
-            console.error("Cannot find entity '" + entityName + "' in canvas '" + canvasName);
-        }
-        return null;
+   removeEntity(canvasName, entityName)
+    {
+      let canvas = this.getCanvas(canvasName);
+      if (canvas == null)
+       return console.error("Canvas '" + canvasName + "' not found");
+
+      let entityIndex = canvas.entities.findIndex(e => e.name === entityName);
+      if (entityIndex == -1)
+       return console.error("Entity '" + entityName + "' not found in canvas '" + canvasName + "'");
+
+      canvas.entities.splice(entityIndex, 1);
+      this.saveState();
     }
 
-    removeEntity(canvasName, entityName) {
-        let canvas = this.getCanvas(canvasName);
-        if (canvas == null) {
-            console.error("Canvas '" + canvasName + "' not found");
-            return;
-        }
-
-        let entityIndex = canvas.entities.findIndex(e => e.name === entityName);
-        if (entityIndex === -1) {
-            console.error("Entity '" + entityName + "' not found in canvas '" + canvasName + "'");
-            return;
-        }
-
-        canvas.entities.splice(entityIndex, 1);
-        this.saveState();
+   saveState()
+    {
+      console.log("Saving canvas state: ", this._canvasData);
+      localStorage.setItem('canvasState', JSON.stringify(this._canvasData));
+//      const savedState = localStorage.getItem('canvasState');
+//      this._canvasData = JSON.parse(savedState);
+//      console.log("Canvas Data right after save:", this._canvasData);
     }
 
-    saveState() {
-        console.log("NEW MODEL TEST:", this._canvasData);
-        localStorage.setItem('canvasState', JSON.stringify(this._canvasData));
-        const savedState = localStorage.getItem('canvasState');
-        this._canvasData = JSON.parse(savedState);
-        console.log("Canvas Data right after save:", this._canvasData);
+   loadState()
+    {
+      const savedState = localStorage.getItem('canvasState');
+      if (savedState == null)
+       return false;
+      this._canvasData = JSON.parse(savedState);
+      console.log("Loading canvas state: ", this._canvasData);
+      return true;
     }
+ }
 
-    loadState() {
-        const savedState = localStorage.getItem('canvasState');
-        if (savedState == null)
-            return false;
-        this._canvasData = JSON.parse(savedState);
-        console.log("Canvas Data:", this._canvasData);
-        return true;
-    }
-
-}
 const canvasStateManager = new CanvasState();
 
 
-class Shelf {
-    constructor(divId) {
-        this._divId = divId;
-        this._entities = [];
+
+class Shelf
+ {
+   constructor(divId)
+    {
+      this._divId = divId;
+      this._entityNames = [];
+      this._canvasName = null;
+      
+      var that = this;
+      FloriaDOM.addEvent(this._divId, "click", function(e, event, target) {
+        if (target.nodeName != 'LI')
+         return;
+        let entityName = target.textContent;
+        canvasStateManager.addEntity(that._canvasName, entityName);
+        ERView.showEntityOnCanvas(entityName);
+        target.remove();
+        this._entityNames.remove(entityName);
+      }, null, true);
     }
-    addEntity(entity) {
-        if (this._entities.getSE(entity.name, "name") == null)
-            this._entities.push(entity);
+    
+   addEntity(entityName)
+    {
+      if (this._entityNames.indexOf(entityName) == -1)
+       this._entityNames.push(entityName);
     }
-    paint(canvasName) {
-        let str = '<UL>';
-        for (let i = 0; i < this._entities; ++i)
-            if (canvasStateManager.getEntity(canvasName, this._entities[i].name) == null)
-                str += '<LI>' + this._entities[i].name + '</LI>'
-        str += '</UL>';
-        FloriaDOM.setInnerHTML(this._divId, str);
-        FloriaDOM.addEvent(this._divId, "click", function(e, event, target) {
-            if (target.nodeName != 'LI')
-                return;
-            let entityName = target.textContent;
-            canvasStateManager.addEntity(canvasName, entityName);
-            ERView.showEntityOnCanvas(entityName);
-            target.remove();
-        }, null, true);
+
+   reset(canvasName)
+    {
+      this._entityNames = [];
+      this._canvasName = canvasName;
+    }
+
+   paint(canvasName)
+    {
+      let str = '<UL>';
+      for (let i = 0; i < this._entityNames.length; ++i)
+       if (canvasStateManager.getEntity(canvasName, this._entityNames[i]) == null)
+        str += '<LI>' + this._entityNames[i] + '</LI>'
+      str += '</UL>';
+      FloriaDOM.setInnerHTML(this._divId, str);
     }
 }
 
 
 
 export var ERView = {
-    _currentTildaSchemaJson: null
-    , _entitiesMap: {}
-    , _graph: new joint.dia.Graph()
-    , _canvasData: {}
-    , _contextMenu: $('<ul>', { class: 'context-menu' }).appendTo(document.body)
-    , _currentCellView: null
-    , _link: null
+  _currentTildaSchemaJson: null
+ ,_entitiesMap: {}
+ ,_paper: null
+ ,_graph: null
+ ,_contextMenu: $('<ul>', { class: 'context-menu' }).appendTo(document.body).hide()
 
-    , createEntitiesFromTildaJson: function(tildaJson) {
-        if (tildaJson.hasOwnProperty('objects')) {
-            tildaJson['objects'].forEach(entityData => {
-                const entityName = entityData.name;
+ ,start: function(mainDivId, entityListDivId, tildaJsonData)
+   {
+     this._mainDivId = mainDivId;
+     this.createEntitiesFromTildaJson(tildaJsonData);
+     
+     let canvasElement = FloriaDOM.getElement(this._mainDivId + '_CANVAS_CONTAINER');
+     if (canvasElement == null)
+      return;
 
-                // Parsing all columns and create a new array of strings "<columnName>:<type>"
-                const allAttributes = [];
-                entityData.columns.forEach(column => {
-                    let attribute = column.name;
-                    if (column.type) {
-                        attribute += `:${column.type}`;
-                    }
-                    else if (column.sameAs || column.sameas) {
-                        const refString = column.sameAs || column.sameas;
-                        const [refEntity, refColumn] = refString.split('.');
-                        if (refColumn === 'refnum') {
-                            attribute += ':LONG';
-                        }
-                        else {
-                            const relatedEntity = tildaJson['objects'].find(obj => obj.name === refEntity);
-                            if (relatedEntity && relatedEntity.columns) {
-                                const relatedColumn = relatedEntity.columns.find(col => col.name === refColumn);
-                                if (relatedColumn && relatedColumn.type) {
-                                    attribute += `:${relatedColumn.type}`;
-                                }
-                            }
-                        }
-                    }
-                    allAttributes.push(attribute);
-                });
+     this._graph = new joint.dia.Graph();
+     this._paper = new joint.dia.Paper({
+        el: canvasElement
+       ,width: "98%"
+       ,height: 800
+       ,model: this._graph
+     });
+     this.bindContextMenuToPaper();
 
-                // Calculating the max length of attribute names
-                const longestAttributeLength = Math.min(25, Math.max.apply(Math, allAttributes.map(attr => attr.length)));
+     this._shelf = new Shelf(entityListDivId);        
+     
+     canvasStateManager.loadState();
+     let currentCanvasState = canvasStateManager.getCurrentCanvas();
+     if (currentCanvasState == null)
+      currentCanvasState = canvasStateManager.addCanvas("Main")
+     this.showCanvas(currentCanvasState);
+           
+     var that = this;
+     $('#' + mainDivId + '_ADD_CANVAS_BUTTON').click(function() { that.addCanvas() });
+     $('#' + mainDivId + '_CANVAS_TABS').on('click', '.tab', function() { that.showCanvas($(this).data('canvas-id')) });
+   }
+   
+ ,createEntitiesFromTildaJson: function(tildaJson)
+   {
+     if (tildaJson.hasOwnProperty('objects') != true)
+      return;
 
-                // Handling PrimaryKey columns with the same string values "<columnName>:<type>"
-                const primaryKey = (entityData.primary && entityData.primary.columns) ? entityData.primary.columns : [];
-                const primaryKeyAttributes = [];
-                primaryKey.forEach(pk => {
-                    const foundAttr = allAttributes.find(attr => attr.startsWith(pk + ":"));
-                    if (foundAttr) {
-                        const [pkName, pkType] = foundAttr.split(':');
-                        primaryKeyAttributes.push(`${pkName}:${pkType || ''}`);
-                    }
-                });
+     tildaJson['objects'].forEach(entityData => {
+       const entityName = entityData.name;
 
-                // Handling Foreign Keys columns with the same string values "<columnName>:<type>"
-                const foreignKeysWithTypes = [];
-                if (entityData.foreign) {
-                    entityData.foreign.forEach(fk => {
-                        if (fk.srcColumns) {
-                            fk.srcColumns.forEach(srcColumn => {
-                                const foundAttr = allAttributes.find(attr => attr.startsWith(srcColumn + ":"));
-                                if (foundAttr) {
-                                    const [colName, colType] = foundAttr.split(':');
-                                    foreignKeysWithTypes.push(`${colName}:${colType || ''}`);
-                                }
-                            });
-                        }
-                    });
-                }
+       // Parsing all columns and create a new array of strings allAttributes as "<columnName>:<type>"
+       const allAttributes = [];
+       entityData.columns.forEach(column => {
+         let attribute = column.name;
+         if (column.type)
+          attribute += `:${column.type}`;
+         else if (column.sameAs || column.sameas)
+          {
+            const refString = column.sameAs || column.sameas;
+            const [refEntity, refColumn] = refString.split('.');
+            if (refColumn === 'refnum')
+             attribute += ':LONG';
+            else
+             {
+               const relatedEntity = tildaJson['objects'].find(obj => obj.name === refEntity);
+               if (relatedEntity && relatedEntity.columns)
+                {
+                  const relatedColumn = relatedEntity.columns.find(col => col.name === refColumn);
+                  if (relatedColumn && relatedColumn.type)
+                   attribute += `:${relatedColumn.type}`;
+                 }
+              }
+           }
+         allAttributes.push(attribute);
+       });
 
-                const NewEntity = new CustomUMLClass({
-                    position: { x: Math.random() * 600, y: Math.random() * 400 },
-                    size: { width: 200 + longestAttributeLength * 7, height: 100 + allAttributes.length * 12 },
-                    name: entityName,
-                    attributes: allAttributes,
-                    attributesFk: foreignKeysWithTypes,
-                    attributesPk: primaryKeyAttributes,
-                    longestAttributeLength: longestAttributeLength,
-                    methods: [],
-                    hideKeys: false,
-                    hideColumns: false,
-                });
-                this._entitiesMap[entityName] = NewEntity;
-                console.log("Added entity to entitiesMap:", entityName);
-            });
-        }
-    }
+       // Calculating the max length of attribute names
+       const longestAttributeLength = Math.min(25, Math.max.apply(Math, allAttributes.map(attr => attr.length)));
 
+       // Handling PrimaryKey columns with the same string values "<columnName>:<type>"
+       const primaryKey = (entityData.primary && entityData.primary.columns) ? entityData.primary.columns : [];
+       const primaryKeyAttributes = [];
+       primaryKey.forEach(pk => {
+         const foundAttr = allAttributes.find(attr => attr.startsWith(pk + ":"));
+         if (foundAttr)
+          {
+            const [pkName, pkType] = foundAttr.split(':');
+            primaryKeyAttributes.push(`${pkName}:${pkType || ''}`);
+          }
+       });
 
-    , createCanvasFromData: function(canvasID, canvasInfo) {
-        console.log("canvasinfo", canvasInfo);
-        let canvasEl = $('#' + canvasID);
-        if (!canvasEl.length)
-         canvasEl = $('<div>').addClass('canvas').attr('id', canvasID).appendTo('#' + this._mainDivId + '_CANVAS_CONTAINER').hide();
-
-        const graph = new joint.dia.Graph();
-        const paper = new joint.dia.Paper({
-            el: canvasEl,
-            width: "98%",
-            height: 800,
-            model: graph
-        });
-
-        this.bindContextMenuToPaper(paper);
-
-        let that = this;
-        
-        $('.tab.active').removeClass('active');
-        let tabEl = $(`.tab[data-canvas-id="${canvasID}"]`);
-        if (!tabEl.length) {
-            tabEl = $('<button>')
-                .addClass('tab active')
-                .data('canvas-id', canvasID)
-                .text(canvasID.replace('canvas', 'Canvas '))
-                .appendTo('#' + this._mainDivId + '_CANVAS_TABS');
-        } else {
-            tabEl.addClass('active');
+       // Handling Foreign Keys columns with the same string values "<columnName>:<type>"
+       const foreignKeysWithTypes = [];
+       if (entityData.foreign)
+        {
+          entityData.foreign.forEach(fk => {
+            if (fk.srcColumns)
+             {
+               fk.srcColumns.forEach(srcColumn => {
+                 const foundAttr = allAttributes.find(attr => attr.startsWith(srcColumn + ":"));
+                 if (foundAttr)
+                  {
+                    const [colName, colType] = foundAttr.split(':');
+                    foreignKeysWithTypes.push(`${colName}:${colType || ''}`);
+                  }
+               });
+             }
+          });
         }
 
-        $('.canvas').hide();
-        canvasEl.show();
-        if (canvasInfo.entities && canvasInfo.entities.length) {
-            // const cells = canvasInfo.graph.cells;
-            let col;
-            let key;
-            let display_col;
-            let display_key;
-            canvasInfo.entities.forEach((entityName, index) => {
-                col = canvasInfo.entities[index].hideColumns;
-                key = canvasInfo.entities[index].hideKeys;
-                console.log("col and key", col, key);
-                if (col == true) {
-                    display_col = "Hide Columns";
-                }
-                else if (col == false) {
-                    display_col = "Show Columns";
-                }
+       // Create the entity as jointJS object (the CustomUMLClass object)
+       const NewEntity = new CustomUMLClass({
+          position: { x: Math.random() * 600, y: Math.random() * 400 },
+          size: { width: 200 + longestAttributeLength * 7, height: 100 + allAttributes.length * 12 },
+          name: entityName,
+          attributes: allAttributes,
+          attributesFk: foreignKeysWithTypes,
+          attributesPk: primaryKeyAttributes,
+          longestAttributeLength: longestAttributeLength,
+          methods: [],
+          hideKeys: false,
+          hideColumns: false,
+       });
+       
+       // Add the entity to the map
+       this._entitiesMap[entityName] = NewEntity;
+       console.log("Added entity to entitiesMap:", entityName);
+     });
+   }
+   
+ ,showCanvas: function(canvasState)
+   {
+     console.log("canvasState: ", canvasState);
+     
+     $('.tab.active').removeClass('active');
+     let tabId = this._paper.el.id+'_'+(canvasState.id);
+     let tab = FloriaDOM.getElement(tabId);
+     if (tab == null)
+      FloriaDOM.appendInnerHTML(this._mainDivId + '_CANVAS_TABS', '<BUTTON class="tab active" id="'+tabId+'">'+canvasState.name+'</BUTTON>');
+     else
+      FloriaDOM.addCSS(tab, "active");
+      
+     this._graph.clear();
+     this._shelf.reset(canvasState.name);
 
-                if (key == true) {
-                    display_key = "Hide Keys";
-                }
-                else if (key == false) {
-                    display_key = "Show Keys";
-                }
-                if (key == null) {
-                    key = true;
-                }
-                if (col == null) {
-                    key = true;
-                }
-                let x = canvasInfo.entities[index].x;
-                let y = canvasInfo.entities[index].y;
-                if (x && y) {
-                    that.showEntityOnCanvas(entityName.name, graph, x, y, col, key);
-                    console.log(entityName);
-                    console.log(that._entitiesMap[entityName.name]);
-                    const cell = graph.getCell(that._entitiesMap[entityName.name].attributes.id);
-                    that.updateEntityAttributesDisplay(display_col, cell, paper, col, key);
-                    that.updateEntityAttributesDisplay(display_key, cell, paper, col, key);
-                }
-                else {
-                    let xrand = Math.random();
-                    let yrand = Math.random();
-                    that.showEntityOnCanvas(entityName.name, graph, xrand, yrand, col, key);
-                    console.log(entityName);
-                    console.log(that._entitiesMap[entityName]);
-                    const cell = graph.getCell(that._entitiesMap[entityName.name].attributes.id);
-                    that.updateEntityAttributesDisplay(display_col, cell, paper, col, key);
-                    that.updateEntityAttributesDisplay(display_key, cell, paper, col, key);
-                }
+     for (let prop in this._entitiesMap)
+      {
+        let entity = this._entitiesMap[prop];
+        if (canvasState.entities.getSE(entity.attributes.name, "name") == null) // not on canvas
+         this._shelf.addEntity(entity.attributes.name);
+        else
+         {
+           const key = entity.hideKeys || true;
+           const col = entity.hideColumns || true;
+           const x = entity.x || 25;
+           const y = entity.y || 25;
+           that.showEntityOnCanvas(entity.name, this._paper.model, x, y, col, key);
+           const cell = this._paper.model.getCell(entity.attributes.id);
+           const display_col = col == true ? "Hide Columns" : "Show Columns";
+           const display_key = key == true ? "Hide Keys": "Show Keys";
+           that.updateEntityAttributesDisplay(display_col, cell, paper, col, key);
+           that.updateEntityAttributesDisplay(display_key, cell, paper, col, key);
+         }
+      }
+     this._shelf.paint(canvasState.name);
+   }
 
-            });
-        }
+/*
+ ,addCanvas: function()
+   {
+     let canvasNumber = $('.canvas').length + 1;
+     let newCanvasID = this._mainDivId + '_canvas' + canvasNumber;
 
-        if (canvasInfo.entities && canvasInfo.entities.length) {
-            canvasInfo.entities.forEach((entityName, index) => {
+     // Adding tab
+     $('<button>').addClass('tab')
+                  .data('canvas-id', newCanvasID)
+                  .text('Canvas ' + canvasNumber)
+                  .appendTo('#' + this._mainDivId + '_CANVAS_TABS');
 
-                let x = canvasInfo.entities[index].x;
-                let y = canvasInfo.entities[index].y;
-                if (x && y) {
-                    that.showEntityOnCanvas(entityName, graph, x, y);
-                }
-                else {
-                    that.showEntityOnCanvas(entityName, graph);
-                }
+     // Adding canvas
+     $('<div>').addClass('canvas')
+               .attr('id', newCanvasID)
+               .appendTo('#' + this._mainDivId + '_CANVAS_CONTAINER')
+               .hide();
 
-            });
-        }
+     let newGraph = new joint.dia.Graph();
+     let newPaper = new joint.dia.Paper({
+       el: $('#' + newCanvasID),
+       // width: "100%",
+       // height: "95%",
+       model: newGraph
+     });
 
-        this._canvasData[canvasID] = {
-            entities: canvasInfo.entities || [],
-            graph: graph
-        };
-    }
+     this.bindContextMenuToPaper(newPaper);
+
+     // Storing canvas data
+     canvasStateManager.addCanvas(newCanvasID);
+   }
+*/
 
     , _zoomLevel: 1
     , _zoom: function() {
@@ -381,96 +405,67 @@ export var ERView = {
         zoom(this._zoomLevel);
     }
 
+  ,bindContextMenuToPaper: function()
+    {
+      var that = this;
+      
+      this._paper.on('cell:contextmenu', function(cellView, evt, x, y) {
+         evt.stopPropagation();
+         that._contextMenu.css({ left: evt.pageX, top: evt.pageY });
+         that.refreshContextMenuForCell(cellView.model, that._paper);
+         that._contextMenu.show();
+      });
 
+      // Position update
+      this._paper.on("cell:pointerup", function(cellview, evt, x, y) {
+//         console.log(cellview.model);
+//         console.log("pointer up on cell ", cellview.model.id, " pos: ", x, ",", y);
+         if (cellview.model.attributes.hideColumns == null)
+          cellview.model.attributes.hideColumns = false;
+         if (cellview.model.attributes.hideKeys == null)
+          cellview.model.attributes.hideKeys = false;
+         canvasStateManager.addEntity(that._paper.el.id, cellview.model.attributes.name, x, y, cellview.model.attributes.hideColumns, cellview.model.attributes.hideKeys);
+      });
 
+      // scoped variable for link drag and drop logic
+      let link = null;
 
-    ////////////////////  FUNCTIONS ABOVE NEED TO BE CLEANED UP    /////////////////////////////////////
-    ////////////////////                                           /////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
+      // Dragging the entities, updating the links
+      this._paper.on('cell:pointerdown', function(cellView, evt, x, y) {
+         if (cellView.model.isLink() == true)
+          return;
+         var threshold = 10;
+         var bbox = cellView.model.getBBox();
+         var distance = Math.min(
+               Math.abs(bbox.x - x),
+               Math.abs(bbox.y - y),
+               Math.abs(bbox.x + bbox.width - x),
+               Math.abs(bbox.y + bbox.height - y)
+             );
 
+         if (distance < threshold)
+          {
+            link = new CustomLink();
+            link.source({ x: x, y: y });
+            link.target({ x: x, y: y });
+            link.addTo(graph);
+          }
+      });
 
+      // Moving link
+      this._paper.on('blank:pointermove', function(evt, x, y) {
+         if (link == true)
+          link.target({ x: x, y: y });
+      });
 
-
-
-
-    , bindContextMenuToPaper: function(paperInstance) {
-
-        let link = null;
-
-        var that = this;
-        paperInstance.on('cell:contextmenu', function(cellView, evt, x, y) {
-            evt.stopPropagation();
-            that._contextMenu.css({ left: evt.pageX, top: evt.pageY });
-            currentCellView = cellView;
-            that.refreshContextMenuForCell(currentCellView.model, paperInstance);
-            that._contextMenu.show();
-        });
-
-        //        // Debugging position events which fires A LOT!!!! Use pointerup instead (below).
-        //        paperInstance.on('change:position',function(element) {
-        //            console.log(element.get('position'));
-        //        });
-
-        // Position update
-        paperInstance.on("cell:pointerup", function(cellview, evt, x, y) {
-            console.log(cellview.model);
-            console.log("pointer up on cell ", cellview.model.id, " pos: ", x, ",", y);
-            if (cellview.model.attributes.hideColumns == null) {
-                cellview.model.attributes.hideColumns = false;
-            }
-            if (cellview.model.attributes.hideKeys == null) {
-                cellview.model.attributes.hideKeys = false;
-            }
-            canvasStateManager.addEntity(paperInstance.el.id, cellview.model.attributes.name, x, y, cellview.model.attributes.hideColumns, cellview.model.attributes.hideKeys);
-            // canvasStateManager.saveState();
-        });
-
-        // Dragging the entities, updating the links
-        paperInstance.on('cell:pointerdown', function(cellView, evt, x, y) {
-            if (cellView.model.isLink()) return;
-
-            var threshold = 10;
-
-            var bbox = cellView.model.getBBox();
-            var distance = Math.min(
-                Math.abs(bbox.x - x),
-                Math.abs(bbox.y - y),
-                Math.abs(bbox.x + bbox.width - x),
-                Math.abs(bbox.y + bbox.height - y)
-            );
-
-            if (distance < threshold) {
-                link = new CustomLink();
-
-                link.source({ x: x, y: y });
-                link.target({ x: x, y: y });
-                link.addTo(graph);
-            }
-        });
-
-        // Moving link
-        paperInstance.on('blank:pointermove', function(evt, x, y) {
-            if (link) {
-                link.target({ x: x, y: y });
-            }
-        });
-
-        // finish modifying links
-        paperInstance.on('cell:pointerup blank:pointerup', function(cellView, evt, x, y) {
-            if (!link) return;
-
-            var targetElement = paperInstance.findViewsFromPoint(link.getTargetPoint())[0];
-
-            if (targetElement) {
-
-                link.target({ id: targetElement.model.id });
-            }
-
-            link = null;
-        });
+      // finish modifying links
+      this._paper.on('cell:pointerup blank:pointerup', function(cellView, evt, x, y) {
+         if (!link) return;
+         var targetElement = that._paper.findViewsFromPoint(link.getTargetPoint())[0];
+         if (targetElement)
+          link.target({ id: targetElement.model.id });
+         link = null;
+      });
     }
 
 
@@ -499,7 +494,7 @@ export var ERView = {
             }
         }
         canvasStateManager.removeEntity(activeCanvasID, entityName);
-        this.updateShelfDisplay();
+        this._shelf.paint(activeCanvasID);
     }
 
 
@@ -657,15 +652,17 @@ export var ERView = {
             }
             activeGraph.addCells([entityModel]);
             const activeCanvasID = $('.tab.active').data('canvas-id');
-            if (this._canvasData[activeCanvasID]) {
-                if (!this._canvasData[activeCanvasID].entities.includes(entityName)) {
-                    console.log(hideCol, hideKeys);
-                    console.log("adit");
-                    canvasStateManager.addEntity(activeCanvasID, entityName, x, y, hideCol, hideKeys);
-                    this._canvasData[activeCanvasID].entities.push(entityName);
+            if (this._canvasData[activeCanvasID])
+             {
+               if (!this._canvasData[activeCanvasID].entities.includes(entityName))
+                {
+                  console.log(hideCol, hideKeys);
+                  console.log("adit");
+                  canvasStateManager.addEntity(activeCanvasID, entityName, x, y, hideCol, hideKeys);
+                  this._canvasData[activeCanvasID].entities.push(entityName);
                 }
-            }
-
+             }
+            this._shelf.paint(activeCanvasID);
         }
         jsonData.objects.forEach(entityData => {
             if (entityData.foreign) {
@@ -690,9 +687,7 @@ export var ERView = {
             }
         });
 
-        this.updateShelfDisplay();
         canvasStateManager.saveState();
-
     }
 
 
@@ -713,104 +708,6 @@ export var ERView = {
         }
     }
 
-    , updateShelfDisplay: function() {
-        const entityList = document.getElementById('entity-list');
-        entityList.innerHTML = '';
-
-        for (const entityName in this._entitiesMap) {
-            if (!thus._entitiesMap[entityName].get('onCanvas') && !this.isEntityOnAnyCanvas(entityName)) {
-                this.populateEntityList(entityName);
-            }
-        }
-    }
-
-
-
-    , isEntityOnAnyCanvas: function(entityName) {
-        for (let canvasID in this._canvasData) {
-            if (this._canvasData[canvasID].entities.includes(entityName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-
-
-
-    , start: function(mainDivId, tildaJsonData) {
-        /*        
-            var graph = new joint.dia.Graph();
-        
-            var CustomLink = joint.dia.Link.extend({
-                defaults: joint.util.deepSupplement({
-                    type: 'CustomLink',
-                    attrs: { 
-                        '.marker-target': { d: 'M 10 0 L 0 5 L 10 10 z' },
-                    },
-                    z: -1,
-                    connector: { name: 'rounded' }
-                }, joint.dia.Link.prototype.defaults)
-            });
-        */
-        this._mainDivId = mainDivId;
-        this._contextMenu.hide();
-        this.createEntitiesFromTildaJson(tildaJsonData);
-        if (canvasStateManager.loadState() == true && canvasStateManager._canvasData.length > 0)
-         {
-           for (let value in Object.getOwnPropertyNames(canvasStateManager._canvasData))
-            this.createCanvasFromData(canvasStateManager._canvasData[value].name, canvasStateManager._canvasData[value]);
-         }
-        else
-          this.createCanvasFromData(mainDivId + '_canvas1', {});
- 
-        var that = this;
-        $('#' + mainDivId + '_ADD_CANVAS_BUTTON').click(function() {
-            let canvasNumber = $('.canvas').length + 1;
-            let newCanvasID = mainDivId + '_canvas' + canvasNumber;
-
-            // Adding tab
-            $('<button>')
-                .addClass('tab')
-                .data('canvas-id', newCanvasID)
-                .text('Canvas ' + canvasNumber)
-                .appendTo('#' + mainDivId + '_CANVAS_TABS');
-
-            // Adding canvas
-            $('<div>').addClass('canvas').attr('id', newCanvasID).appendTo('#' + mainDivId + '_CANVAS_CONTAINER').hide();
-
-            let newGraph = new joint.dia.Graph();
-            let newPaper = new joint.dia.Paper({
-                el: $('#' + newCanvasID),
-                //            width: "100%",
-                //            height: "95%",
-                model: newGraph
-            });
-
-            that.bindContextMenuToPaper(newPaper);
-
-            // Storing canvas data
-            let newCanvasData = {
-                entities: [],
-                graph: newGraph
-            };
-
-            that._canvasData[newCanvasID] = newCanvasData;
-            canvasStateManager.addCanvas(newCanvasID);
-        });
-
-        $('#' + mainDivId + '_CANVAS_TABS').on('click', '.tab', function() {
-            $('.canvas').hide(); // Hide all canvases
-
-            let canvasID = $(this).data('canvas-id');
-            console.log(canvasID);
-
-            $('.tab').removeClass('active'); // Mark all tabs as inactive
-            $(this).addClass('active'); // Mark the clicked tab as active
-            $('#' + canvasID).show(); // Show the clicked canvas
-            canvasStateManager.saveState();
-        });
-    }
 }
 
 

@@ -22,7 +22,7 @@
   <MAIN id="MAINCONTAINER_PROJECTS" class="mainContainerBody">
     <DIV id="PROJECTS" class="column left"  style="top:75px; bottom:75px; left:15%; width:70%; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin;">
       <DIV class="tileHeader360g">
-         Projects <A href="javascript:TILDA_GLOBAL.addProject();"><IMG src="/static/img/add.gif"></A>
+         Projects <A href="javascript:TILDA_GLOBAL.addProject();" title="New Project"><IMG src="/static/img/add.gif"></A>
                   <span class="searchBox"><input class="searchInput" type="text" name="" placeholder="Search"></span>
       </DIV>
       <DIV id="PROJECT_LIST" class="tileGroup360g"><IMG src="/static/img/progress.gif"></DIV>
@@ -32,7 +32,17 @@
   <MAIN id="MAINCONTAINER_SCHEMAS"  class="mainContainerBody" style="display:none;">
     <DIV id="SCHEMAS" class="column left"  style="top:75px; bottom:75px; left:5px; width:18%; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin;">
       <DIV class="tileHeader360g">
-         Schemas <A href="javascript:TILDA_GLOBAL.addProject();"><IMG src="/static/img/add.gif"></A>
+         Schemas <A href="javascript:TILDA_GLOBAL.addSchema();" title="New Schema"><IMG src="/static/img/add.gif"></A>
+                  <span class="searchBox"><input class="searchInput" type="text" name="" placeholder="Search"></span>
+      </DIV>
+      <DIV id="SCHEMA_LIST"><IMG src="/static/img/progress.gif"></DIV>
+    </DIV>
+  </MAIN>
+
+  <MAIN id="MAINCONTAINER_ENTITIES"  class="mainContainerBody" style="display:none;">
+    <DIV id="ENTITIES" class="column left"  style="top:75px; bottom:75px; left:5px; width:18%; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin;">
+      <DIV class="tileHeader360g">
+         Entities <A href="javascript:TILDA_GLOBAL.addEntity();" title="New Entity"><IMG src="/static/img/add.gif"></A>
                   <span class="searchBox"><input class="searchInput" type="text" name="" placeholder="Search"></span>
       </DIV>
       <DIV id="ENTITY_LIST"><IMG src="/static/img/progress.gif"></DIV>
@@ -44,7 +54,7 @@
       <DIV id="ER_EDITOR" style="position: relative; width:98%; height:98%;">
          <button id="ER_EDITOR_ADD_CANVAS_BUTTON">Add New Canvas</button>
          <div id="ER_EDITOR_CANVAS_TABS"></DIV>
-         <div id="ER_EDITOR_CANVAS_CONTAINER"></div>
+         <div id="ER_EDITOR_CANVAS_CONTAINER" class="canvas"></div>
       </DIV>
   </MAIN>
   
@@ -72,6 +82,14 @@ window.TILDA_GLOBAL = {
   addProject: function()
     {
        projects.addProject("PROJECT_LIST");
+    }
+ ,addSchema: function()
+    {
+       alert("not implemented yet");
+    }
+ ,addEntity: function()
+    {
+       alert("not implemented yet");
     }
 };
 projects.start("PROJECT_LIST");

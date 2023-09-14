@@ -11,7 +11,7 @@ export var schemas = {};
 schemas.paint = function(tildaJsonStr)
  {
     
-   ERView.start("ER_EDITOR", FloriaDOM.jsonParseWithComments(tildaJsonStr));
+   ERView.start("ER_EDITOR", "ENTITY_LIST", FloriaDOM.jsonParseWithComments(tildaJsonStr));
     
 //   FloriaDOM.setInnerHTML("EDITOR", tildaJsonStr);
  };

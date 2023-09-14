@@ -37,6 +37,15 @@ function paintSchemaTile(projectName, fullSchemaPath)
  }
 
 
+function parseSchemaName(schemaPath)
+ {
+   var i = schemaPath.lastIndexOf("/");
+   schemaPath = schemaPath.substring(i+1);
+   var i = schemaPath.indexOf(".");
+   var j = schemaPath.lastIndexOf(".");
+   return schemaPath.substring(i+1, j);
+ }
+
 
 /*
 var _SAMPLE_PROJECTS = [
@@ -115,7 +124,7 @@ projects.selectProject = function(e, event, target)
 projects.paintProject = function(projectName)
  {
    var title = FloriaDOM.getElement("HEADER_TITLE");
-   title.innerHTML = "TIDE - "+projectName;
+   title.innerHTML = "TIDE / "+projectName;
    
    let p = getProject(currentProjectList, projectName);
    FloriaDOM.switchVisibility("MAINCONTAINER_PROJECTS", "MAINCONTAINER_SCHEMAS");
@@ -127,8 +136,8 @@ projects.paintProject = function(projectName)
           let s = schemaList[i];
           str+=paintSchemaTile(projectName, s);
         }
-       FloriaDOM.setInnerHTML("ENTITY_LIST", str);
-       FloriaDOM.addEvent("ENTITY_LIST", "click", projects.selectSchema)
+       FloriaDOM.setInnerHTML("SCHEMA_LIST", str);
+       FloriaDOM.addEvent("SCHEMA_LIST", "click", projects.selectSchema)
     })  
  }
 
@@ -145,6 +154,10 @@ projects.selectSchema = function(e, event, target)
 projects.paintSchema = function(div, projectName, fullSchemaPath)
  {
    FloriaDOM.toggleCSS(div, "selected");
+
+   var title = FloriaDOM.getElement("HEADER_TITLE");
+   title.innerHTML = "TIDE / "+projectName+" / "+parseSchemaName(fullSchemaPath);
+   FloriaDOM.switchVisibility("MAINCONTAINER_SCHEMAS", "MAINCONTAINER_ENTITIES");
    FloriaAjax.ajaxUrl("/svc/project/schema/details?projectName="+encodeURIComponent(projectName)+"&fullSchemaPath="+encodeURIComponent(fullSchemaPath)+"&ts="+new Date(), "GET", "Cannot get the schema for this project", function(tildaJson) {
 
        //FloriaDOM.setInnerHTML("EDITOR", tildaJson);
