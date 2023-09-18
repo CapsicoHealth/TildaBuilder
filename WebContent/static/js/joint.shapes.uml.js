@@ -14,25 +14,25 @@ this.joint.shapes = this.joint.shapes || {};
         attrs: {
             rect: { 'width': 200 },
 
-            '.uml-class-name-rect': { 'stroke': 'black', 'stroke-width': 2, 'fill': '#3498db' },
-            '.uml-class-attrs-rect': { 'stroke': 'black', 'stroke-width': 2, 'fill': '#FFFF00' },
+            '.uml-class-name-rect': { /*'stroke': 'black', 'stroke-width': 2, 'fill': '#3498db'*/ },
+            '.uml-class-attrs-rect': { /*'stroke': 'black', 'stroke-width': 2, 'fill': '#FFFF00'*/ },
             '.uml-class-name-text': {
                 'ref': '.uml-class-name-rect',
                 'ref-y': .5,
                 'ref-x': .5,
                 'text-anchor': 'middle',
                 'y-alignment': 'middle',
-                'font-weight': 'bold',
-                'fill': 'black',
-                'font-size': 12,
-                'font-family': 'Times New Roman'
+//                'font-weight': 'bold',
+//                'fill': 'black',
+//                'font-size': 12,
+//                'font-family': 'Times New Roman'
             },
             '.uml-class-attrs-text': {
                 'ref': '.uml-class-attrs-rect', 'ref-y': 5, 'ref-x': 5,
                 'fill': 'black', 'font-size': 12, 'font-family': 'Courier'
             },
-            '.uml-class-attributes-fk-rect': { 'stroke': 'black', 'stroke-width': 2, 'fill': '#606060' },
-            '.uml-class-attributes-pk-rect': { 'stroke': 'black', 'stroke-width': 2, 'fill': '#808080' },
+            '.uml-class-attributes-fk-rect': {/* 'stroke': 'black', 'stroke-width': 2, 'fill': '#606060'*/ },
+            '.uml-class-attributes-pk-rect': {/* 'stroke': 'black', 'stroke-width': 2, 'fill': '#808080'*/ },
         
             '.uml-class-attributes-fk-text': {
                 'ref': '.uml-class-attributes-fk-rect', 'ref-y': 5, 'ref-x': 5,

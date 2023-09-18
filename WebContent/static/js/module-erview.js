@@ -62,7 +62,7 @@ class CanvasState
       return this._canvasData[0];
     }
     
-   addEntity(canvasName, entityName, x, y, hideColumns, hideKeys)
+   addEntity(canvasName, entityName, x, y, showColumns, showKeys)
     {
       let entity = this.getEntity(canvasName, entityName);
       console.log(entity);
@@ -72,15 +72,15 @@ class CanvasState
          if (canvas == null)
           return console.error("Canvas '" + canvasName + "' not found");
          console.log("new entity");
-         canvas.entities.push({ "name": entityName, "x": x, "y": y, "hideColumns": hideColumns, "hideKeys": hideKeys });
+         canvas.entities.push({ "name": entityName, "x": x, "y": y, "showColumns": showColumns, "showKeys": showKeys });
        }
       else // entity is being updated
        {
-          console.log("updated entity--> x: ", x, "; y: ", y, "; hideColumns: ", hideColumns, "; hideKeys: ", hideKeys, ";");
+          console.log("updated entity--> x: ", x, "; y: ", y, "; showColumns: ", showColumns, "; showKeys: ", showKeys, ";");
           entity.x = x;
           entity.y = y;
-          entity.hideColumns = hideColumns;
-          entity.hideKeys = hideKeys;
+          entity.showColumns = showColumns;
+          entity.showKeys = showKeys;
        }
       this.saveState();
     }
@@ -129,9 +129,6 @@ class CanvasState
     {
       console.log("Saving canvas state: ", this._canvasData);
       localStorage.setItem('canvasState', JSON.stringify(this._canvasData));
-//      const savedState = localStorage.getItem('canvasState');
-//      this._canvasData = JSON.parse(savedState);
-//      console.log("Canvas Data right after save:", this._canvasData);
     }
 
    loadState()
@@ -162,10 +159,9 @@ class Shelf
         if (target.nodeName != 'LI')
          return;
         let entityName = target.textContent;
-        canvasStateManager.addEntity(that._canvasName, entityName);
-        ERView.showEntityOnCanvas(entityName);
+        ERView.addEntityToCanvas(entityName);
         target.remove();
-        this._entityNames.remove(entityName);
+        that._entityNames.remove(entityName);
       }, null, true);
     }
     
@@ -181,11 +177,11 @@ class Shelf
       this._canvasName = canvasName;
     }
 
-   paint(canvasName)
+   paint()
     {
-      let str = '<UL>';
+      let str = '<UL class="entityShelf">';
       for (let i = 0; i < this._entityNames.length; ++i)
-       if (canvasStateManager.getEntity(canvasName, this._entityNames[i]) == null)
+       if (canvasStateManager.getEntity(this._canvasName, this._entityNames[i]) == null)
         str += '<LI>' + this._entityNames[i] + '</LI>'
       str += '</UL>';
       FloriaDOM.setInnerHTML(this._divId, str);
@@ -194,30 +190,63 @@ class Shelf
 
 
 
+
+
+var CustomLink = joint.dia.Link.extend({
+  defaults: joint.util.deepSupplement({
+     type: 'CustomLink',
+     attrs: { 
+             '.marker-target': { d: 'M 10 0 L 0 5 L 10 10 z' },
+            },
+     z: -1,
+     connector: { name: 'rounded' }
+  }, joint.dia.Link.prototype.defaults)
+});
+
+
+function createContextenu()
+ {
+   var e = document.createElement('UL');
+   e.classList.add("context-menu");
+   e.style.display="none";
+   document.body.appendChild(e);
+   return e;
+ }
+
 export var ERView = {
-  _currentTildaSchemaJson: null
- ,_entitiesMap: {}
+  _entitiesMap: []
  ,_paper: null
  ,_graph: null
- ,_contextMenu: $('<ul>', { class: 'context-menu' }).appendTo(document.body).hide()
+ ,_canvasElement: null
+ ,_contextMenu: createContextenu()
+ 
+ ,getEntity: function(entityName)
+   {
+     for (var i = 0; i < this._entitiesMap.length; ++i)
+      {
+        var e = this._entitiesMap[i];
+        if (e.attributes.name == entityName)
+         return e;
+      }
+     return console.warn("Cannot find entity '"+entityName+"' in ERView._entitiesMap.")
+   }
 
  ,start: function(mainDivId, entityListDivId, tildaJsonData)
    {
      this._mainDivId = mainDivId;
      this.createEntitiesFromTildaJson(tildaJsonData);
      
-     let canvasElement = FloriaDOM.getElement(this._mainDivId + '_CANVAS_CONTAINER');
-     if (canvasElement == null)
+     this._canvasElement = FloriaDOM.getElement(this._mainDivId + '_CANVAS_CONTAINER');
+     if (this._canvasElement == null)
       return;
 
      this._graph = new joint.dia.Graph();
      this._paper = new joint.dia.Paper({
-        el: canvasElement
+        el: this._canvasElement
        ,width: "98%"
        ,height: 800
        ,model: this._graph
      });
-     this.bindContextMenuToPaper();
 
      this._shelf = new Shelf(entityListDivId);        
      
@@ -225,11 +254,16 @@ export var ERView = {
      let currentCanvasState = canvasStateManager.getCurrentCanvas();
      if (currentCanvasState == null)
       currentCanvasState = canvasStateManager.addCanvas("Main")
+     
      this.showCanvas(currentCanvasState);
-           
+
+     this.bindContextMenuToPaper(currentCanvasState);
+
      var that = this;
      $('#' + mainDivId + '_ADD_CANVAS_BUTTON').click(function() { that.addCanvas() });
-     $('#' + mainDivId + '_CANVAS_TABS').on('click', '.tab', function() { that.showCanvas($(this).data('canvas-id')) });
+     $('#' + mainDivId + '_CANVAS_TABS').on('click', '.tab', function() {
+       that.showCanvas(xxx)
+     });
    }
    
  ,createEntitiesFromTildaJson: function(tildaJson)
@@ -242,28 +276,37 @@ export var ERView = {
 
        // Parsing all columns and create a new array of strings allAttributes as "<columnName>:<type>"
        const allAttributes = [];
+       if (entityData?.primary?.autogen == true)
+        {
+          allAttributes.push("refnum:LONG");
+          entityData.primary.columns=["refnum"];
+        }
        entityData.columns.forEach(column => {
-         let attribute = column.name;
-         if (column.type)
-          attribute += `:${column.type}`;
-         else if (column.sameAs || column.sameas)
-          {
-            const refString = column.sameAs || column.sameas;
-            const [refEntity, refColumn] = refString.split('.');
-            if (refColumn === 'refnum')
-             attribute += ':LONG';
-            else
-             {
-               const relatedEntity = tildaJson['objects'].find(obj => obj.name === refEntity);
-               if (relatedEntity && relatedEntity.columns)
-                {
-                  const relatedColumn = relatedEntity.columns.find(col => col.name === refColumn);
-                  if (relatedColumn && relatedColumn.type)
-                   attribute += `:${relatedColumn.type}`;
-                 }
-              }
-           }
-         allAttributes.push(attribute);
+          let attribute = column.name;
+          if (column.type)
+           attribute += ':'+column.type;
+          else if (column.sameAs || column.sameas)
+           {
+             const refString = column.sameAs || column.sameas;
+             const arr = refString.split('.');
+             const refEntity = arr[arr.length-2];
+             const refColumn = arr[arr.length-1];
+             if (attribute == null)
+              attribute = refColumn;
+             if (refColumn === 'refnum' || refColumn === 'pk')
+              attribute += ':LONG';
+             else
+              {
+                const relatedEntity = tildaJson['objects'].find(obj => obj.name === refEntity);
+                if (relatedEntity && relatedEntity.columns)
+                 {
+                   const relatedColumn = relatedEntity.columns.find(col => col.name === refColumn);
+                   if (relatedColumn && relatedColumn.type)
+                    attribute += ':'+relatedColumn.type;
+                  }
+               }
+            }
+          allAttributes.push(attribute);
        });
 
        // Calculating the max length of attribute names
@@ -275,10 +318,7 @@ export var ERView = {
        primaryKey.forEach(pk => {
          const foundAttr = allAttributes.find(attr => attr.startsWith(pk + ":"));
          if (foundAttr)
-          {
-            const [pkName, pkType] = foundAttr.split(':');
-            primaryKeyAttributes.push(`${pkName}:${pkType || ''}`);
-          }
+          primaryKeyAttributes.push(foundAttr);
        });
 
        // Handling Foreign Keys columns with the same string values "<columnName>:<type>"
@@ -291,10 +331,7 @@ export var ERView = {
                fk.srcColumns.forEach(srcColumn => {
                  const foundAttr = allAttributes.find(attr => attr.startsWith(srcColumn + ":"));
                  if (foundAttr)
-                  {
-                    const [colName, colType] = foundAttr.split(':');
-                    foreignKeysWithTypes.push(`${colName}:${colType || ''}`);
-                  }
+                  foreignKeysWithTypes.push(foundAttr);
                });
              }
           });
@@ -310,12 +347,12 @@ export var ERView = {
           attributesPk: primaryKeyAttributes,
           longestAttributeLength: longestAttributeLength,
           methods: [],
-          hideKeys: false,
-          hideColumns: false,
+          showKeys: true,
+          showColumns: true,
        });
        
        // Add the entity to the map
-       this._entitiesMap[entityName] = NewEntity;
+       this._entitiesMap.push(NewEntity);
        console.log("Added entity to entitiesMap:", entityName);
      });
    }
@@ -325,7 +362,7 @@ export var ERView = {
      console.log("canvasState: ", canvasState);
      
      $('.tab.active').removeClass('active');
-     let tabId = this._paper.el.id+'_'+(canvasState.id);
+     let tabId = this._canvasElement.id+'_'+(canvasState.id);
      let tab = FloriaDOM.getElement(tabId);
      if (tab == null)
       FloriaDOM.appendInnerHTML(this._mainDivId + '_CANVAS_TABS', '<BUTTON class="tab active" id="'+tabId+'">'+canvasState.name+'</BUTTON>');
@@ -335,27 +372,97 @@ export var ERView = {
      this._graph.clear();
      this._shelf.reset(canvasState.name);
 
-     for (let prop in this._entitiesMap)
+     for (let i = 0; i < this._entitiesMap.length; ++i)
       {
-        let entity = this._entitiesMap[prop];
-        if (canvasState.entities.getSE(entity.attributes.name, "name") == null) // not on canvas
+        let entity = this._entitiesMap[i];
+        let canvasStateEntity = canvasStateManager.getEntity(canvasState.name, entity.attributes.name);
+        if (canvasStateEntity == null) // not on canvas
          this._shelf.addEntity(entity.attributes.name);
         else
          {
-           const key = entity.hideKeys || true;
-           const col = entity.hideColumns || true;
-           const x = entity.x || 25;
-           const y = entity.y || 25;
-           that.showEntityOnCanvas(entity.name, this._paper.model, x, y, col, key);
-           const cell = this._paper.model.getCell(entity.attributes.id);
-           const display_col = col == true ? "Hide Columns" : "Show Columns";
-           const display_key = key == true ? "Hide Keys": "Show Keys";
-           that.updateEntityAttributesDisplay(display_col, cell, paper, col, key);
-           that.updateEntityAttributesDisplay(display_key, cell, paper, col, key);
+           const key = canvasStateEntity.showKeys || true;
+           const col = canvasStateEntity.showColumns || true;
+           const x = canvasStateEntity.x || 25;
+           const y = canvasStateEntity.y || 25;
+           this.addEntityToCanvas(entity.attributes.name, x, y, col, key);
          }
       }
-     this._shelf.paint(canvasState.name);
+     this._shelf.paint();
    }
+   
+   
+ ,addEntityToCanvas: function(entityName, x, y, showCol, showKeys)
+   {
+     const entity = this.getEntity(entityName);
+     if (entity == null)
+      return console.warn("Cannot find entity '"+entityName+"' to add.");
+
+     canvasStateManager.addEntity(this._shelf._canvasName, entityName, x, y, showCol, showKeys);
+     
+     entity.set('onCanvas', true);
+     entity.position(x, y);
+     entity.attributes.showColumns = showCol || true;
+     entity.attributes.showKeys = showKeys || true;
+     this._graph.addCells([entity]);
+
+     for (let i = 0; i < this._entitiesMap.length; ++i)
+      {
+        let entity2 = this._entitiesMap[i];
+        if (entity2.get('onCanvas') == true)
+         {
+           
+         }
+      }
+/*
+     jsonData.objects.forEach(entityData => {
+        if (entityData.foreign)
+         {
+           entityData.foreign.forEach(foreignKey => {
+              let sourceModel, destinationModel;
+              if (entityData.name === entityName)
+               {
+                 sourceModel = this._graph.getCell(entityModel.id);
+                 destinationModel = this._graph.getCell(this._entitiesMap[foreignKey.destObject].id);
+               } 
+              else if (foreignKey.destObject === entityName)
+               {
+                 sourceModel = this._graph.getCell(this._entitiesMap[entityData.name].id);
+                 destinationModel = this._graph.getCell(entityModel.id);
+               }
+              if (sourceModel && destinationModel)
+               {
+                 const link = new joint.shapes.standard.Link();
+                 link.source(sourceModel);
+                 link.target(destinationModel);
+                 this._graph.addCells([link]);
+               }
+           });
+         }
+     });
+*/
+   }
+   
+ ,removeEntityFromCanvas: function(entityModel)
+   {
+     const entity = this.getEntity(entityModel.attributes.name);
+     if (entity == null)
+      return console.warn("Cannot find entity '"+entityModel.attributes.name+"' to remove.");
+
+     var links = this._graph.getConnectedLinks(entityModel);
+     var that = this;
+     links.forEach(link => {
+       that._graph.removeCells([link]);
+     });
+
+     this._graph.removeCells([entityModel]);
+     entityModel.set('onCanvas', false);
+
+     canvasStateManager.removeEntity(this._shelf._canvasName, entityModel.attributes.name);
+     this._shelf.addEntity(entityModel.attributes.name);
+     this._shelf.paint();
+   }
+   
+
 
 /*
  ,addCanvas: function()
@@ -405,26 +512,50 @@ export var ERView = {
         zoom(this._zoomLevel);
     }
 
-  ,bindContextMenuToPaper: function()
-    {
+ ,bindContextMenuToPaper: function(currentCanvasState)
+   {
       var that = this;
+      
+      // scoped variable for context menu
+      let contextMenuCell = null;
+      FloriaDOM.addEvent(this._contextMenu, "click", function(e, event, target) {
+         if (target.nodeName != 'LI')
+          return;
+         var selectedOption = target.innerText;
+         if (selectedOption == 'Remove Entity from Canvas')
+          that.removeEntityFromCanvas(contextMenuCell);
+         else
+          {
+                 if (selectedOption == 'Show Keys'   ) contextMenuCell.set('showKeys', true);
+            else if (selectedOption == 'Hide Keys'   ) contextMenuCell.set('showKeys', false);
+            else if (selectedOption == 'Show Columns') contextMenuCell.set('showColumns', true);
+            else if (selectedOption == 'Hide Columns') contextMenuCell.set('showColumns', false);
+            that.updateEntityAttributesDisplay(currentCanvasState.name, selectedOption, contextMenuCell, that._paper);
+          }
+         FloriaDOM.hide(that._contextMenu);
+      });
       
       this._paper.on('cell:contextmenu', function(cellView, evt, x, y) {
          evt.stopPropagation();
-         that._contextMenu.css({ left: evt.pageX, top: evt.pageY });
-         that.refreshContextMenuForCell(cellView.model, that._paper);
-         that._contextMenu.show();
+         that._contextMenu.style.left=evt.pageX+"px";
+         that._contextMenu.style.top=evt.pageY+"px";
+         var str = '<LI>'+(cellView.model.get('showKeys'   ) != true ? 'Show Keys'    : 'Hide Keys')+'</LI>'
+                  +'<LI>'+(cellView.model.get('showColumns') != true ? 'Show Columns' : 'Hide Columns')+'</LI>'
+                  +'<LI>Remove Entity from Canvas</LI>'
+                  ;
+         that._contextMenu.innerHTML = str;
+         FloriaDOM.show(that._contextMenu);
+         contextMenuCell = cellView.model;
+      });
+
+      this._paper.on('blank:contextmenu', function() {
+         FloriaDOM.hide(that._contextMenu);
       });
 
       // Position update
-      this._paper.on("cell:pointerup", function(cellview, evt, x, y) {
-//         console.log(cellview.model);
-//         console.log("pointer up on cell ", cellview.model.id, " pos: ", x, ",", y);
-         if (cellview.model.attributes.hideColumns == null)
-          cellview.model.attributes.hideColumns = false;
-         if (cellview.model.attributes.hideKeys == null)
-          cellview.model.attributes.hideKeys = false;
-         canvasStateManager.addEntity(that._paper.el.id, cellview.model.attributes.name, x, y, cellview.model.attributes.hideColumns, cellview.model.attributes.hideKeys);
+      this._paper.on("cell:pointerup", function(cell, evt, x, y) {
+         var a = cell.model.attributes;
+         canvasStateManager.addEntity(currentCanvasState.name, a.name, a.position.x, a.position.y, a.showColumns, a.showKeys);
       });
 
       // scoped variable for link drag and drop logic
@@ -432,6 +563,7 @@ export var ERView = {
 
       // Dragging the entities, updating the links
       this._paper.on('cell:pointerdown', function(cellView, evt, x, y) {
+         FloriaDOM.hide(that._contextMenu);
          if (cellView.model.isLink() == true)
           return;
          var threshold = 10;
@@ -442,13 +574,12 @@ export var ERView = {
                Math.abs(bbox.x + bbox.width - x),
                Math.abs(bbox.y + bbox.height - y)
              );
-
          if (distance < threshold)
           {
             link = new CustomLink();
             link.source({ x: x, y: y });
             link.target({ x: x, y: y });
-            link.addTo(graph);
+            link.addTo(that._graph);
           }
       });
 
@@ -460,255 +591,65 @@ export var ERView = {
 
       // finish modifying links
       this._paper.on('cell:pointerup blank:pointerup', function(cellView, evt, x, y) {
+         FloriaDOM.hide(that._contextMenu);
          if (!link) return;
          var targetElement = that._paper.findViewsFromPoint(link.getTargetPoint())[0];
          if (targetElement)
           link.target({ id: targetElement.model.id });
          link = null;
       });
-    }
+   }
 
 
+ ,updateEntityAttributesDisplay: function(canvasName, option, cell, paper)
+   {
+     let x = cell.attributes.position.x;
+     let y = cell.attributes.position.y;
+     let showCols = cell.attributes.showColumns || true;
+     let showKeys = cell.attributes.showKeys || true;
 
+     if (cell.isLink() == true)
+      return;
+     if (!cell.get('originalAttributes')) 
+      {
+        cell.set('originalAttributes', cell.get('attributes') || []);
+        cell.set('originalAttributesFk', cell.get('attributesFk') || []);
+        cell.set('originalAttributesPk', cell.get('attributesPk') || []);
+      }
 
-    , removeEntityFromCanvas: function(entityModel) {
-        const entityName = entityModel.attributes.name;
+     switch (option)
+      {
+        case 'Hide Keys':
+          cell.attr('.uml-class-attributes-pk-rect/display', 'none');
+          cell.attr('.uml-class-attributes-pk-text/display', 'none');
+          cell.attr('.uml-class-attributes-fk-rect/display', 'none');
+          cell.attr('.uml-class-attributes-fk-text/display', 'none');
+          canvasStateManager.addEntity(canvasName, cell.attributes.name, x, y, showCols, false);
+          cell.updateRectangles();
+          break;
+        case 'Show Keys':
+          cell.removeAttr('.uml-class-attributes-fk-rect/display');
+          cell.removeAttr('.uml-class-attributes-pk-rect/display');
+          cell.removeAttr('.uml-class-attributes-pk-text/display');
+          cell.removeAttr('.uml-class-attributes-fk-text/display');
+          canvasStateManager.addEntity(canvasName, cell.attributes.name, x, y, showCols, true);
+          cell.updateRectangles();
+          break;
+        case 'Hide Columns':
+          cell.attr('.uml-class-attrs-rect/display', 'none');
+          cell.attr('.uml-class-attrs-text/display', 'none');
+          canvasStateManager.addEntity(canvasName, cell.attributes.name, x, y, true, showKeys);
+          cell.updateRectangles();
+          break;
+        case 'Show Columns':
+          cell.removeAttr('.uml-class-attrs-rect/display');
+          cell.removeAttr('.uml-class-attrs-text/display');
+          canvasStateManager.addEntity(canvasName, cell.attributes.name, x, y, false, showKeys);
+          cell.updateRectangles();
+          break;
+      }
+     canvasStateManager.saveState();
+     this._paper.findViewByModel(cell).update();
+   }
 
-        this.populateEntityList(entityName);
-
-        var links = this._graph.getConnectedLinks(entityModel);
-        var that = this;
-        links.forEach(link => {
-            that._graph.removeCells([link]);
-        });
-
-        this._graph.removeCells([entityModel]);
-
-        entityModel.set('onCanvas', false);
-
-        const activeCanvasID = $('.tab.active').data('canvas-id');
-        if (this._canvasData[activeCanvasID] && this._canvasData[activeCanvasID].entities) {
-            const index = this._canvasData[activeCanvasID].entities.indexOf(entityName);
-            if (index !== -1) {
-                this._canvasData[activeCanvasID].entities.splice(index, 1);
-            }
-        }
-        canvasStateManager.removeEntity(activeCanvasID, entityName);
-        this._shelf.paint(activeCanvasID);
-    }
-
-
-
-    , getContextOptions: function(cell) {
-        var hideKeys = cell.get('hideKeys') ? 'Show Keys' : 'Hide Keys';
-        var hideColumns = cell.get('hideColumns') ? 'Show Columns' : 'Hide Columns';
-        return [hideKeys, hideColumns, 'Remove Entity from Canvas'];
-    }
-
-
-
-
-
-    , refreshContextMenuForCell: function(cell, paper) {
-        let hideCol = cell.attributes.hideColumns;
-        let hideKeys = cell.attributes.hideKeys;
-        this._contextMenu.empty();
-        //        var options = this.getContextOptions(cell);
-        var that = this.
-            options.forEach(function(option) {
-                $('<li>').text(option).appendTo(contextMenu).on('click', function() {
-                    var selectedOption = $(this).text();
-                    switch (selectedOption) {
-                        case 'Hide Keys':
-                            that.updateEntityAttributesDisplay('Hide Keys', cell, paper, hideCol, true);
-                            cell.set('hideKeys', true);
-                            break;
-                        case 'Show Keys':
-                            that.updateEntityAttributesDisplay('Show Keys', cell, paper, hideCol, false);
-                            cell.set('hideKeys', false);
-                            break;
-                        case 'Hide Columns':
-                            that.updateEntityAttributesDisplay('Hide Columns', cell, paper, true, hideKeys);
-                            cell.set('hideColumns', true);
-                            break;
-                        case 'Show Columns':
-                            that.updateEntityAttributesDisplay('Show Columns', cell, paper, false, hideCol);
-                            cell.set('hideColumns', false);
-                            break;
-                        case 'Remove Entity from Canvas':
-                            that.removeEntityFromCanvas(cell);
-                            break;
-                    }
-                    that._contextMenu.hide();
-                });
-            });
-    }
-
-
-
-
-    , updateEntityAttributesDisplay: function(option, cell, paper) {
-
-        let x = cell.attributes.position.x;
-        let y = cell.attributes.position.y;
-        let hideCols = cell.attributes.hideColumns;
-        let hideKeys = cell.attributes.hideKeys;
-        if (hideCols == null) {
-            hideCols = false;
-        }
-        if (hideKeys == null) {
-            hideKeys = false;
-        }
-
-        if (cell.isLink()) return;
-        if (!cell.get('originalAttributes')) {
-            cell.set('originalAttributes', cell.get('attributes') || []);
-            cell.set('originalAttributesFk', cell.get('attributesFk') || []);
-            cell.set('originalAttributesPk', cell.get('attributesPk') || []);
-        }
-        // var originalAttributes = cell.get('originalAttributes');
-        // var originalAttributesFk = cell.get('originalAttributesFk');
-        // var originalAttributesPk = cell.get('originalAttributesPk');
-
-        switch (option) {
-            case 'Hide Keys':
-                cell.attr('.uml-class-attributes-pk-rect/display', 'none');
-                cell.attr('.uml-class-attributes-pk-text/display', 'none');
-                cell.attr('.uml-class-attributes-fk-rect/display', 'none');
-                cell.attr('.uml-class-attributes-fk-text/display', 'none');
-                canvasStateManager.addEntity(paper.el.id, cell.attributes.name, x, y, hideCols, true);
-                cell.updateRectangles();
-
-                break;
-            case 'Show Keys':
-                cell.removeAttr('.uml-class-attributes-fk-rect/display');
-                cell.removeAttr('.uml-class-attributes-pk-rect/display');
-                cell.removeAttr('.uml-class-attributes-pk-text/display');
-                cell.removeAttr('.uml-class-attributes-fk-text/display');
-                canvasStateManager.addEntity(paper.el.id, cell.attributes.name, x, y, hideCols, false);
-                cell.updateRectangles();
-                break;
-            case 'Hide Columns':
-                cell.attr('.uml-class-attrs-rect/display', 'none');
-                cell.attr('.uml-class-attrs-text/display', 'none');
-                canvasStateManager.addEntity(paper.el.id, cell.attributes.name, x, y, true, hideKeys);
-                cell.updateRectangles();
-                break;
-            case 'Show Columns':
-                cell.removeAttr('.uml-class-attrs-rect/display');
-                cell.removeAttr('.uml-class-attrs-text/display');
-                canvasStateManager.addEntity(paper.el.id, cell.attributes.name, x, y, false, hideKeys);
-                cell.updateRectangles();
-                break;
-        }
-        canvasStateManager.saveState();
-        paper.findViewByModel(cell).update();
-    }
-
-
-
-    , populateEntityList: function(entityName) {
-        const entityList = document.getElementById('entity-list');
-        const listItem = document.createElement('li');
-        listItem.textContent = entityName;
-
-        listItem.addEventListener('click', function() {
-            this.showEntityOnCanvas(entityName);
-            if (listItem.parentNode === entityList) {
-                entityList.removeChild(listItem);
-            }
-        });
-
-        entityList.appendChild(listItem);
-    }
-
-
-
-
-
-    , showEntityOnCanvas: function(entityName, graphInstance, x, y, hideCol, hideKeys) {
-        const entityModel = this._entitiesMap[entityName];
-        let activeGraph;
-        if (graphInstance) {
-            activeGraph = graphInstance;
-        }
-        else {
-            activeGraph = this.getActiveGraph();
-        }
-        if (entityModel) {
-            entityModel.set('onCanvas', true);
-        }
-
-        if (entityModel) {
-            entityModel.set('onCanvas', true);
-            entityModel.position(x, y);
-            entityModel.attributes.hideColumns = hideCol;
-            entityModel.attributes.hideKeys = hideKeys;
-            if (hideCol == null) {
-                hideCol = false;
-            }
-            if (hideKeys == null) {
-                hideKeys = false;
-            }
-            activeGraph.addCells([entityModel]);
-            const activeCanvasID = $('.tab.active').data('canvas-id');
-            if (this._canvasData[activeCanvasID])
-             {
-               if (!this._canvasData[activeCanvasID].entities.includes(entityName))
-                {
-                  console.log(hideCol, hideKeys);
-                  console.log("adit");
-                  canvasStateManager.addEntity(activeCanvasID, entityName, x, y, hideCol, hideKeys);
-                  this._canvasData[activeCanvasID].entities.push(entityName);
-                }
-             }
-            this._shelf.paint(activeCanvasID);
-        }
-        jsonData.objects.forEach(entityData => {
-            if (entityData.foreign) {
-                entityData.foreign.forEach(foreignKey => {
-                    let sourceModel, destinationModel;
-
-                    if (entityData.name === entityName) {
-                        sourceModel = activeGraph.getCell(entityModel.id);
-                        destinationModel = activeGraph.getCell(this._entitiesMap[foreignKey.destObject].id);
-                    } else if (foreignKey.destObject === entityName) {
-                        sourceModel = activeGraph.getCell(this._entitiesMap[entityData.name].id);
-                        destinationModel = activeGraph.getCell(entityModel.id);
-                    }
-
-                    if (sourceModel && destinationModel) {
-                        const link = new joint.shapes.standard.Link();
-                        link.source(sourceModel);
-                        link.target(destinationModel);
-                        activeGraph.addCells([link]);
-                    }
-                });
-            }
-        });
-
-        canvasStateManager.saveState();
-    }
-
-
-
-
-
-    , getActiveGraph: function() {
-        const activeCanvasID = $('.tab.active').length > 0 ? $('.tab.active').data('canvas-id') : null;
-        console.log("active id", activeCanvasID);
-        if (this._canvasData.hasOwnProperty(activeCanvasID)) {
-            console.log("id", activeCanvasID);
-            console.log(canvasData[activeCanvasID]);
-            console.log("IN HERE ALL DAY", canvasData[activeCanvasID].graph);
-            return this._canvasData[activeCanvasID].graph;
-        } else {
-            console.error(`Canvas with ID ${activeCanvasID} not found in canvasData.`);
-            return null;
-        }
-    }
-
-}
-
-
-
+ }

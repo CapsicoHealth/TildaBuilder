@@ -2586,3 +2586,52 @@ table.centered {
 
 .canvas-container {
 }
+
+.joint-type-uml-class {
+  cursor: move;
+  stroke: grey;
+  stroke-width: 1px;  
+}
+.uml-class-name-rect {
+  fill: #9BE;
+}
+.uml-class-name-text {
+  font-weight: bold;
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+  fill: black;
+}
+.uml-class-attributes-pk-rect {
+  fill: #e4f8f0;
+}
+.uml-class-attributes-fk-rect {
+  fill: #e4f8f0;
+}
+.uml-class-attrs-rect {
+  fill: #DEF;
+}
+
+
+/* CSS for the context menu */
+.context-menu {
+  position: absolute;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background-color: #fff;
+  border: 1px solid #ddd;
+}
+.context-menu li {
+  padding: 10px;
+  cursor: pointer;
+}
+.context-menu li:hover {
+  background-color: #eee;
+}
+
+.entityShelf LI {
+  cursor: pointer;
+}
+.entityShelf LI:hover {
+  background-color: #eee;
+}
