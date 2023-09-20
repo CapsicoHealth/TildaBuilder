@@ -2522,12 +2522,9 @@ table.centered {
     color: white;
     font-size: 16px;
     transition: 0.4s;
-    width: 0px !important;
+    width: 150px !important;
     position: relative;
     top: -8px;    
-}
-.searchBox:hover > .searchInput {
-    width: 250px !important;
 }
 
 
@@ -2581,7 +2578,7 @@ table.centered {
    width: 90%;
    height: 90%;
    border: 1px solid #F0F0F0;
-   background-color: #F7F7F7;
+   background-color: #FaFaFa;
 }
 
 .canvas-container {
@@ -2629,9 +2626,19 @@ table.centered {
   background-color: #eee;
 }
 
+
 .entityShelf LI {
   cursor: pointer;
 }
 .entityShelf LI:hover {
-  background-color: #eee;
+  background-color: #DDD;
+  font-weight: bold;
+}
+.entityShelf LI.onCanvas {
+  color:#BBB;
+}
+.entityShelf LI.onCanvas:hover {
+  background-color: #F0F0F0 ;
+  cursor: auto;
+  font-weight: normal;
 }
