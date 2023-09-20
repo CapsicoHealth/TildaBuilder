@@ -148,10 +148,13 @@ const canvasStateManager = new CanvasState();
 
 class Shelf
  {
-   constructor(divId)
+   constructor(divId, inputIdSearch, entities)
     {
       this._divId = divId;
       this._entityNames = [];
+      this._filterStr = '';
+      for (let i = 0; i < entities.length; ++i)
+       this._entityNames.push({name: entities[i].attributes.name, onCanvas:false});
       this._canvasName = null;
       
       var that = this;
@@ -159,31 +162,54 @@ class Shelf
         if (target.nodeName != 'LI')
          return;
         let entityName = target.textContent;
+        let i = that._entityNames.indexOfSE(entityName, "name");
+        if (i == -1)
+         return console.warn("Entity '"+entityName+"' cannot be found on the shelf after the click event.")
+        if (that._entityNames[i].onCanvas == true)
+         return;
         ERView.addEntityToCanvas(entityName);
-        target.remove();
-        that._entityNames.remove(entityName);
+        target.classList.add("onCanvas");
+        that.removeEntity(entityName);
       }, null, true);
+      
+      if (inputIdSearch != null)
+       FloriaDOM.addEvent(inputIdSearch, "keyup", function(e, event, target) {
+         that._filterStr = target.value;
+         that.paint();
+      }, 200, true);
+
     }
     
    addEntity(entityName)
     {
-      if (this._entityNames.indexOf(entityName) == -1)
-       this._entityNames.push(entityName);
+      let i = this._entityNames.indexOfSE(entityName, "name");
+      if (i == -1)
+       return console.warn("Cannot find entity '"+entityName+"' in the shelf to add.");
+      this._entityNames[i].onCanvas = true;
+    }
+   removeEntity(entityName)
+    {
+      let i = this._entityNames.indexOfSE(entityName, "name");
+      if (i == -1)
+       return console.warn("Cannot find entity '"+entityName+"' in the shelf to remove.");
+      this._entityNames[i].onCanvas = false;
     }
 
    reset(canvasName)
     {
-      this._entityNames = [];
+      for (let i = 0; i < this._entityNames.length; ++i)
+       this._entityNames[i].onCanvas = false;
       this._canvasName = canvasName;
     }
 
    paint()
     {
-      let str = '<UL class="entityShelf">';
+      const re = new RegExp(this._filterStr.replaceAll(' ', "\\s+"), 'i');
+      let str = '<UL class="entityShelf">\n';
       for (let i = 0; i < this._entityNames.length; ++i)
-       if (canvasStateManager.getEntity(this._canvasName, this._entityNames[i]) == null)
-        str += '<LI>' + this._entityNames[i] + '</LI>'
-      str += '</UL>';
+       if (this._entityNames[i].name.match(re) != null)
+        str += '<LI class="'+(this._entityNames[i].onCanvas==true?'onCanvas':'')+'">' + this._entityNames[i].name + '</LI>\n'
+      str += '</UL>\n';
       FloriaDOM.setInnerHTML(this._divId, str);
     }
 }
@@ -214,7 +240,7 @@ function createContextenu()
  }
 
 export var ERView = {
-  _entitiesMap: []
+  _entities: []
  ,_paper: null
  ,_graph: null
  ,_canvasElement: null
@@ -222,16 +248,16 @@ export var ERView = {
  
  ,getEntity: function(entityName)
    {
-     for (var i = 0; i < this._entitiesMap.length; ++i)
+     for (var i = 0; i < this._entities.length; ++i)
       {
-        var e = this._entitiesMap[i];
+        var e = this._entities[i];
         if (e.attributes.name == entityName)
          return e;
       }
-     return console.warn("Cannot find entity '"+entityName+"' in ERView._entitiesMap.")
+     return console.warn("Cannot find entity '"+entityName+"' in ERView._entities.")
    }
 
- ,start: function(mainDivId, entityListDivId, tildaJsonData)
+ ,start: function(mainDivId, entityListDivId, searchInputId, tildaJsonData)
    {
      this._mainDivId = mainDivId;
      this.createEntitiesFromTildaJson(tildaJsonData);
@@ -247,8 +273,10 @@ export var ERView = {
        ,height: 800
        ,model: this._graph
      });
+//     this._paper.setGrid({ name: 'mesh', args: { color: '#CCC', thickness:1 }});
+//     this._paper.drawGrid()
 
-     this._shelf = new Shelf(entityListDivId);        
+     this._shelf = new Shelf(entityListDivId, searchInputId, this._entities);        
      
      canvasStateManager.loadState();
      let currentCanvasState = canvasStateManager.getCurrentCanvas();
@@ -352,7 +380,7 @@ export var ERView = {
        });
        
        // Add the entity to the map
-       this._entitiesMap.push(NewEntity);
+       this._entities.push(NewEntity);
        console.log("Added entity to entitiesMap:", entityName);
      });
    }
@@ -372,14 +400,13 @@ export var ERView = {
      this._graph.clear();
      this._shelf.reset(canvasState.name);
 
-     for (let i = 0; i < this._entitiesMap.length; ++i)
+     for (let i = 0; i < this._entities.length; ++i)
       {
-        let entity = this._entitiesMap[i];
+        let entity = this._entities[i];
         let canvasStateEntity = canvasStateManager.getEntity(canvasState.name, entity.attributes.name);
-        if (canvasStateEntity == null) // not on canvas
-         this._shelf.addEntity(entity.attributes.name);
-        else
+        if (canvasStateEntity != null) // not on canvas
          {
+           this._shelf.addEntity(entity.attributes.name);
            const key = canvasStateEntity.showKeys || true;
            const col = canvasStateEntity.showColumns || true;
            const x = canvasStateEntity.x || 25;
@@ -405,9 +432,9 @@ export var ERView = {
      entity.attributes.showKeys = showKeys || true;
      this._graph.addCells([entity]);
 
-     for (let i = 0; i < this._entitiesMap.length; ++i)
+     for (let i = 0; i < this._entities.length; ++i)
       {
-        let entity2 = this._entitiesMap[i];
+        let entity2 = this._entities[i];
         if (entity2.get('onCanvas') == true)
          {
            
@@ -422,11 +449,11 @@ export var ERView = {
               if (entityData.name === entityName)
                {
                  sourceModel = this._graph.getCell(entityModel.id);
-                 destinationModel = this._graph.getCell(this._entitiesMap[foreignKey.destObject].id);
+                 destinationModel = this._graph.getCell(this._entities[foreignKey.destObject].id);
                } 
               else if (foreignKey.destObject === entityName)
                {
-                 sourceModel = this._graph.getCell(this._entitiesMap[entityData.name].id);
+                 sourceModel = this._graph.getCell(this._entities[entityData.name].id);
                  destinationModel = this._graph.getCell(entityModel.id);
                }
               if (sourceModel && destinationModel)
@@ -458,7 +485,7 @@ export var ERView = {
      entityModel.set('onCanvas', false);
 
      canvasStateManager.removeEntity(this._shelf._canvasName, entityModel.attributes.name);
-     this._shelf.addEntity(entityModel.attributes.name);
+     this._shelf.removeEntity(entityModel.attributes.name);
      this._shelf.paint();
    }
    
@@ -499,30 +526,33 @@ export var ERView = {
 
     , _zoomLevel: 1
     , _zoom: function() {
-        paper.scale(this._zoomLevel);
-        paper.fitToContent({ useModelGeometry: true, padding: 100 * this._zoomLevel, allowNewOrigin: 'any' });
+        this._paper.scale(this._zoomLevel);
+        this._paper.fitToContent({ useModelGeometry: true, padding: 100 * this._zoomLevel, allowNewOrigin: 'any' });
 
     }
     , zoomIn: function() {
         this._zoomLevel = Math.min(3, this._zoomLevel + 0.2);
-        zoom(this._zoomLevel);
+        this._zoom(this._zoomLevel);
     }
     , zoomOut: function() {
         this._zoomLevel = Math.max(0.2, this._zoomLevel - 0.2);
-        zoom(this._zoomLevel);
+        this._zoom(this._zoomLevel);
     }
 
  ,bindContextMenuToPaper: function(currentCanvasState)
    {
       var that = this;
-      
       // scoped variable for context menu
       let contextMenuCell = null;
       FloriaDOM.addEvent(this._contextMenu, "click", function(e, event, target) {
          if (target.nodeName != 'LI')
           return;
          var selectedOption = target.innerText;
-         if (selectedOption == 'Remove Entity from Canvas')
+         if (selectedOption == 'Zoom In')
+          that.zoomIn();
+         else if (selectedOption == 'Zoom Out')
+          that.zoomOut();
+         else if (selectedOption == 'Remove from Canvas')
           that.removeEntityFromCanvas(contextMenuCell);
          else
           {
@@ -541,15 +571,23 @@ export var ERView = {
          that._contextMenu.style.top=evt.pageY+"px";
          var str = '<LI>'+(cellView.model.get('showKeys'   ) != true ? 'Show Keys'    : 'Hide Keys')+'</LI>'
                   +'<LI>'+(cellView.model.get('showColumns') != true ? 'Show Columns' : 'Hide Columns')+'</LI>'
-                  +'<LI>Remove Entity from Canvas</LI>'
+                  +'<LI>Remove from Canvas</LI>'
                   ;
          that._contextMenu.innerHTML = str;
          FloriaDOM.show(that._contextMenu);
          contextMenuCell = cellView.model;
       });
 
-      this._paper.on('blank:contextmenu', function() {
-         FloriaDOM.hide(that._contextMenu);
+      this._paper.on('blank:contextmenu', function(evt, x, y) {
+         evt.stopPropagation();
+         that._contextMenu.style.left=evt.pageX+"px";
+         that._contextMenu.style.top=evt.pageY+"px";
+         var str = '<LI>Zoom In</LI>'
+                  +'<LI>Zoom Out</LI>'
+                  ;
+         that._contextMenu.innerHTML = str;
+         FloriaDOM.show(that._contextMenu);
+         contextMenuCell = null;
       });
 
       // Position update
@@ -564,7 +602,8 @@ export var ERView = {
       // Dragging the entities, updating the links
       this._paper.on('cell:pointerdown', function(cellView, evt, x, y) {
          FloriaDOM.hide(that._contextMenu);
-         if (cellView.model.isLink() == true)
+         cellView.model.toFront();
+         if (cellView.model.isLink() == false)
           return;
          var threshold = 10;
          var bbox = cellView.model.getBBox();
