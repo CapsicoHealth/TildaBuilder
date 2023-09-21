@@ -65,14 +65,14 @@ class CanvasState
    addEntity(canvasName, entityName, x, y, showColumns, showKeys)
     {
       let entity = this.getEntity(canvasName, entityName);
-      console.log(entity);
+//      console.log(entity);
       if (entity == null) // entity is being actually added
        {
          let canvas = this.getCanvas(canvasName);
          if (canvas == null)
           return console.error("Canvas '" + canvasName + "' not found");
          console.log("new entity");
-         canvas.entities.push({ "name": entityName, "x": x, "y": y, "showColumns": showColumns, "showKeys": showKeys });
+         canvas.entities.push({ "name": entityName, "x": x, "y": y, "showColumns": showColumns, "showKeys": showKeys, "vertices":{} });
        }
       else // entity is being updated
        {
@@ -122,6 +122,15 @@ class CanvasState
        return console.error("Entity '" + entityName + "' not found in canvas '" + canvasName + "'");
 
       canvas.entities.splice(entityIndex, 1);
+      this.saveState();
+    }
+    
+   addLink(canvasName, entitySrcName, entityDstName, vertices)
+    {
+      let entity = this.getEntity(canvasName, entitySrcName);
+      if (entity == null)
+       return;
+      entity.vertices[entityDstName] = vertices.slice();
       this.saveState();
     }
 
@@ -231,8 +240,8 @@ var CustomLink = joint.shapes.standard.Link.extend({
 });
 
 
-var toolsView = new joint.dia.ToolsView({tools: [new joint.linkTools.Vertices()
-                                                ,new joint.linkTools.Segments()
+var toolsView = new joint.dia.ToolsView({tools: [new joint.linkTools.Vertices({stopPropagation: false})
+                                                ,new joint.linkTools.Segments({stopPropagation: false})
                                                 ]});
 
 function hasFK(entitySrc, entityDst)
@@ -303,7 +312,7 @@ export var ERView = {
      
      this.showCanvas(currentCanvasState);
 
-     this.bindContextMenuToPaper(currentCanvasState);
+     this.bindEventHandlersToPaper(currentCanvasState);
 
      var that = this;
      $('#' + mainDivId + '_ADD_CANVAS_BUTTON').click(function() { that.addCanvas() });
@@ -426,18 +435,19 @@ export var ERView = {
         if (canvasStateEntity != null) // not on canvas
          {
            this._shelf.addEntity(entity.attributes.name);
-           const key = canvasStateEntity.showKeys || true;
-           const col = canvasStateEntity.showColumns || true;
-           const x = canvasStateEntity.x || 25;
-           const y = canvasStateEntity.y || 25;
-           this.addEntityToCanvas(entity.attributes.name, x, y, col, key);
+           this.addEntityToCanvas(entity.attributes.name
+                                , canvasStateEntity.x || 25
+                                , canvasStateEntity.y || 25
+                                , canvasStateEntity.showColumns || true
+                                , canvasStateEntity.showKeys || true
+                                , canvasStateEntity.vertices);
          }
       }
      this._shelf.paint();
    }
    
    
- ,addEntityToCanvas: function(entityName, x, y, showCol, showKeys)
+ ,addEntityToCanvas: function(entityName, x, y, showCol, showKeys, vertices)
    {
      const entity = this.getEntity(entityName);
      if (entity == null)
@@ -461,6 +471,8 @@ export var ERView = {
               const link = new CustomLink();
               link.source(entity);
               link.target(entity2);
+              if (vertices != null)
+               link.vertices(vertices[entity2.attributes.entityDefinition.name]);
               this._graph.addCells([link]);
             }
            if (hasFK(entity2.attributes.entityDefinition, entity.attributes.entityDefinition) == true)
@@ -468,37 +480,12 @@ export var ERView = {
               const link = new CustomLink();
               link.source(entity2);
               link.target(entity);
+              if (vertices != null)
+               link.vertices(vertices[entity.attributes.entityDefinition.name]);
               this._graph.addCells([link]);
             }
          }
       }
-/*
-     jsonData.objects.forEach(entityData => {
-        if (entityData.foreign)
-         {
-           entityData.foreign.forEach(foreignKey => {
-              let sourceModel, destinationModel;
-              if (entityData.name === entityName)
-               {
-                 sourceModel = this._graph.getCell(entityModel.id);
-                 destinationModel = this._graph.getCell(this._entities[foreignKey.destObject].id);
-               } 
-              else if (foreignKey.destObject === entityName)
-               {
-                 sourceModel = this._graph.getCell(this._entities[entityData.name].id);
-                 destinationModel = this._graph.getCell(entityModel.id);
-               }
-              if (sourceModel && destinationModel)
-               {
-                 const link = new joint.shapes.standard.Link();
-                 link.source(sourceModel);
-                 link.target(destinationModel);
-                 this._graph.addCells([link]);
-               }
-           });
-         }
-     });
-*/
    }
    
  ,removeEntityFromCanvas: function(entityModel)
@@ -571,7 +558,7 @@ export var ERView = {
         this._zoom(this._zoomLevel);
     }
 
- ,bindContextMenuToPaper: function(currentCanvasState)
+ ,bindEventHandlersToPaper: function(currentCanvasState)
    {
       var that = this;
       // scoped variable for context menu
@@ -622,11 +609,6 @@ export var ERView = {
          contextMenuCell = null;
       });
 
-      // Add vertex
-      this._paper.on("link:pointerup", function(cell, evt, x, y) {
-        cell.addVertex(x, y);
-      });
-
       // Element/Entity move
       this._paper.on("element:pointerup", function(cell, evt, x, y) {
         cell.model.toFront();
@@ -642,37 +624,15 @@ export var ERView = {
       this._paper.on('link:mouseleave', function(linkView) {
          linkView.removeTools();
       });
+      this._paper.on('link:pointerup', function(linkView, evt, x, y ) {
+         canvasStateManager.addLink(currentCanvasState.name, linkView.sourceView.model.attributes.name, linkView.targetView.model.attributes.name, linkView.model.attributes.vertices);
+      });
       
       // clear popup menu
       this._paper.on('blank:pointerup', function(cellView, evt, x, y) {
          FloriaDOM.hide(that._contextMenu);
       });      
 
-/*
-      // scoped variable for link drag and drop logic
-      let link = null;
-
-      // Dragging the entities, updating the links
-      this._paper.on('cell:pointerdown', function(cellView, evt, x, y) {
-         FloriaDOM.hide(that._contextMenu);
-      });
-
-      // Moving link
-      this._paper.on('blank:pointermove', function(evt, x, y) {
-         if (link == true)
-          link.target({ x: x, y: y });
-      });
-
-      // finish modifying links
-      this._paper.on('cell:pointerup blank:pointerup', function(cellView, evt, x, y) {
-         FloriaDOM.hide(that._contextMenu);
-         if (!link) return;
-         var targetElement = that._paper.findViewsFromPoint(link.getTargetPoint())[0];
-         if (targetElement)
-          link.target({ id: targetElement.model.id });
-         link = null;
-      });
-*/
    }
 
 
