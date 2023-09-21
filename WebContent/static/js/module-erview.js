@@ -218,16 +218,34 @@ class Shelf
 
 
 
-var CustomLink = joint.dia.Link.extend({
+var CustomLink = joint.shapes.standard.Link.extend({
   defaults: joint.util.deepSupplement({
-     type: 'CustomLink',
-     attrs: { 
-             '.marker-target': { d: 'M 10 0 L 0 5 L 10 10 z' },
-            },
-     z: -1,
-     connector: { name: 'rounded' }
-  }, joint.dia.Link.prototype.defaults)
+     type: 'CustomLink'
+    ,z: -1
+//    ,connector: { name: 'jumpover', args: {size:8, jump:'arc'} }
+    ,connector: { name: 'rounded', args: {radius:20} }
+//    ,connector: { name: 'smooth'}
+    ,router: { name: 'normal' }
+//    ,router: { name: 'metro' | 'orthogonal' | 'manhattan' | 'normal' }
+  }, joint.shapes.standard.Link.prototype.defaults)
 });
+
+
+var toolsView = new joint.dia.ToolsView({tools: [new joint.linkTools.Vertices()
+                                                ,new joint.linkTools.Segments()
+                                                ]});
+
+function hasFK(entitySrc, entityDst)
+ {
+   // LDH-NOTE: Very simple matching which may not work in all cases, i.e., if full
+   //          object path is provided, FK across schemas etc...
+   if (entitySrc.foreign != null)
+    for (let i = 0; i < entitySrc.foreign.length; ++i)
+     if (entitySrc.foreign[i].destObject == entityDst.name)
+      return true;
+   return false;
+ }
+
 
 
 function createContextenu()
@@ -375,6 +393,7 @@ export var ERView = {
           attributesPk: primaryKeyAttributes,
           longestAttributeLength: longestAttributeLength,
           methods: [],
+          entityDefinition: entityData,
           showKeys: true,
           showColumns: true,
        });
@@ -437,7 +456,20 @@ export var ERView = {
         let entity2 = this._entities[i];
         if (entity2.get('onCanvas') == true)
          {
-           
+           if (hasFK(entity.attributes.entityDefinition, entity2.attributes.entityDefinition) == true)
+            {
+              const link = new CustomLink();
+              link.source(entity);
+              link.target(entity2);
+              this._graph.addCells([link]);
+            }
+           if (hasFK(entity2.attributes.entityDefinition, entity.attributes.entityDefinition) == true)
+            {
+              const link = new CustomLink();
+              link.source(entity2);
+              link.target(entity);
+              this._graph.addCells([link]);
+            }
          }
       }
 /*
@@ -565,7 +597,7 @@ export var ERView = {
          FloriaDOM.hide(that._contextMenu);
       });
       
-      this._paper.on('cell:contextmenu', function(cellView, evt, x, y) {
+      this._paper.on('element:contextmenu', function(cellView, evt, x, y) {
          evt.stopPropagation();
          that._contextMenu.style.left=evt.pageX+"px";
          that._contextMenu.style.top=evt.pageY+"px";
@@ -590,36 +622,39 @@ export var ERView = {
          contextMenuCell = null;
       });
 
-      // Position update
-      this._paper.on("cell:pointerup", function(cell, evt, x, y) {
-         var a = cell.model.attributes;
-         canvasStateManager.addEntity(currentCanvasState.name, a.name, a.position.x, a.position.y, a.showColumns, a.showKeys);
+      // Add vertex
+      this._paper.on("link:pointerup", function(cell, evt, x, y) {
+        cell.addVertex(x, y);
       });
 
+      // Element/Entity move
+      this._paper.on("element:pointerup", function(cell, evt, x, y) {
+        cell.model.toFront();
+        FloriaDOM.hide(that._contextMenu);
+        var a = cell.model.attributes;
+        canvasStateManager.addEntity(currentCanvasState.name, a.name, a.position.x, a.position.y, a.showColumns, a.showKeys);
+      });
+      
+      // Link tools
+      this._paper.on('link:mouseenter', function(linkView) {
+         linkView.addTools(toolsView);
+      });
+      this._paper.on('link:mouseleave', function(linkView) {
+         linkView.removeTools();
+      });
+      
+      // clear popup menu
+      this._paper.on('blank:pointerup', function(cellView, evt, x, y) {
+         FloriaDOM.hide(that._contextMenu);
+      });      
+
+/*
       // scoped variable for link drag and drop logic
       let link = null;
 
       // Dragging the entities, updating the links
       this._paper.on('cell:pointerdown', function(cellView, evt, x, y) {
          FloriaDOM.hide(that._contextMenu);
-         cellView.model.toFront();
-         if (cellView.model.isLink() == false)
-          return;
-         var threshold = 10;
-         var bbox = cellView.model.getBBox();
-         var distance = Math.min(
-               Math.abs(bbox.x - x),
-               Math.abs(bbox.y - y),
-               Math.abs(bbox.x + bbox.width - x),
-               Math.abs(bbox.y + bbox.height - y)
-             );
-         if (distance < threshold)
-          {
-            link = new CustomLink();
-            link.source({ x: x, y: y });
-            link.target({ x: x, y: y });
-            link.addTo(that._graph);
-          }
       });
 
       // Moving link
@@ -637,6 +672,7 @@ export var ERView = {
           link.target({ id: targetElement.model.id });
          link = null;
       });
+*/
    }
 
 
