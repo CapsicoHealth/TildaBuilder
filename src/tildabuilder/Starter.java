@@ -54,7 +54,7 @@ public class Starter
 
       }
 
-    public static String _RUNTIME_CODE = null;
+    public static final String _RUNTIME_CODE = EncryptionUtil.getToken(32, true);;
 
     //
     // SEE ALSO: /CapsicoWebMLCatalog/src/main/java/com/capsico/ServerMain.java
@@ -92,13 +92,29 @@ public class Starter
         context.setResources(resources);
         tomcat.start();
 
+        String url = "https://localhost:" + webPort + "?code=" + _RUNTIME_CODE;
+        LOG.info("\n\n\n"
+        +"\n********************************************************************************************************"
+        +"\n****"
+        +"\n****  Server started on "+url
+        +"\n****"
+        +"\n********************************************************************************************************"
+        +"\n\n"
+        );
         if (Desktop.isDesktopSupported() == true && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE) == true)
-          {
-            _RUNTIME_CODE = EncryptionUtil.getToken(32, true);
-            Desktop.getDesktop().browse(new URI("https://localhost:" + webPort + "?code=" + _RUNTIME_CODE));
-          }
-
-
+         Desktop.getDesktop().browse(new URI(url));
+        else
+         LOG.info("\n\n\n"
+                 +"\n###############################################################################################################"
+                 +"\n####"
+                 +"\n####"
+                 +"\n####  Your system doesn't seem to support launching a browser directly. Please use the following URL:"
+                 +"\n####     "+url
+                 +"\n####"
+                 +"\n####"
+                 +"\n###############################################################################################################"
+                 +"\n\n"
+                 );
 
         tomcat.getServer().await();
       }
