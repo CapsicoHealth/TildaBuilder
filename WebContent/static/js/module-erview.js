@@ -16,6 +16,8 @@ class CanvasState
    constructor()
     {
       this._canvasData = [];
+      // LDH-NOTE: We should really cache the current canvas 
+      //this._currentCanvas = null;
     }
 
    addCanvas(canvasName)
@@ -27,8 +29,8 @@ class CanvasState
          canvas = { "id":this._canvasData.length, "name": canvasName, "entities": [] };
          this._canvasData.push(canvas);
        }
-      // update currnent flag
-      this.setCurrentCanvas(canvasName);
+      // update current flag
+      this.setCurrentCanvasByName(canvasName);
       return canvas;
     }
 
@@ -40,10 +42,31 @@ class CanvasState
       return null;
     }
 
-   setCurrentCanvas(canvasName)
+   setCurrentCanvasByName(canvasName)
     {
+      let currentCanvas = null;
       for (let i = 0; i < this._canvasData.length; ++i)
-       this._canvasData[i].current = this._canvasData[i].name == canvasName;
+       {
+         let current = this._canvasData[i].name == canvasName;
+         this._canvasData[i].current = current;
+         if (current == true)
+          currentCanvas = this._canvasData[i];
+       }
+      this.saveState();
+      return currentCanvas;
+    }
+   setCurrentCanvasById(canvasId)
+    {
+      let currentCanvas = null;
+      for (let i = 0; i < this._canvasData.length; ++i)
+       {
+         let current = this._canvasData[i].id == canvasId;
+         this._canvasData[i].current = current;
+         if (current == true)
+          currentCanvas = this._canvasData[i];
+       }
+      this.saveState();
+      return currentCanvas;
     }
 
    getCurrentCanvas()
@@ -61,7 +84,7 @@ class CanvasState
       this._canvasData[0].current = true;
       return this._canvasData[0];
     }
-    
+
    addEntity(canvasName, entityName, x, y, showColumns, showKeys)
     {
       let entity = this.getEntity(canvasName, entityName);
@@ -272,6 +295,7 @@ export var ERView = {
  ,_graph: null
  ,_canvasElement: null
  ,_contextMenu: createContextenu()
+ ,_currentCanvasState: null
  
  ,getEntity: function(entityName)
    {
@@ -292,32 +316,45 @@ export var ERView = {
      this._canvasElement = FloriaDOM.getElement(this._mainDivId + '_CANVAS_CONTAINER');
      if (this._canvasElement == null)
       return;
+     this._canvasElement.innerHTML = '<DIV></DIV>';
 
      this._graph = new joint.dia.Graph();
      this._paper = new joint.dia.Paper({
-        el: this._canvasElement
-       ,width: "98%"
-       ,height: 800
+        el: this._canvasElement.childNodes[0]
+       ,width: "2000px"
+       ,height: "2000px"
        ,model: this._graph
+       ,gridSize: 10
      });
-//     this._paper.setGrid({ name: 'mesh', args: { color: '#CCC', thickness:1 }});
+//     this._paper.setGrid({ name: 'mesh', args: { color: '#999', thickness:1 }});
 //     this._paper.drawGrid()
 
      this._shelf = new Shelf(entityListDivId, searchInputId, this._entities);        
      
      canvasStateManager.loadState();
-     let currentCanvasState = canvasStateManager.getCurrentCanvas();
-     if (currentCanvasState == null)
-      currentCanvasState = canvasStateManager.addCanvas("Main")
+     this._currentCanvasState = canvasStateManager.getCurrentCanvas();
+     if (this._currentCanvasState == null)
+      this._currentCanvasState = canvasStateManager.addCanvas("Main")
+      
+     let str = '';
+     for (let i = 0; i < canvasStateManager._canvasData.length; ++i)
+      {
+        let canvas = canvasStateManager._canvasData[i];
+        let tabId = this._canvasElement.id+'_'+canvas.id;
+        str+='<BUTTON class="tab" id="'+tabId+'" data-canvasid="'+canvas.id+'">'+canvas.name+'</BUTTON>';
+      }
+     if (str != '')
+      FloriaDOM.setInnerHTML(this._mainDivId + '_CANVAS_TABS', str);
      
-     this.showCanvas(currentCanvasState);
+     this.showCurrentCanvas();
 
-     this.bindEventHandlersToPaper(currentCanvasState);
+     this.bindEventHandlersToPaper();
 
      var that = this;
-     $('#' + mainDivId + '_ADD_CANVAS_BUTTON').click(function() { that.addCanvas() });
-     $('#' + mainDivId + '_CANVAS_TABS').on('click', '.tab', function() {
-       that.showCanvas(xxx)
+     $('#' + mainDivId + '_ADD_CANVAS_BUTTON').click(function() { that.addCanvas(); });
+     $('#' + mainDivId + '_CANVAS_TABS').on('click', '.tab', function(e) {
+          that._currentCanvasState = canvasStateManager.setCurrentCanvasById(e.target.dataset.canvasid);
+          that.showCurrentCanvas();
      });
    }
    
@@ -413,26 +450,29 @@ export var ERView = {
      });
    }
    
- ,showCanvas: function(canvasState)
+ ,showCurrentCanvas: function()
    {
-     console.log("canvasState: ", canvasState);
-     
      $('.tab.active').removeClass('active');
-     let tabId = this._canvasElement.id+'_'+(canvasState.id);
+     let tabId = this._canvasElement.id+'_'+(this._currentCanvasState.id);
      let tab = FloriaDOM.getElement(tabId);
      if (tab == null)
-      FloriaDOM.appendInnerHTML(this._mainDivId + '_CANVAS_TABS', '<BUTTON class="tab active" id="'+tabId+'">'+canvasState.name+'</BUTTON>');
+      FloriaDOM.appendInnerHTML(this._mainDivId + '_CANVAS_TABS', '<BUTTON class="tab active" id="'+tabId+'">'+this._currentCanvasState.name+'</BUTTON>');
      else
       FloriaDOM.addCSS(tab, "active");
       
      this._graph.clear();
-     this._shelf.reset(canvasState.name);
+     this._zoomLevel = this._currentCanvasState.zoomLevel || 1;
+     this._zoom();
+      
+     for (let i = 0; i < this._entities.length; ++i)
+      this._entities[i].set('onCanvas', false);
+     this._shelf.reset(this._currentCanvasState.name);
 
      for (let i = 0; i < this._entities.length; ++i)
       {
         let entity = this._entities[i];
-        let canvasStateEntity = canvasStateManager.getEntity(canvasState.name, entity.attributes.name);
-        if (canvasStateEntity != null) // not on canvas
+        let canvasStateEntity = canvasStateManager.getEntity(this._currentCanvasState.name, entity.attributes.name);
+        if (canvasStateEntity != null) // on canvas
          {
            this._shelf.addEntity(entity.attributes.name);
            this.addEntityToCanvas(entity.attributes.name
@@ -510,38 +550,18 @@ export var ERView = {
    
 
 
-/*
  ,addCanvas: function()
    {
+     var canvasName = prompt("Please enter your new canvas' name");
      let canvasNumber = $('.canvas').length + 1;
-     let newCanvasID = this._mainDivId + '_canvas' + canvasNumber;
+     let tabId = this._canvasElement.id+'_'+canvasNumber;
 
      // Adding tab
-     $('<button>').addClass('tab')
-                  .data('canvas-id', newCanvasID)
-                  .text('Canvas ' + canvasNumber)
-                  .appendTo('#' + this._mainDivId + '_CANVAS_TABS');
-
-     // Adding canvas
-     $('<div>').addClass('canvas')
-               .attr('id', newCanvasID)
-               .appendTo('#' + this._mainDivId + '_CANVAS_CONTAINER')
-               .hide();
-
-     let newGraph = new joint.dia.Graph();
-     let newPaper = new joint.dia.Paper({
-       el: $('#' + newCanvasID),
-       // width: "100%",
-       // height: "95%",
-       model: newGraph
-     });
-
-     this.bindContextMenuToPaper(newPaper);
-
-     // Storing canvas data
-     canvasStateManager.addCanvas(newCanvasID);
+     FloriaDOM.appendInnerHTML(this._mainDivId + '_CANVAS_TABS', '<BUTTON class="tab" id="'+tabId+'" data-canvasid="'+canvasNumber+'">'+canvasName+'</BUTTON>');
+     this._currentCanvasState = canvasStateManager.addCanvas(canvasName);
+     this.showCurrentCanvas();
    }
-*/
+
 
     , _zoomLevel: 1
     , _zoom: function() {
@@ -550,15 +570,15 @@ export var ERView = {
 
     }
     , zoomIn: function() {
-        this._zoomLevel = Math.min(3, this._zoomLevel + 0.2);
-        this._zoom(this._zoomLevel);
+        this._zoomLevel = Math.min(5, this._zoomLevel + 0.2);
+        this._zoom();
     }
     , zoomOut: function() {
         this._zoomLevel = Math.max(0.2, this._zoomLevel - 0.2);
-        this._zoom(this._zoomLevel);
+        this._zoom();
     }
 
- ,bindEventHandlersToPaper: function(currentCanvasState)
+ ,bindEventHandlersToPaper: function()
    {
       var that = this;
       // scoped variable for context menu
@@ -579,7 +599,7 @@ export var ERView = {
             else if (selectedOption == 'Hide Keys'   ) contextMenuCell.set('showKeys', false);
             else if (selectedOption == 'Show Columns') contextMenuCell.set('showColumns', true);
             else if (selectedOption == 'Hide Columns') contextMenuCell.set('showColumns', false);
-            that.updateEntityAttributesDisplay(currentCanvasState.name, selectedOption, contextMenuCell, that._paper);
+            that.updateEntityAttributesDisplay(that._currentCanvasState.name, selectedOption, contextMenuCell, that._paper);
           }
          FloriaDOM.hide(that._contextMenu);
       });
@@ -614,7 +634,7 @@ export var ERView = {
         cell.model.toFront();
         FloriaDOM.hide(that._contextMenu);
         var a = cell.model.attributes;
-        canvasStateManager.addEntity(currentCanvasState.name, a.name, a.position.x, a.position.y, a.showColumns, a.showKeys);
+        canvasStateManager.addEntity(that._currentCanvasState.name, a.name, a.position.x, a.position.y, a.showColumns, a.showKeys);
       });
       
       // Link tools
@@ -625,14 +645,13 @@ export var ERView = {
          linkView.removeTools();
       });
       this._paper.on('link:pointerup', function(linkView, evt, x, y ) {
-         canvasStateManager.addLink(currentCanvasState.name, linkView.sourceView.model.attributes.name, linkView.targetView.model.attributes.name, linkView.model.attributes.vertices);
+         canvasStateManager.addLink(that._currentCanvasState.name, linkView.sourceView.model.attributes.name, linkView.targetView.model.attributes.name, linkView.model.attributes.vertices);
       });
       
       // clear popup menu
       this._paper.on('blank:pointerup', function(cellView, evt, x, y) {
          FloriaDOM.hide(that._contextMenu);
-      });      
-
+      });
    }
 
 
