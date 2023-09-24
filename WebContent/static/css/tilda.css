@@ -2574,12 +2574,15 @@ table.centered {
 
 
 .canvas {
-   position: relative;
-   width: 90%;
-   height: 90%;
+   position: absolute;
+   width: 99%;
+   height: 96%;
    border: 1px solid #F0F0F0;
    background-color: #FaFaFa;
+   overflow: auto;
+   scrollbar-width: thin;
 }
+
 
 .canvas-container {
 }
@@ -2641,4 +2644,15 @@ table.centered {
   background-color: #F0F0F0 ;
   cursor: auto;
   font-weight: normal;
+}
+
+.tab {
+  margin-right: 20px;
+  padding: 3px;
+}
+
+.tab.active {
+  background-color: #666;
+  color: #FFF;
+  text-weight: bold;
 }

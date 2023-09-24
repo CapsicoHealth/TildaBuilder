@@ -85,6 +85,13 @@ class CanvasState
       return this._canvasData[0];
     }
 
+   setZoomLevel(zoomLevel)
+    {
+      let currentCanvas = this.getCurrentCanvas();
+      currentCanvas.zoomLevel = zoomLevel;
+      this.saveState();
+    }
+    
    addEntity(canvasName, entityName, x, y, showColumns, showKeys)
     {
       let entity = this.getEntity(canvasName, entityName);
@@ -566,8 +573,7 @@ export var ERView = {
     , _zoomLevel: 1
     , _zoom: function() {
         this._paper.scale(this._zoomLevel);
-        this._paper.fitToContent({ useModelGeometry: true, padding: 100 * this._zoomLevel, allowNewOrigin: 'any' });
-
+        canvasStateManager.setZoomLevel(this._zoomLevel);
     }
     , zoomIn: function() {
         this._zoomLevel = Math.min(5, this._zoomLevel + 0.2);
@@ -652,6 +658,17 @@ export var ERView = {
       this._paper.on('blank:pointerup', function(cellView, evt, x, y) {
          FloriaDOM.hide(that._contextMenu);
       });
+
+/*      
+      this._paper.on("blank:mousewheel", function(evt, x, y, delta) {
+         evt.preventDefault();
+         if (delta > 0)
+          that.zoomIn();
+         else
+          that.zoomOut();
+      });
+*/
+
    }
 
 
