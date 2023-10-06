@@ -650,7 +650,7 @@ export var ERView = {
       this._paper.on('link:mouseleave', function(linkView) {
          linkView.removeTools();
       });
-      this._paper.on('link:pointerup', function(linkView, evt, x, y ) {
+      this._paper.on('link:pointerup link:pointerdblclick', function(linkView, evt, x, y ) {
          canvasStateManager.addLink(that._currentCanvasState.name, linkView.sourceView.model.attributes.name, linkView.targetView.model.attributes.name, linkView.model.attributes.vertices);
       });
       
