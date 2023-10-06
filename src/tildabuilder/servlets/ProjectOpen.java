@@ -1,6 +1,5 @@
 package tildabuilder.servlets;
 
-import java.awt.Desktop;
 import java.io.File;
 
 import javax.servlet.annotation.WebServlet;
@@ -29,18 +28,17 @@ public class ProjectOpen extends SimpleServletNonTransactional
     protected void justDo(RequestUtil req, ResponseUtil res)
       throws Exception
       {
-        String name = req.getParamString("name", true);
-        String schema = req.getParamString("schema", false);
+        String projectName = req.getParamString("projectName", true);
 
         Config conf = Config.getInstance();
-        Project p = conf.getProject(name);
+        Project p = conf.getProject(projectName);
         if (p == null)
-          req.addError("name", "Cannot find project.");
+          req.addError("projectName", "Cannot find project.");
         else
           {
             File folder = new File(p.getFullSrcPath());
             if (folder.exists() == false)
-              req.addError("name", "The project's home folder doesn't exist.");
+              req.addError("projectName", "The project's home folder doesn't exist.");
             else 
               Runtime.getRuntime().exec("explorer.exe /select," + folder.getAbsolutePath());
           }

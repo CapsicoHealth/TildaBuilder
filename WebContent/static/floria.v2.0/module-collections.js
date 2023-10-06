@@ -185,6 +185,32 @@ if (!Array.prototype.fill)
      return this;
    }
 
+/** Works like substring, i.e., n -> m+1 non inclusive
+ */
+if (!Array.prototype.subarray)
+ Array.prototype.subarray = function(start, end)
+   {
+     if (end == null)
+      end = this.length; 
+     return this.slice(start, end);
+   }
+
+if (!Array.prototype.createTotalRow)
+ Array.prototype.createTotalRow = function(fields)
+   {
+	 var totalRow = {};
+     for (let i = 0; i < this.length; ++i)
+      for (let j = 0; j < fields.length; ++j)
+       {
+	     var f = fields[j];
+	     if (totalRow[f] == null)
+          totalRow[f] = 0;
+         totalRow[f]+=this[i][f];
+       }
+     return totalRow;
+   }
+
+
 
 /**
  * A wrapper to a sorted String array. If an array is passed into the

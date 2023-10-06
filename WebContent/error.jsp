@@ -8,7 +8,6 @@ HttpStatus Status = HttpStatus.parse((Integer) request.getAttribute("javax.servl
 String StatusMessage = (String) request.getAttribute("javax.servlet.error.message");
 String  PageTitle=Status._Code == HttpStatus.Unauthorized._Code ? "CapsicoHealth Login" : "CapsicoHealth error: "+Status._Code;
 %>
-    <link rel="stylesheet" href="/static/dojo-release-1.16.4/dijit/themes/claro/claro.css"/>
     <link rel="stylesheet" href="/static/css/dojoSimple.css"/>
     <link rel="stylesheet" href="/static/css/tilda.css"/>
 
@@ -48,7 +47,7 @@ if (Status._Code == HttpStatus.Unauthorized._Code) { %>
 	        Session Timeout
             <DIV id="ERR_MSG">You were inactive for more than 20 minutes</DIV>
 	     </DIV>
-         <CENTER><BUTTON class="buttonLogin" onClick="dojoSimple.PopupLogin.show(false, function() { document.location.reload();})" style="font-size: 75%; font-weight: bold;">Login again</BUTTON></CENTER>
+         <CENTER><BUTTON class="buttonLogin" onClick="FloriaLogin.PopupLogin.show(false, function() { document.location.reload();})" style="font-size: 75%; font-weight: bold;">Login again</BUTTON></CENTER>
 	   </DIV>
 <% } else if (Status._Code == HttpStatus.ResourceNotFound._Code) { %>
 	        Page not found

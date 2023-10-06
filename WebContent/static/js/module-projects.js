@@ -4,6 +4,10 @@ import { FloriaDOM } from "/static/floria.v2.0/module-dom.js";
 import { FloriaAjax } from "/static/floria.v2.0/module-ajax.js";
 import { FloriaForms } from "/static/floria.v2.0/module-forms2.js";
 
+import { schemas } from "./module-schemas.js";
+//import { InitializeMonaco } from "./module-monaco.js";
+
+
 
 function paintProjectTile(p)
  {
@@ -17,7 +21,33 @@ function paintProjectTile(p)
          ;
  }
 
+const schemaRegex = /(.*)[\\/]_tilda\.(.*)\.json/;
+function paintSchemaTile(projectName, fullSchemaPath)
+ {
+   let matches = fullSchemaPath.match(schemaRegex);
+   console.log(fullSchemaPath+": ", matches);
+   if (matches == null || matches.length != 3)
+    return window.alert("Cannot parse '"+fullSchemaPath+"' as a Tilda schema ful path.");
+   return `<DIV class="schema" data-project-name="${projectName}" data-full-schema-path="${fullSchemaPath}">
+             <div>${matches[2]}</div>
+             <div>${matches[1]}</div>
+           </DIV>
+          `
+         ;
+ }
 
+
+function parseSchemaName(schemaPath)
+ {
+   var i = schemaPath.lastIndexOf("/");
+   schemaPath = schemaPath.substring(i+1);
+   var i = schemaPath.indexOf(".");
+   var j = schemaPath.lastIndexOf(".");
+   return schemaPath.substring(i+1, j);
+ }
+
+
+/*
 var _SAMPLE_PROJECTS = [
      { "name":"FHIR Model"  , "description":"Operational FHIR-inspired Model"  , "rootPath":"C:\\Projects\\repos-hmhn\\hmh-da-fhir-datamodel\\HMHN_FHIR\\src" }
     ,{ "name":"Capsico Base", "description":"Capsico Base Models"              , "rootPath":"C:\\Projects\\repos\\CapsicoBase", "schemaCount":4 }
@@ -36,7 +66,7 @@ var _SAMPLE_PROJECTS = [
     ,{ "name":"Capsico Main", "description":"Capsico Main Models"              , "rootPath":"C:\\Projects\\repos\\Capsico"     }
    ]
    ;
-
+*/
 
 var projects = {};
 
@@ -89,18 +119,53 @@ projects.selectProject = function(e, event, target)
     return;
 
    projects.paintProject(target?.dataset?.projectName);
-    
-//   FloriaAjax.ajaxUrl("/svc/project/open?"+FloriaDOM.makeUrlParams({name:target.dataset.projectName}), "GET", "Cannot open the project", function() { } );   
  }
 
-projects.paintProject = function(name)
+projects.paintProject = function(projectName)
  {
    var title = FloriaDOM.getElement("HEADER_TITLE");
-   title.innerHTML = "TIDE - "+name;
+   title.innerHTML = "TIDE / "+projectName;
    
-   let p = getProject(currentProjectList, name);
+   let p = getProject(currentProjectList, projectName);
    FloriaDOM.switchVisibility("MAINCONTAINER_PROJECTS", "MAINCONTAINER_SCHEMAS");
+   
+   FloriaAjax.ajaxUrl("/svc/project/schemas?projectName="+projectName+"&ts="+new Date(), "GET", "Cannot get list of schemas for this project", function(schemaList) {
+       let str = "";
+       for (var i = 0; i < schemaList.length; ++i)
+        {
+          let s = schemaList[i];
+          str+=paintSchemaTile(projectName, s);
+        }
+       FloriaDOM.setInnerHTML("SCHEMA_LIST", str);
+       FloriaDOM.addEvent("SCHEMA_LIST", "click", projects.selectSchema)
+    })  
  }
+
+projects.selectSchema = function(e, event, target)
+ {
+   while (target != null && target != e && target.dataset.projectName == null && target.dataset.schemaFullPath == null)
+    target = target.parentNode;
+   
+   if (target?.dataset?.projectName == null)
+    return;
+   projects.paintSchema(target, target.dataset.projectName, target.dataset.fullSchemaPath);
+ }
+
+projects.paintSchema = function(div, projectName, fullSchemaPath)
+ {
+   FloriaDOM.toggleCSS(div, "selected");
+
+   var title = FloriaDOM.getElement("HEADER_TITLE");
+   title.innerHTML = "TIDE / "+projectName+" / "+parseSchemaName(fullSchemaPath);
+   FloriaDOM.switchVisibility("MAINCONTAINER_SCHEMAS", "MAINCONTAINER_ENTITIES");
+   FloriaAjax.ajaxUrl("/svc/project/schema/details?projectName="+encodeURIComponent(projectName)+"&fullSchemaPath="+encodeURIComponent(fullSchemaPath)+"&ts="+new Date(), "GET", "Cannot get the schema for this project", function(tildaJson) {
+
+       //FloriaDOM.setInnerHTML("EDITOR", tildaJson);
+       schemas.paint(tildaJson);
+//       InitializeMonaco(tildaJson);
+    })  
+ }
+
 
 
 projects.start = function(divId)

@@ -1,18 +1,19 @@
 "use strict";
 
-import { FloriaDOM } from "./module-dom.js";
+import { FloriaDOM  } from "./module-dom.js";
+import { FloriaAjax } from "./module-ajax.js";
 import { ChartTheme } from "./module-charttheme.js";
 
 import { createPopper } from "/static/jslibs/popperjs/popper.js";
+
+var FloriaConfig = await FloriaAjax.jsonSyncFetch("/static/json/floria-config.json");
 
 // Check https://d3-graph-gallery.com/
 
 export var FloriaCharts = {};
 
-
-require(["jslibs/d3-7.6.1/d3.min", "dojo/text!json/floria-config.json"], function(d3, FloriaConfig)
+require(["jslibs/d3-7.6.1/d3.min"], function(d3)
 {
-  FloriaConfig = JSON.parse(FloriaConfig).data;
   
   var globalLegend = {};
 // ///////////////// Legend Logic
@@ -921,7 +922,7 @@ FloriaCharts.ChartBase.prototype.drawBar = function(horizontal)
     chart.x1.domain(d3.range(chart.seriesbarData.length)).rangeRound([0, (chart.x.bandwidth()-5)]);       
    chart.rect = chart.svg.append("g").selectAll("g")
                      .data(chart.seriesbarData).enter().append("g")
-                     .style("fill", function(d, i) { return chart.colorOvr(i); /*ChartTheme.colors[i];*/ })
+                     .style("fill", function(d, i) { return /*d[i].color || */ chart.colorOvr(i); /*ChartTheme.colors[i];*/ })
                      .style("stroke-width", 0.5)
                      .attr("transform", function(d, i) {
                                return (horizontal) ? "translate(0, " + chart.y1(i) + ")"
@@ -1051,7 +1052,7 @@ FloriaCharts.ChartBase.prototype.addBarClickHandler = function(handlerFunc) {
     if(overrideColor != "undefined" && overrideColor != null && overrideColor != []){
         chart.overrideTheColor = true;
         chart.overridecolor = overrideColor;
-         chart.colorOvr = d3.scaleOrdinal().range(chart.overridecolor); 
+         chart.colorOvr = d3.scaleOrdinal().range(chart.overridecolor);
       }else{
         chart.colorOvr = d3.scaleOrdinal().range(ChartTheme.colors);         
       }

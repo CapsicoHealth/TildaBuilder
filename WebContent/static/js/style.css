@@ -1,0 +1,44 @@
+body {
+    font: 400 16px/1.4 'serif';
+    }
+#container #editor1 {
+    border: 1px solid grey;
+    height: 100px;
+    width: 602px;
+    margin: 0px auto 0;
+    padding:10px;
+   }
+#container fieldset {
+    margin: 2px auto 0px;
+    width: 600px;
+    height:26px;
+    background-color: #f2f2f2;
+    border:none;
+}
+[contentEditable=true]:empty:not(:focus):before{
+    content:attr(data-text);
+    color:#888;
+}
+table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      table, th, td {
+        border: 1px solid black;
+      }
+      th, td {
+        padding: 5px;
+        text-align: left;
+      }
+.draggable td:first-child img{
+    visibility:hidden;
+    width: 20px;
+    height: 20px;
+    float: right;
+    padding:5px;
+}
+.draggable td:first-child:hover img{
+	cursor:move;
+    visibility:visible;
+}
+

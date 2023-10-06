@@ -3,10 +3,9 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>TIDE: Tilda Workbench</title>
-    <link rel="stylesheet" href="/static/dojo-release-1.16.4/dijit/themes/claro/claro.css"/>
     <link rel="stylesheet" href="/static/css/dojoSimple.css"/>
     <link rel="stylesheet" href="/static/css/tilda.css"/>
-    
+    <link rel="stylesheet" href="/static/js/style.css"/>
 </head>
 <body class="claro">
 
@@ -23,7 +22,7 @@
   <MAIN id="MAINCONTAINER_PROJECTS" class="mainContainerBody">
     <DIV id="PROJECTS" class="column left"  style="top:75px; bottom:75px; left:15%; width:70%; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin;">
       <DIV class="tileHeader360g">
-         Projects <A href="javascript:TILDA_GLOBAL.addProject();"><IMG src="/static/img/add.gif"></A>
+         Projects <A href="javascript:TILDA_GLOBAL.addProject();" title="New Project"><IMG src="/static/img/add.gif"></A>
                   <span class="searchBox"><input class="searchInput" type="text" name="" placeholder="Search"></span>
       </DIV>
       <DIV id="PROJECT_LIST" class="tileGroup360g"><IMG src="/static/img/progress.gif"></DIV>
@@ -33,14 +32,30 @@
   <MAIN id="MAINCONTAINER_SCHEMAS"  class="mainContainerBody" style="display:none;">
     <DIV id="SCHEMAS" class="column left"  style="top:75px; bottom:75px; left:5px; width:18%; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin;">
       <DIV class="tileHeader360g">
-         Entities <A href="javascript:TILDA_GLOBAL.addProject();"><IMG src="/static/img/add.gif"></A>
+         Schemas <A href="javascript:TILDA_GLOBAL.addSchema();" title="New Schema"><IMG src="/static/img/add.gif"></A>
                   <span class="searchBox"><input class="searchInput" type="text" name="" placeholder="Search"></span>
+      </DIV>
+      <DIV id="SCHEMA_LIST"><IMG src="/static/img/progress.gif"></DIV>
+    </DIV>
+  </MAIN>
+
+  <MAIN id="MAINCONTAINER_ENTITIES"  class="mainContainerBody" style="display:none;">
+    <DIV id="ENTITIES" class="column left"  style="top:75px; bottom:25px; left:5px; width:18%; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin;">
+      <DIV class="tileHeader360g">
+         Entities <A href="javascript:TILDA_GLOBAL.addEntity();" title="New Entity"><IMG src="/static/img/add.gif"></A>
+                  <span class="searchBox"><input id="ENTITIES_SEARCH" class="searchInput" type="text" name="" placeholder="Search"></span>
       </DIV>
       <DIV id="ENTITY_LIST"><IMG src="/static/img/progress.gif"></DIV>
     </DIV>
-    <DIV id="EDITORS" class="column right"  style="top:75px; bottom:75px; left:20%; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin;">
-      <DIV id="EDITOR"></DIV>
-    </DIV>
+    <DIV id="EDITORS" class="column right"  style="top:75px; bottom:25px; left:20%; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin;">
+<!--
+      <textarea id="EDITOR" wrap="off" style="tab-size:4; width:98%; height:98%;"></textarea >
+-->
+      <DIV id="ER_EDITOR" style="position: relative; width:98%; height:98%;">
+         <button id="ER_EDITOR_ADD_CANVAS_BUTTON">Add New Canvas</button>
+         <div id="ER_EDITOR_CANVAS_TABS"></DIV>
+         <div id="ER_EDITOR_CANVAS_CONTAINER" class="canvas"></div>
+      </DIV>
   </MAIN>
   
   <FOOTER id="MAINCONTAINER_FOOTER">
@@ -53,30 +68,39 @@
 
 </div>
 
+<scriptX src="https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/loader.js"></scriptX>
+<script src="/static/jslibs/jquery/3.6.0/jquery.min.js"></script>
+<script src="/static/jslibs/lodash.js/4.17.21/lodash.min.js"></script>
+<script src="/static/jslibs/backbone.js/1.4.0/backbone-min.js"></script>
+<script src="/static/jslibs/jointjs/3.4.2/joint.min.js"></script>
+<script src="/static/js/joint.shapes.uml.js"></script>
 
-<SCRIPT> var djConfig = { isDebug: false, locale: 'en-us', parseOnLoad: false, disableFlashStorage:true, parseWidgets:false, baseUrl: "/static/",
-                          packages: [ { name: "dojo", location: "dojo-release-1.16.4/dojo" },
-                                      { name: "dijit", location: "dojo-release-1.16.4/dijit" },
-                                      { name: "dojox", location: "dojo-release-1.16.4/dojox" },
-                                      { name: "floria", location: "floria.v2.0" },
-                                      { name: "js", location: "js" },
-                                      { name: "json", location: "json" }
-                                    ]
-                        };
-window.CapsicoDojoSimpleLibJS = "floria.v2.0/dojoSimple";
-</SCRIPT>
-<script src="/static/dojo-release-1.16.4/dojo/dojo.js"></script>
 <SCRIPT type="module">
 import { projects } from "/static/js/module-projects.js";
+
 window.TILDA_GLOBAL = {
   addProject: function()
     {
        projects.addProject("PROJECT_LIST");
     }
+ ,addSchema: function()
+    {
+       alert("not implemented yet");
+    }
+ ,addEntity: function()
+    {
+       alert("not implemented yet");
+    }
 };
 projects.start("PROJECT_LIST");
 
 </SCRIPT>
+<!-- 
+<script src="https://cdn.jsdelivr.net/npm/sceditor@3/minified/sceditor.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.5.0.min.js"></script>
+ -->
+
+
 
 </body>
 </html>

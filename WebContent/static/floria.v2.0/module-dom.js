@@ -1,5 +1,6 @@
 "use strict";
 
+import { FloriaAjax    } from "./module-ajax.js";
   
 if (!String.prototype.isEmpty)
  String.prototype.isEmpty = function()
@@ -12,6 +13,8 @@ if (!String.prototype.isEmpty)
      }
     return true;
   };
+  
+var EVENT_REGISTRY = { };
 
 export var FloriaDOM = {
     SpanNA: '<SPAN class="NA"></SPAN>',
@@ -581,7 +584,7 @@ export var FloriaDOM = {
             return a.href;
           };
       })(),
-     addEvent: function(elementId, eventName, handlerFunc, delayedMillis)
+     addEvent: function(elementId, eventName, handlerFunc, delayedMillis, clearPrevious)
       {
         var e = this.getElement(elementId);
         if (e == null)
@@ -589,6 +592,13 @@ export var FloriaDOM = {
         var func = (delayedMillis == null) ? function(event) { return handlerFunc(e, event, event.target); }
                                            : function(event) { FloriaDOM.DelayedEvent.register(elementId, delayedMillis, function() { handlerFunc(e, event, event.target); }); }
                                            ;
+        if (clearPrevious == true)
+         {
+           var oldFunc = EVENT_REGISTRY[elementId+"_"+eventName];
+           if (oldFunc != null)
+            e.removeEventListener(eventName, oldFunc);
+           EVENT_REGISTRY[elementId+"_"+eventName] = func;
+         }
         e.addEventListener(eventName, func);
         return func;
       },
@@ -635,7 +645,7 @@ export var FloriaDOM = {
              var ajaxUrlStr = ajaxUrlFunc(target); // Additional check and returns URL string if a call is necessary.
              if (ajaxUrlStr == null)
               return;
-             dojoSimple.ajaxUrl(ajaxUrlStr, "GET", "No data could be fetched", function(data) {
+             FloriaAjax.ajaxUrl(ajaxUrlStr, "GET", "No data could be fetched", function(data) {
                var node = document.createElement("SPAN");
                node.classList.add(tooltipTextClassName);
                node.innerHTML = contentsFunc(data);
@@ -649,7 +659,7 @@ export var FloriaDOM = {
                node.innerHTML = contentsFunc(data);
                target.appendChild(node);
            }
-        });
+        }, null, true);
       },
 
      toggleNestedRows : function(rows,display)
@@ -862,7 +872,6 @@ export var FloriaDOM = {
         return url.split(/[?#]/)[0];
       },
      // Checking event target selectors with event bubbling
-     // Similar to https://dojotoolkit.org/reference-guide/1.10/dojo/on.html
      on: function(eventName, parentId, childSelector, callbackFn)
      {
        var parentElement = FloriaDOM.getElement(parentId, "Cannot find Element with id='"+parentId+"'");
@@ -891,7 +900,7 @@ export var FloriaDOM = {
           if (!event.target.closest(childSelector)) return;
           callbackFn.apply(null, arguments);
         }
-       parentElement.addEventListener(eventName, eventHandler);
+       parentElement.addEventListener(eventName, eventHandler, null, true);
      },   
      isElementHidden: function(el)
       {
@@ -1066,7 +1075,36 @@ export var FloriaDOM = {
           if (target.nodeName!='IMG')
            return;
           FloriaDOM.showImgFullScreen(divId+'_popup', target.src)
-        });
+        }, null, true);
+      }
+      
+    ,getCookie: function(name)
+      {
+        const cookies = document.cookie.split(/\s*;\s*/);
+        for (var i = cookies.length - 1; i >= 0; i--)
+         {
+           const c = cookies[i].split(/\s*=\s*/);
+           if (c[0] == name)
+            return c[1];
+         }
+        return null;
+      }
+    ,setCookie: function(name, value, expiryDays)
+      {
+        const d = new Date();
+        d.setTime(d.getTime() + (expiryDays*24*60*60*1000));
+        let expires = "expires="+ d.toUTCString();
+        document.cookie = name + "=" + value + ";" + expires + ";path=/";
+      }
+    ,removeCookie: function(name)
+      {
+        document.cookie = name+'=; Max-Age=-99999999;path=/';
+      }
+    ,_jsonCommentRegex: /\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g
+    ,jsonParseWithComments: function(str)
+      {
+        str = str.replace(FloriaDOM._jsonCommentRegex, (m, g) => g ? "" : m);
+        return JSON.parse(str);
       }
   };
 

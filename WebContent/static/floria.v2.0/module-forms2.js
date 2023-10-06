@@ -5,12 +5,12 @@ import { FloriaControls } from "./module-controls.js";
 import { FloriaText } from "./module-text.js";
 import { FloriaFactories } from "./module-factories.js";
 import { FloriaDate } from "./module-date.js";
-import { DojoSimple } from "./module-dojosimple.js";
+import { FloriaDialog  } from "./module-dialog.js";
 
 
 function makeUpdatePageFunc(that, toPageId) 
   { 
-    return function() { that.updatePage(toPageId); };
+    return function() { that.paint(toPageId); };
   }
   
 var maxLabelLengthBeforeWrapping = 30;
@@ -20,8 +20,8 @@ function createNavEvents(form)
    if (form._formDefs.length > 1)
     {
       for (var i = 0; i < form._formDefs.length; ++i)
-       FloriaDOM.addEvent(form._elementId+'_F_'+i, "click", makeUpdatePageFunc(form, i));
-      FloriaDOM.addEvent(form._elementId+'_F_PREV', "click", function() { form.updatePage(form._pageId-1); });
+       FloriaDOM.addEvent(form._elementId+'_F_'+i, "click", makeUpdatePageFunc(form, i), null, true);
+      FloriaDOM.addEvent(form._elementId+'_F_PREV', "click", function() { form.updatePage(form._pageId-1); }, null, true);
       FloriaDOM.addEvent(form._elementId+'_F_NEXT', "click", function() {
         if (form._pageId == form._formDefs.length-1)
          {
@@ -30,14 +30,20 @@ function createNavEvents(form)
          }
         else
          form.updatePage(form._pageId+1); 
-      });
+      }, null, true);
     }
 
    if (form._customNav == true)
     return;
     
    if (form._popupTitle==null || form._submitButton == true)
-    FloriaDOM.addEvent(form._elementId+'_F_SUBMIT', "click", function() { form.updatePage(null); });
+    FloriaDOM.addEvent(form._elementId+'_F_SUBMIT', "click", function(e, event, target) {
+         e.disabled = 1;
+         FloriaDOM.addCSS(e, "formButtonBusy");
+         try { form.updatePage(null); } catch(e) { console.error(e); }
+//         e.disabled = 0;
+//         FloriaDOM.removeCSS(e, "formButtonBusy");
+    }, null, true);
 
    if (form._cancelButton == true)
     FloriaDOM.addEvent(form._elementId+'_F_CANCEL', "click", function() {
@@ -46,7 +52,7 @@ function createNavEvents(form)
        form._dlg.setOnHide(null);
        form._dlg.hide();
        form._dlg.setOnHide(onHideHandler);
-    });
+    }, null, true);
  }
 
 function getFieldMarkup(parentD, d, elementId, pageId, rowId, subRowId, groupId, data, edgeFunc, heading, verticalLayout)
@@ -67,8 +73,8 @@ function getFieldMarkup(parentD, d, elementId, pageId, rowId, subRowId, groupId,
     {
       Str+='<TR class="bottomPadded withIndenting" valign="top" id="'+elementId+'_'+pageId+'_ROW_'+xid+'">'
       if (d.inline == true || verticalLayout == true)
-        Str+='<TD colspan="10"><DIV class="fieldQuestion'+(d.mandatory == true ? " mandatory":"")+'">'+d.label+'</DIV>'
-            +'<TABLE border="0px" width="90%"><TR><TD>&nbsp;&nbsp;&nbsp;</TD><TD id="'+elementId+'_'+pageId+'_PH'+xid+'">';
+        Str+='<TD colspan="10" '+(d.description==null?"":'title="'+d.description+'"')+'><DIV class="fieldQuestion'+(d.mandatory == true ? " mandatory":"")+'">'+d.label+'</DIV>'
+            +'<TABLE border="0px" width="90%"><TR><TD width="1px">&nbsp;&nbsp;&nbsp;</TD><TD id="'+elementId+'_'+pageId+'_PH'+xid+'">';
       else
         Str+='<TD class="fieldName'+(d.mandatory == true ? " mandatory":"")+'">'+(d.label==null?'':d.label)+'</TD><TD colspan="9" id="'+elementId+'_'+pageId+'_PH'+xid+'">';
     }
@@ -93,7 +99,20 @@ function getFieldMarkup(parentD, d, elementId, pageId, rowId, subRowId, groupId,
                                                                                                                        +' '+(d.placeHolder==null?'':'placeholder="'+d.placeHolder+'"')
                                                                                                                        +'>';
    else if (d.type=="date")
-     Str+='<DIV id="'+elementId+'_b_'+xid+'"><DIV>';
+    {
+        
+      if ((v == null || v == 'NOW') && v != '---')
+       v = new Date().toISOString();
+      else
+       v = v.substring(0, 10);
+
+      Str+='<INPUT name="'+fieldName+'" type="date" value="'+FloriaText.TextUtil.printFuncParam(v)+'" style="width:'+(d.width==null?'150px':d.width)+'" '+(d.min==null?'min="0"':'min="'+d.min+'"')
+                                                                                                                         +' '+(d.max==null?'':'max="'+d.max+'"')
+                                                                                                                         +' step="1"'
+                                                                                                                         +' '+(d.placeHolder==null?'':'placeholder="'+d.placeHolder+'"')
+                                                                                                                         +'>';
+    }
+//     Str+='<DIV id="'+elementId+'_b_'+xid+'"><DIV>';
 //     Str+='<INPUT type="hidden" id="'+elementId+'_a_'+xid+'" name="'+fieldName+'" value="'+FloriaText.TextUtil.printFuncParam(v)+'"><DIV id="'+elementId+'_b_'+xid+'"><DIV>';
    else if (d.type=="radio")
     Str+=FloriaControls.Radio.gen(null, formElementIds, d.values, d.cols == null ? edgeFunc : FloriaControls.TableEdgeFunc(d.cols), null, v);
@@ -194,11 +213,11 @@ function getGroupMarkup(d, elementId, pageId, rowId, data, edgeFunc, heading)
    return Str;
  }
 
-function fillField(d, elementId, pageId, rowId, subRowId, descriptions, data, widgets, pickers, groupCount)
+function fillField(d, elementId, pageId, rowId, subRowId, descriptions, data, pickers, groupCount)
  {
    var fieldName = d.name+(groupCount!=null?"_"+groupCount : subRowId!=null?"_"+subRowId : "");
    var xid = rowId+(subRowId==null?'':'_'+subRowId);
-   if (d.name == null || d.type=="textarea" || d.type=="hidden" || d.type=="file" || d.type=="number" || d.type=="boolean" || d.type=="rating" || d.type=="int" || d.type=="radio" || d.type=="checkbox" || d.type=="dropdown")
+   if (d.name == null || d.type=="textarea" || d.type=="hidden" || d.type=="file" || d.type=="number" || d.type=="boolean" || d.type=="rating" || d.type=="int" || d.type=="radio" || d.type=="checkbox" || d.type=="dropdown" || d.type=="date")
     return;
    if (d.type=="text")
     {
@@ -210,19 +229,9 @@ function fillField(d, elementId, pageId, rowId, subRowId, descriptions, data, wi
              DelayedEvent.register(elementId+'_a_'+xid,500,function() {
                FloriaDOM.fireEvent(f, "change");
              });
-           });
+           }, null, true);
         }
     }
-   else if (d.type=="date")
-     {
-       var v = data==null?null:data[d.name];
-       if (v == null)
-        v = d.defaultValue;
-       if ((v == null || v == 'NOW') && v != '---')
-        v = new Date().toISOString();
-       
-       widgets.push(new DojoSimple.Calendar(elementId+'_b_'+xid, elementId+'_a_'+xid, null, null, null, v, fieldName));
-     }
    else
     {
 //      console.log("Picker "+d.type+" on "+fieldName+"= ", data==null?null:data[fieldName]);
@@ -239,7 +248,7 @@ function fillField(d, elementId, pageId, rowId, subRowId, descriptions, data, wi
     }
  }
 
-function fillGroup(d, elementId, pageId, rowId, descriptions, data, widgets, pickers)
+function fillGroup(d, elementId, pageId, rowId, descriptions, data, pickers)
  {
    var values = data[d.name];
    var groupCount = -1;
@@ -251,14 +260,14 @@ function fillGroup(d, elementId, pageId, rowId, descriptions, data, widgets, pic
         continue;
        ++groupCount;
        for (var k = 0; k < d.group.length; ++k)
-        fillField(d.group[k], elementId, pageId, rowId, groupCount*d.group.length+k, descriptions, val, widgets, pickers, groupCount);
+        fillField(d.group[k], elementId, pageId, rowId, groupCount*d.group.length+k, descriptions, val, pickers, groupCount);
     }
    if (groupCount == -1)
     for (var j = 0; j < 2; ++j)
      {
        ++groupCount;
        for (var k = 0; k < d.group.length; ++k)
-        fillField(d.group[k], elementId, pageId, rowId, groupCount*d.group.length+k, descriptions, null, widgets, pickers, groupCount);
+        fillField(d.group[k], elementId, pageId, rowId, groupCount*d.group.length+k, descriptions, null, pickers, groupCount);
      }
  };
 
@@ -266,7 +275,12 @@ function fillGroup(d, elementId, pageId, rowId, descriptions, data, widgets, pic
 export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, processCallbackFunc, popupTitle, wizardMode, liveOnChange, persist, validationErrMsg, cancelButton, submitButton)
  { 
 //   console.log("=>=>=> Forms2.constructor (data): ", data);
-   formDefs = FloriaDOM.clone(formDefs);
+// no await here????
+//   if (typeof formDefs == "string") // Consider it a URL
+//    formDefs = await FloriaAjax.jsonSyncFetch(formDefs);
+//   else
+    formDefs = FloriaDOM.clone(formDefs);
+
    this._elementId = elementId;
    if (typeof persist == "string")
     this._persistId = persist;
@@ -353,7 +367,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
    this._pickersLoading = 0;
    if (popupTitle != null)
     {
-      this._dlg = new DojoSimple.Dialog(elementId+"_DLG");
+      this._dlg = new FloriaDialog(elementId+"_DLG");
       var that = this;
       this._dlg.setOnHide(function() { if (that._cancelButton != true) that.updatePage(null, null, true); });
     }
@@ -413,6 +427,21 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
 
       return null;
     }
+   this.getMultiValueLabels = function(fieldName, values)
+    {
+      var f = this._getField(fieldName);
+      if (f == null || f.values == null || Array.isArray(f.values) == false || values == null)
+       return [];
+
+      var results = [];
+      for (var i = 0; i < values.length; ++i)
+       for (var k = 0; k < f.values.length; ++k)
+        if (f.values[k][0] == values[i])
+         results.push(f.values[k][1]);
+
+      return results;
+    }
+    
    this.getValueImg = function(fieldName, value)
     {
       var f = this._getField(fieldName);
@@ -548,11 +577,6 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
    
    this.paint = function(pageId, frameContentOverride, frameContentCallbackFunc, widthPct, heightPct)
     {
-      if(this._widgets != null) 
-        for (var i = 0; i < this._widgets.length; ++i)
-          this._widgets[i].destroy();
-      this._widgets = [];
-      
       if (pageId == null)
         {
           this._pageId = null;
@@ -733,7 +757,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
               formElement.style.display = "none";
               FloriaDOM.fitBelow(containerElement, containerNextElement, 0);
             }
-         });
+         }, null, true);
        }
 
       FloriaDOM.addEvent(this._elementId+'_F', "click", function(e, event, target) {
@@ -767,7 +791,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
                     var Pickers = [];
                     for (var k = 0; k < d.group.length; ++k)
                       {
-                        fillField(d.group[k], that._elementId, that._pageId, parts[1], d.group.length*(e.rows.length-1)+k, that._descriptions, null, that._widgets, Pickers, e.rows.length-1);
+                        fillField(d.group[k], that._elementId, that._pageId, parts[1], d.group.length*(e.rows.length-1)+k, that._descriptions, null, Pickers, e.rows.length-1);
                       }
                     if (Pickers.length > 0)
                       {
@@ -786,22 +810,22 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
                }
            }
           return false;
-        });
+        }, null, true);
       
       if (this._liveOnChange == true)
         FloriaDOM.addEvent(this._elementId+'_F', "change", function(e, event, target)
           {
             that.updatePage(that._pageId, true);
-          });
+          }, null, true);
 
       var Pickers = [];
       for (var i = 0; i < p.length; ++i)
        {
          var d = p[i];
          if (d.group != null)
-          fillGroup(d, this._elementId, this._pageId, i, this._descriptions, this._data, this._widgets, Pickers);
+          fillGroup(d, this._elementId, this._pageId, i, this._descriptions, this._data, Pickers);
          else
-          fillField(d, this._elementId, this._pageId, i, null, this._descriptions, this._data, this._widgets, Pickers);
+          fillField(d, this._elementId, this._pageId, i, null, this._descriptions, this._data, Pickers);
        }
       if (Pickers.length > 0)
         {
@@ -837,6 +861,8 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
          if (p != null)
           {
             var f = FloriaDOM.getElement(this._elementId+"_F");
+            if (f == null)
+             return console.error("Form container element '"+this._elementId+"_F' cannot be found.");
             var MissingParams = [];
             p = p.fields != null ? p.fields : p.formDef;
             for (var i = 0; i < p.length; ++i)
@@ -1129,7 +1155,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
                        val = FloriaText.isNoE(val)==true || val=="---" ? null : FloriaDate.parseDateTime(val).printFriendly(true, false);
                      }
                     else if (f.type=="text" || f.type == "textarea")
-                     val = FloriaText.TextUtil.replaceNewLinesWithBreaks(val, false);
+                     val = Array.isArray(val)==true ? val : FloriaText.TextUtil.replaceNewLinesWithBreaks(val, false);
                     else if (f.type=="boolean")
                      val = FloriaText.isNoE(val) ? null : val==1 ? 'Yes' : 'No';
                     else if (Array.isArray(val) == true)
@@ -1181,7 +1207,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
        {
          var that = this;
          for (var i = 0; i < this._formDefs.length; ++i)
-          FloriaDOM.addEvent(this._elementId+'_P'+i, "click", makeUpdatePageFunc(that, i));
+          FloriaDOM.addEvent(this._elementId+'_P'+i, "click", makeUpdatePageFunc(that, i), null, true);
        }
       if (commentElementId != null)
        {
@@ -1193,7 +1219,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
              for (var j = 0; j < def.formDef.length; ++j)
               {
                 var f = def.formDef[j];
-                FloriaDOM.addEvent(this._elementId+'_'+f.name, "click", MakeHandler(f.name));
+                FloriaDOM.addEvent(this._elementId+'_'+f.name, "click", MakeHandler(f.name), null, true);
               }
           }
        }
@@ -1384,8 +1410,8 @@ FloriaForms.paintFieldGenerator = function(elementId, type, callbackFunc, field)
       FloriaDOM.addEvent(elementId+"_F_type", "change", function(e, event, target) {
          that.paintFieldGenerator(elementId, FloriaControls.Dropdown.get([elementId+"_F", "type"]));
          return false;
-      });
-      FloriaDOM.addEvent(elementId+'_F', "submit", makeSubmitHandlerFunc(elementId, callbackFunc));
+      }, null, true);
+      FloriaDOM.addEvent(elementId+'_F', "submit", makeSubmitHandlerFunc(elementId, callbackFunc), null, true);
     }
    if (type != null)
     {
@@ -1490,7 +1516,7 @@ FloriaForms.paintFieldGenerator = function(elementId, type, callbackFunc, field)
                                                  ,'<TD>'+(rowCount+0)+'</TD><TD><INPUT type="text" name="value'+(rowCount-1)+'"></TD><TD><INPUT type="text" name="label'+(rowCount-1)+'"></TD>'
                                                  ,'<TD>'+(rowCount+1)+'</TD><TD><INPUT type="text" name="value'+(rowCount-0)+'"></TD><TD><INPUT type="text" name="label'+(rowCount-0)+'"></TD>'
                                                 ], rowCount-1);          
-         });
+         }, null, true);
          FloriaDOM.addEvent(elementId+'_TBUT', "click", function(e, event, target) {
             oldTypeElement.value=type;
             var txt = target.innerHTML;
@@ -1500,7 +1526,7 @@ FloriaForms.paintFieldGenerator = function(elementId, type, callbackFunc, field)
             target.parentNode.childNodes[2].disabled = txt == "Dropdown";
             event.preventDefault();
             return false;            
-         });
+         }, null, true);
        }
     }
  }
@@ -1567,7 +1593,7 @@ FloriaForms.paintFieldList = function(elementId, fieldDefs, callbackFunc, editCa
          if (id[0] == "up" || id[0] == "down")
           FloriaDOM.flashCSS(FloriaDOM.getElement(elementId+'_LIST').rows[i], "highlight", 250);
       }, 500);
-  });
+  }, null, true);
    
  }
 

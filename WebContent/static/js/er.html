@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JointJS Custom Entity</title>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jointjs/3.4.2/joint.min.css">
+    
+    <style>
+        /* Some minimal styling for the entity attributes */
+        .entity-attrs text {
+            font-size: 12px;
+        }
+
+        /* CSS for the context menu */
+        .context-menu {
+            position: absolute;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            border: 1px solid #ddd;
+        }
+
+        .context-menu li {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .context-menu li:hover {
+            background-color: #eee;
+        }
+        .tab.active {
+            background-color: #ddd;
+        }
+
+        /* Sidebar styles */
+        #sidebar {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            width: 200px;
+            border: 1px solid #ddd;
+            background-color: #f7f7f7;
+            padding: 10px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        #sidebar h3 {
+            margin-top: 0;
+        }
+
+        #entity-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        #entity-list li {
+            margin-bottom: 10px;
+        }
+
+        #load-json-btn {
+            margin-top: 20px;
+            display: block;
+        }
+        .canvas {
+          position: relative;
+          width: 90%;
+          height: 90%;
+          border: 1px solid grey;
+          background-color: #DDD;
+        }
+        .canvas-container {
+          border: 1px solid #F0F0F0;
+          background-color: #F7F7F7;
+        }
+    </style>
+</head>
+<body>
+    <form id="entity-form">
+        <label for="entity-names">Entity Name:</label>
+        <input type="text" id="entity-name" name="entity-name"><br>
+        <label for="entity-attributes">Attributes (comma-separated):</label>
+        <input type="text" id="entity-attributes" name="entity-attributes"><br>
+        <label for="entity-attributes-fk">Foreign Keys (comma-separated):</label>
+        <input type="text" id="entity-attributes-fk" name="entity-attributes-fk"><br>
+        <label for="entity-attributes-pk">Primary Keys (comma-separated):</label>
+        <input type="text" id="entity-attributes-pk" name="entity-attributes-pk"><br>
+        <input type="submit" value="Add Entity">
+    </form>
+    
+    <div id="paper"></div>
+
+    <button id="addCanvasBtn">Add New Canvas</button>
+
+    <div class="canvas-container">
+    </div>
+
+    <div class="tabs">
+        
+    </div>
+
+
+    <!-- Sidebar for entity list -->
+    <div id="sidebar">
+        <h3>Entities</h3>
+        <ul id="entity-list">
+            <!-- List of entities will appear here -->
+        </ul>
+    </div>
+
+    <!-- Context Menu HTML -->
+    <ul class="context-menu hide"></ul>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.4.0/backbone-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jointjs/3.4.2/joint.min.js"></script>
+    <script src="joint.shapes.uml.js"></script>
+    <script src="er.js"></script> 
+
+</body>
+</html>

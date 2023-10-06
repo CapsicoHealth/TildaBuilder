@@ -2522,10 +2522,137 @@ table.centered {
     color: white;
     font-size: 16px;
     transition: 0.4s;
-    width: 0px !important;
+    width: 150px !important;
     position: relative;
     top: -8px;    
 }
-.searchBox:hover > .searchInput {
-    width: 250px !important;
+
+
+
+
+
+
+
+
+
+
+
+
+
+.schema {
+  background-color: #FbFbFb;
+  margin: 20px 1% 30px 1%;
+  padding: 10px;
+  border-radius: 3px 3px 0px 0px;
+  box-shadow: 0px 0px 2px #BBB;
+  background-repeat: no-repeat;
+  background-size: 60px;
+  background-position: 5px 12px;
+  cursor: pointer;
+}
+.schema:hover {
+  background-color: #F5F5F5;
+  box-shadow: 0px 0px 3px #999;
+}
+.schema div:nth-child(1) {
+  color: #666;
+  font-weight: bold;
+  margin-bottom: 10px;  
+}
+.schema div:nth-child(2) {
+  color: #888;
+  font-size: 80%;
+}
+.schema .selected {
+  background-color: #F5F5F5;
+  box-shadow: 0px 0px 3px #999;
+}
+
+
+
+
+
+
+.canvas {
+   position: absolute;
+   width: 99%;
+   height: 96%;
+   border: 1px solid #F0F0F0;
+   background-color: #FaFaFa;
+   overflow: auto;
+   scrollbar-width: thin;
+}
+
+
+.canvas-container {
+}
+
+.joint-type-uml-class {
+  cursor: move;
+  stroke: grey;
+  stroke-width: 1px;  
+}
+.uml-class-name-rect {
+  fill: #9BE;
+}
+.uml-class-name-text {
+  font-weight: bold;
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+  fill: black;
+}
+.uml-class-attributes-pk-rect {
+  fill: #e4f8f0;
+}
+.uml-class-attributes-fk-rect {
+  fill: #e4f8f0;
+}
+.uml-class-attrs-rect {
+  fill: #DEF;
+}
+
+
+/* CSS for the context menu */
+.context-menu {
+  position: absolute;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background-color: #fff;
+  border: 1px solid #ddd;
+}
+.context-menu li {
+  padding: 10px;
+  cursor: pointer;
+}
+.context-menu li:hover {
+  background-color: #eee;
+}
+
+
+.entityShelf LI {
+  cursor: pointer;
+}
+.entityShelf LI:hover {
+  background-color: #DDD;
+  font-weight: bold;
+}
+.entityShelf LI.onCanvas {
+  color:#BBB;
+}
+.entityShelf LI.onCanvas:hover {
+  background-color: #F0F0F0 ;
+  cursor: auto;
+  font-weight: normal;
+}
+
+.tab {
+  margin-right: 20px;
+  padding: 3px;
+}
+
+.tab.active {
+  background-color: #666;
+  color: #FFF;
+  text-weight: bold;
 }

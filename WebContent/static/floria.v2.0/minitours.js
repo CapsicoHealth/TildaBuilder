@@ -1,13 +1,11 @@
 "use strict";
 
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Date extensions
+// Mini Tours
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 define(["floria/textutil", "floria/superdom", "jslibs/popper", "floria/collections"], function(FloriaText, SuperDOM, Popper, FloriaCollections)
 {
-
-var dojoSimple = require(CapsicoDojoSimpleLibJS)
 
 var x = {};
 
@@ -57,7 +55,7 @@ function start(data)
 
 x.startTour = function(tourName, jsonUrl)
  {
-   dojoSimple.ajaxUrl(jsonUrl, "GET", null, 
+   FloriaAjax.ajaxUrl(jsonUrl, "GET", null, 
                       function(data) {
                          start(data); 
                       },

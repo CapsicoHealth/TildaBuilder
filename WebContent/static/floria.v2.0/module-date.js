@@ -55,6 +55,16 @@ import { FloriaText } from "./module-text.js";
    }
 
   /**
+   * Returns the number of minutes (with decimal) between this date and otherDate. If otherDate is
+   * after this date, the value returned will be positive. If it's before, the value
+   * will be negative:
+   */
+  Date.prototype.diffMinutes = function(otherDate)
+   {
+     return Math.round((otherDate - this) / (1000 * 60));
+   }
+
+  /**
    * Returns the number of hours (with decimal) between this date and otherDate. If otherDate is
    * after this date, the value returned will be positive. If it's before, the value
    * will be negative:
@@ -170,11 +180,11 @@ import { FloriaText } from "./module-text.js";
   Date.prototype.DATE_MONTHS = new Array('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
   Date.prototype.DATE_DAYS = new Array('Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat');
 
-  Date.prototype.printDayWithTH = function()
+  Date.prototype.printDayWithTH = function(printTh)
   {
     var d = this.getDate();
-    return d + "<SUP style='font-size:60%;'>" + (d == 1 || d == 21 ? "st" : d == 2 || d == 22 ? "nd" : d == 3 || d == 23 ? "rd" : "th")
-        + "</SUP>";
+    return d +( printTh==false?"":"<SUP style='font-size:60%;'>" + (d == 1 || d == 21 ? "st" : d == 2 || d == 22 ? "nd" : d == 3 || d == 23 ? "rd" : "th")
+        + "</SUP>");
   };
 
   Date.prototype.print24hTime = function(Timezone)
@@ -231,19 +241,19 @@ import { FloriaText } from "./module-text.js";
         + (PrintTime == true ? " " + this.print24hTime(PrintTimezone) : "");
   };
 
-  Date.prototype.printFriendly = function(PrintYear, PrintTime)
+  Date.prototype.printFriendly = function(PrintYear, PrintTime, th)
   {
-    return this.__printFriendly(PrintYear, PrintTime, false);
+    return this.__printFriendly(PrintYear, PrintTime, false, th);
   };
   
-  Date.prototype.printFriendlyInTZ = function(PrintYear, PrintTime)
+  Date.prototype.printFriendlyInTZ = function(PrintYear, PrintTime, th)
   {
-    return this.adjustFromLocalTime().__printFriendly(PrintYear, PrintTime, true);
+    return this.adjustFromLocalTime().__printFriendly(PrintYear, PrintTime, true, th);
   };
   
-  Date.prototype.__printFriendly = function(PrintYear, PrintTime, Timezone)
+  Date.prototype.__printFriendly = function(PrintYear, PrintTime, Timezone, th)
   {
-    return this.DATE_DAYS[this.getDay()] + ", " + this.DATE_MONTHS[this.getMonth()] + " " + this.printDayWithTH()
+    return this.DATE_DAYS[this.getDay()] + ", " + this.DATE_MONTHS[this.getMonth()] + " " + this.printDayWithTH(th)
         + (PrintYear == true ? " " + this.getFullYear() : "") + (PrintTime == true ? ", at " + this.print24hTime(Timezone) : "");
   };
 
@@ -389,14 +399,17 @@ export var FloriaDate = {
       }
       return d;
     },
-    printYYYYMMDD: function(DateTimeStr)
+    printYYYYMMDD: function(dtStr)
      {
-       if (DateTimeStr != null)
-         DateTimeStr = this.parseDateTime(DateTimeStr);
-       if (DateTimeStr != null)
-         DateTimeStr = DateTimeStr.printYYYYMMDD();
-       return DateTimeStr;
+       var dt = FloriaDate.parseDateTime(dtStr);
+       return dt = dt==null ? FloriaText.spanNA : dt.printYYYYMMDD();
+     },
+    printContextual: function(dtStr)
+     {
+       var dt = FloriaDate.parseDateTime(dtStr);
+       return dt = dt==null ? FloriaText.spanNA : dt.printContextual();
      }
+     
    ,toDtStr: function(d, friendly)
      {
        if (d != null && typeof d == "string")

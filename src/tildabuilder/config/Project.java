@@ -102,4 +102,9 @@ public class Project
 
         return null;
       }
+
+    public boolean hasSchema(String fullSchemaPath)
+      {
+        return _schemas != null && CollectionUtil.indexOf(_schemas, fullSchemaPath) != -1;
+      }
   }
