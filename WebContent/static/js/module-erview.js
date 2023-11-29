@@ -197,7 +197,7 @@ class CanvasState
          else
           that._canvasData = JSON.parse(canvasState);
          console.log("Loading canvas state: ", that._canvasData);
-         callbackFunc();
+         callbackFunc();   
       });
     }
  }
