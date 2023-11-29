@@ -189,15 +189,13 @@ class CanvasState
                                                      +"&schemaName="+encodeURIComponent(this._schemaName)
                                                      +"&fullSchemaPath="+encodeURIComponent(this._fullSchemaPath)
                                                      +"&ts="+new Date(), "GET", "Cannot get the schema for this project", function(canvasState) {
-         if (canvasState == null)
-          canvasState = localStorage.getItem('canvasState');
-
+         canvasState = canvasState?.state || localStorage.getItem('canvasState');
          if (canvasState == null)
           that._canvasData = { };
          else
           that._canvasData = JSON.parse(canvasState);
          console.log("Loading canvas state: ", that._canvasData);
-         callbackFunc();   
+         callbackFunc();
       });
     }
  }

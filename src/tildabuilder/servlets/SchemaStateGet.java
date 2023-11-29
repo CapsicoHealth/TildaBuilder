@@ -48,17 +48,10 @@ public class SchemaStateGet extends SimpleServletNonTransactional
           F = new File(p._rootPath + p._srcPath + fullSchemaPath.replace(".json", ".state.json"));
         req.throwIfErrors();
 
-        if (F.exists() == true)
-          {
-            String state = FileUtil.getFileOfResourceContents(F);
-
-            PrintWriter Out = res.setContentType(ResponseUtil.ContentType.JSON);
-            JSONUtil.startOK(Out, ' ');
-            Gson gson = new GsonBuilder().create();
-            gson.toJson(state, Out);
-            JSONUtil.end(Out, ' ');
-          }
-        else
-          res.success();
+        String state = F.exists() == false ? null : FileUtil.getFileOfResourceContents(F);
+        PrintWriter Out = res.setContentType(ResponseUtil.ContentType.JSON);
+        JSONUtil.startOK(Out, '{');
+        JSONUtil.print(Out, "state", true, state);
+        JSONUtil.end(Out, '}');
       }
   }
