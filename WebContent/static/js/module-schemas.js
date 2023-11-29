@@ -8,10 +8,10 @@ import { ERView } from "/static/js/module-erview.js";
 export var schemas = {};
 
 
-schemas.paint = function(tildaJsonStr)
+schemas.paint = function(projectName, schemaName, fullSchemaPath, tildaJsonStr)
  {
     
-   ERView.start("ER_EDITOR", "ENTITY_LIST", "ENTITIES_SEARCH", FloriaDOM.jsonParseWithComments(tildaJsonStr));
+   ERView.start("ER_EDITOR", "ENTITY_LIST", "ENTITIES_SEARCH", projectName, schemaName, fullSchemaPath, FloriaDOM.jsonParseWithComments(tildaJsonStr));
     
 //   FloriaDOM.setInnerHTML("EDITOR", tildaJsonStr);
  };

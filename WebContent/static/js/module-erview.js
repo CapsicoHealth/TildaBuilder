@@ -4,7 +4,7 @@ import { FloriaDOM } from "/static/floria.v2.0/module-dom.js";
 import { FloriaAjax } from "/static/floria.v2.0/module-ajax.js";
 import { FloriaCollections } from "/static/floria.v2.0/module-collections.js";
 
-import { sampleTildaJsonData } from "./module-testtildajson.js";
+//import { sampleTildaJsonData } from "./module-testtildajson.js";
 
 
 
@@ -166,18 +166,39 @@ class CanvasState
 
    saveState()
     {
-      console.log("Saving canvas state: ", this._canvasData);
-      localStorage.setItem('canvasState', JSON.stringify(this._canvasData));
+      FloriaAjax.ajaxUrl("/svc/project/schema/state/save?projectName="+encodeURIComponent(this._projectName)
+                                                      +"&schemaName="+encodeURIComponent(this._schemaName)
+                                                      +"&fullSchemaPath="+encodeURIComponent(this._fullSchemaPath)
+                                                      +"&state="+encodeURIComponent(JSON.stringify(this._canvasData))
+                                                      +"&ts="+new Date(), "POST", "Cannot get the schema for this project", function(canvasState) {
+      });
+//      localStorage.removeItem('canvasState');
     }
 
-   loadState()
+   /** Loads the state from the server. If not available, check the browser's cache
+      in case there is something already in there from a previous session before the 
+      save-to-server functionality was developed
+    */
+   loadState(projectName, schemaName, fullSchemaPath, callbackFunc)
     {
-      const savedState = localStorage.getItem('canvasState');
-      if (savedState == null)
-       return false;
-      this._canvasData = JSON.parse(savedState);
-      console.log("Loading canvas state: ", this._canvasData);
-      return true;
+      this._projectName = projectName;
+      this._schemaName = schemaName;
+      this._fullSchemaPath = fullSchemaPath;
+      let that = this;
+      FloriaAjax.ajaxUrl("/svc/project/schema/state/get?projectName="+encodeURIComponent(this._projectName)
+                                                     +"&schemaName="+encodeURIComponent(this._schemaName)
+                                                     +"&fullSchemaPath="+encodeURIComponent(this._fullSchemaPath)
+                                                     +"&ts="+new Date(), "GET", "Cannot get the schema for this project", function(canvasState) {
+         if (canvasState == null)
+          canvasState = localStorage.getItem('canvasState');
+
+         if (canvasState == null)
+          that._canvasData = { };
+         else
+          that._canvasData = JSON.parse(canvasState);
+         console.log("Loading canvas state: ", that._canvasData);
+         callbackFunc();
+      });
     }
  }
 
@@ -315,7 +336,7 @@ export var ERView = {
      return console.warn("Cannot find entity '"+entityName+"' in ERView._entities.")
    }
 
- ,start: function(mainDivId, entityListDivId, searchInputId, tildaJsonData)
+ ,start: function(mainDivId, entityListDivId, searchInputId, projectName, schemaName, fullSchemaPath, tildaJsonData)
    {
      this._mainDivId = mainDivId;
      this.createEntitiesFromTildaJson(tildaJsonData);
@@ -338,30 +359,31 @@ export var ERView = {
 
      this._shelf = new Shelf(entityListDivId, searchInputId, this._entities);        
      
-     canvasStateManager.loadState();
-     this._currentCanvasState = canvasStateManager.getCurrentCanvas();
-     if (this._currentCanvasState == null)
-      this._currentCanvasState = canvasStateManager.addCanvas("Main")
-      
-     let str = '';
-     for (let i = 0; i < canvasStateManager._canvasData.length; ++i)
-      {
-        let canvas = canvasStateManager._canvasData[i];
-        let tabId = this._canvasElement.id+'_'+canvas.id;
-        str+='<BUTTON class="tab" id="'+tabId+'" data-canvasid="'+canvas.id+'">'+canvas.name+'</BUTTON>';
-      }
-     if (str != '')
-      FloriaDOM.setInnerHTML(this._mainDivId + '_CANVAS_TABS', str);
-     
-     this.showCurrentCanvas();
-
-     this.bindEventHandlersToPaper();
-
-     var that = this;
-     $('#' + mainDivId + '_ADD_CANVAS_BUTTON').click(function() { that.addCanvas(); });
-     $('#' + mainDivId + '_CANVAS_TABS').on('click', '.tab', function(e) {
-          that._currentCanvasState = canvasStateManager.setCurrentCanvasById(e.target.dataset.canvasid);
-          that.showCurrentCanvas();
+     let that = this;
+     canvasStateManager.loadState(projectName, schemaName, fullSchemaPath, function() {
+         that._currentCanvasState = canvasStateManager.getCurrentCanvas();
+         if (that._currentCanvasState == null)
+          that._currentCanvasState = canvasStateManager.addCanvas("Main")
+          
+         let str = '';
+         for (let i = 0; i < canvasStateManager._canvasData.length; ++i)
+          {
+            let canvas = canvasStateManager._canvasData[i];
+            let tabId = that._canvasElement.id+'_'+canvas.id;
+            str+='<BUTTON class="tab" id="'+tabId+'" data-canvasid="'+canvas.id+'">'+canvas.name+'</BUTTON>';
+          }
+         if (str != '')
+          FloriaDOM.setInnerHTML(that._mainDivId + '_CANVAS_TABS', str);
+         
+         that.showCurrentCanvas();
+    
+         that.bindEventHandlersToPaper();
+    
+         $('#' + mainDivId + '_ADD_CANVAS_BUTTON').click(function() { that.addCanvas(); });
+         $('#' + mainDivId + '_CANVAS_TABS').on('click', '.tab', function(e) {
+              that._currentCanvasState = canvasStateManager.setCurrentCanvasById(e.target.dataset.canvasid);
+              that.showCurrentCanvas();
+         });
      });
    }
    
