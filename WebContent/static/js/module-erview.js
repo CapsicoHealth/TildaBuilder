@@ -3,6 +3,7 @@
 import { FloriaDOM } from "/static/floria.v2.0/module-dom.js";
 import { FloriaAjax } from "/static/floria.v2.0/module-ajax.js";
 import { FloriaCollections } from "/static/floria.v2.0/module-collections.js";
+import { FloriaTabs } from "/static/floria.v2.0/module-dialog.js";
 
 //import { sampleTildaJsonData } from "./module-testtildajson.js";
 
@@ -356,32 +357,39 @@ export var ERView = {
 //     this._paper.drawGrid()
 
      this._shelf = new Shelf(entityListDivId, searchInputId, this._entities);        
-     
+
      let that = this;
      canvasStateManager.loadState(projectName, schemaName, fullSchemaPath, function() {
          that._currentCanvasState = canvasStateManager.getCurrentCanvas();
          if (that._currentCanvasState == null)
           that._currentCanvasState = canvasStateManager.addCanvas("Main")
           
-         let str = '';
+         let tabs = [];
          for (let i = 0; i < canvasStateManager._canvasData.length; ++i)
           {
             let canvas = canvasStateManager._canvasData[i];
-            let tabId = that._canvasElement.id+'_'+canvas.id;
-            str+='<BUTTON class="tab" id="'+tabId+'" data-canvasid="'+canvas.id+'">'+canvas.name+'</BUTTON>';
+            tabs.push({label:canvas.name
+                      ,canvasId: canvas.id
+                      ,current: canvas.current
+                      ,onSelectHandler: function(cntId, firstRender) { 
+                           that._currentCanvasState = canvasStateManager.setCurrentCanvasById(this.canvasId);
+                           that.showCurrentCanvas();
+                       }}
+                     );
+//            let tabId = that._canvasElement.id+'_'+canvas.id;
+//            str+='<BUTTON class="tab" id="'+tabId+'" data-canvasid="'+canvas.id+'">'+canvas.name+'</BUTTON>';
           }
-         if (str != '')
-          FloriaDOM.setInnerHTML(that._mainDivId + '_CANVAS_TABS', str);
+         that._tabs = new FloriaTabs(that._mainDivId + '_CANVAS_TABS', tabs, true);
+         that._tabs.show();
          
-         that.showCurrentCanvas();
+//         if (str != '')
+//          FloriaDOM.setInnerHTML(that._mainDivId + '_CANVAS_TABS', str);
+         
+//         that.showCurrentCanvas();
     
          that.bindEventHandlersToPaper();
     
-         $('#' + mainDivId + '_ADD_CANVAS_BUTTON').click(function() { that.addCanvas(); });
-         $('#' + mainDivId + '_CANVAS_TABS').on('click', '.tab', function(e) {
-              that._currentCanvasState = canvasStateManager.setCurrentCanvasById(e.target.dataset.canvasid);
-              that.showCurrentCanvas();
-         });
+//         $('#' + mainDivId + '_ADD_CANVAS_BUTTON').click(function() { that.addCanvas(); });
      });
    }
    
@@ -400,7 +408,8 @@ export var ERView = {
           allAttributes.push("refnum:LONG");
           entityData.primary.columns=["refnum"];
         }
-       entityData.columns.forEach(column => {
+       if (entityData.columns != null) 
+        entityData.columns.forEach(column => {
           let attribute = column.name;
           if (column.type)
            attribute += ':'+column.type;
@@ -479,13 +488,13 @@ export var ERView = {
    
  ,showCurrentCanvas: function()
    {
-     $('.tab.active').removeClass('active');
-     let tabId = this._canvasElement.id+'_'+(this._currentCanvasState.id);
-     let tab = FloriaDOM.getElement(tabId);
-     if (tab == null)
-      FloriaDOM.appendInnerHTML(this._mainDivId + '_CANVAS_TABS', '<BUTTON class="tab active" id="'+tabId+'">'+this._currentCanvasState.name+'</BUTTON>');
-     else
-      FloriaDOM.addCSS(tab, "active");
+//     $('.tab.active').removeClass('active');
+//     let tabId = this._canvasElement.id+'_'+(this._currentCanvasState.id);
+//     let tab = FloriaDOM.getElement(tabId);
+//     if (tab == null)
+//      FloriaDOM.appendInnerHTML(this._mainDivId + '_CANVAS_TABS', '<BUTTON class="tab active" id="'+tabId+'">'+this._currentCanvasState.name+'</BUTTON>');
+//     else
+//      FloriaDOM.addCSS(tab, "active");
       
      this._graph.clear();
      this._zoomLevel = this._currentCanvasState.zoomLevel || 1;

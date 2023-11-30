@@ -2656,3 +2656,72 @@ table.centered {
   color: #FFF;
   text-weight: bold;
 }
+
+
+
+
+
+/*********************************************************
+  Tab Container
+**********************************************************/
+
+.tabContainer {
+  position: relative;
+  left: 0px;
+  width: 99%;
+  top: 0px;
+  height: 99%;
+  /* border: 1px solid black;   */
+}
+
+.tabContainer .tabHeader {
+  border-bottom: 1px solid #EEE;
+  box-shadow: 0 4px 2px -0px #EEE;
+  margin: 2px 0px 0px -20px;
+}
+
+.tabContainer .tabHeader SPAN {
+  border: 1px solid #BBB;
+  margin-left: 0px;
+  padding: 3px 50px 3px 10px;
+  border-radius: 20px 100px 0px 0px;
+  cursor: pointer;
+  transition-duration: 350ms;
+  user-select: none;
+}
+.tabContainer .tabHeader SPAN:first-child {
+  margin-left: 20px;
+}
+
+.tabContainer .tabHeader SPAN.selected {
+    background-color: #c8e8ff;
+    color: #2d4e71;
+//    font-weight: bold;
+    text-decoration: underline;
+}
+.tabContainer .tabHeader SPAN:hover {
+  text-decoration: underline;
+}
+
+.tabContainer .tabBody {
+  position: absolute;
+  top: 2em;
+  bottom: 0px; 
+  left: 0px; 
+  width: 100%; 
+  overflow: hidden;
+}
+
+.tabContainer .tabBody > DIV {
+  position: relative;
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+  overflow: auto;
+  scrollbar-width: thin;
+  display: none;
+}
+
+.tabContainer .tabBody DIV.selected {
+  display: block;
+}
+

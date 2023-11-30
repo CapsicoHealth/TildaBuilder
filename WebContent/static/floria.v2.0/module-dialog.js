@@ -268,11 +268,12 @@ export function FloriaTooltipDialog(elementId, content)
  tabs ia an array:
     { label:"", onHideHanler: function, onSelectHandler: function }
  */
-export function FloriaTabs(elementId, tabs)
+export function FloriaTabs(elementId, tabs, singleDiv)
  {
    this._elementId = elementId;
    this._tabs = tabs;
    this._currentTabId = null;
+   this._singleDiv = singleDiv || false;
    
    this.show = function()
     {
@@ -283,16 +284,20 @@ export function FloriaTabs(elementId, tabs)
          str+='<SPAN id="'+elementId+'_TABHEADER_'+i+'" data-tabid="'+i+'">'+t.label+'</SPAN>';
        }
       str+='</DIV><DIV class="tabBody">';
+      var current = 0;
       for (var i = 0; i < this._tabs.length; ++i)
        {
          var t = this._tabs[i];
+         if (t.current == true)
+          current = i;
          t._renderCount = 0;
-         str+='<DIV id="'+elementId+'_TABPANEL_'+i+'"></DIV>';
+         if (this._singleDiv == false || i == 0)
+          str+='<DIV id="'+elementId+'_TABPANEL_'+i+'"></DIV>';
        }
       str+='</DIV></DIV>';
       FloriaDOM.setInnerHTML(elementId, str);
       var that = this;
-      setTimeout(function() { that.select(0); }, 10);
+      setTimeout(function() { that.select(current); }, 10);
       FloriaDOM.addEvent(elementId+"_TABHEADERS", "click", function(e, event, target) {
         var tabId = target.dataset.tabid;
         that.select(tabId);
@@ -310,11 +315,11 @@ export function FloriaTabs(elementId, tabs)
           t.onHideHanler(elementId+'_TABPANEL_'+this._currentTabId);
        }
       FloriaDOM.addCSS(elementId+'_TABHEADER_'+i, "selected");
-      FloriaDOM.addCSS(elementId+'_TABPANEL_'+i, "selected");
+      FloriaDOM.addCSS(elementId+'_TABPANEL_'+(this._singleDiv==true?0:i), "selected");
       var t = this._tabs[i];
       ++t._renderCount;
       if (t.onSelectHandler != null)
-       t.onSelectHandler(elementId+'_TABPANEL_'+i, t._renderCount==1);
+       t.onSelectHandler(elementId+'_TABPANEL_'+(this._singleDiv==true?0:i), t._renderCount==1);
       this._currentTabId = i;
     }
  };
