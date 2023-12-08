@@ -214,15 +214,16 @@ require(["jslibs/d3-7.6.1/d3.min"], function(d3)
                //             }else {
                //              d3.select(chart.legend4._groups[0][i]).transition().duration(500).style("fill",d3.hsl("#FA8072").darker(0.7));
                //             }
-                            var txt = d?.data?.tooltip;
+                            var txt = i?.data?.tooltip;
                             if(txt != "")
                              {
                                chart.tooltip.style("display", "block")
                                     .attr("class","back-shadow tooltip")
-                                    .html(d?.data?.tooltip);
+                                    .html(txt);
                                var tooltip = FloriaDOM.getElement(chart.id+"tool"); 
                                var rect = FloriaDOM.getElement(txt) ;//FloriaDOM.getElement(chart.series[i].tooltip+i+"topSlice") ;
                                var container = FloriaDOM.getElement(chart.id);
+//                               console.log("-----> POPPER (1) 226")
                                var popper = createPopper(rect, tooltip, {
                                                 placement: 'top-end',
                                                 modifiers: { 
@@ -621,7 +622,7 @@ require(["jslibs/d3-7.6.1/d3.min"], function(d3)
        } else {
           seriesData.forEach(function(d, i){
             chart.seriesArray.push({
-              "x":+i,
+              "x":i,
             "y":+seriesData[i],
             "name":seriesName,
               "text"  : (typeof seriesLabels != 'undefined' && seriesLabels != null && seriesLabels != "") ? seriesLabels[i] : "",
@@ -703,61 +704,75 @@ require(["jslibs/d3-7.6.1/d3.min"], function(d3)
             .style("opacity", "0");
          }
          var mouseOverFn = function(d, z, that){
-           var x0 = chart.x.invert(d3.pointer(that)[0]);
-             var mouse = chart.x(x0.toFixed(0));
-           var dataString = " <div style='background-color : #D3D3D3; color : #000000;'><center>"+chart.xLabelFunction(x0.toFixed(0)) +"</center></div>";
-           var position  = null;
+           // Get coordinate of pointer/mouse
+           var x0 = d3.pointer(d);
+           // Convert coordinates to x-axis value
+           var x0 = chart.x.invert(x0[0]).toFixed(0);
+           // re-convert back to the mouse pointer for positioning of tooltip along x axis
+           var mouse = chart.x(x0);
+//           var x0 = chart.x.invert(that.__data__.x/*d3.pointer(that)[0]*/);
+//           var mouse = chart.x(x0);
+           var dataString = " <div style='background-color : #D3D3D3; color : #000000;'><center>"+chart.xLabelFunction(x0) +"</center></div>";
            var block = chart.tooltipFloating
-                     .attr("class","back-shadow tooltip")
-                 .style("display","block")
-                 .style("width", "").style("height", "")
-               d3.select(".mouse-line"+chart.id).attr("d", function() {
-                                     var d = "M" + mouse + "," + chart.height;
-                                     d += " " + mouse + "," + 0;
-                                     return d;});       
-               d3.selectAll(".mouse-per-line"+chart.id)
-                 .attr("transform", function(d, i) {
-                   var beginning = 0, end = (typeof lines[i] == 'undefined') ? chart.width : lines[i].getTotalLength(), target = null;
-                   while (true){
-                     target = Math.floor((beginning + end) / 2);
-                     var pos =(typeof lines[i] == 'undefined') ? chart.height : lines[i].getPointAtLength(target);
-                     if ((target === end || target === beginning) && pos.x !== mouse) { break; }
-                     if (pos.x > mouse)      end = target;
-                     else if (pos.x < mouse) beginning = target;
-                     else break; //position found
-                   }
-                   var currentData = chart.seriesLineData;
-                     if(typeof pos.y == "undefined"){
-                       d3.select(that).remove();
-                     } else {
-                         var index = chart.x.invert(pos.x).toFixed(0);     
-                         var tuner = (typeof chart.tunerlabel == 'undefined') ? "": chart.tunerlabel;
-                          var xindex = chart.x.invert(pos.x).toFixed();
-                          var tunerValue = "";
-                          for (var n = 0; n < currentData[i].length; n++) {
-                          if(currentData[i][n].x == xindex)
-                            tunerValue = currentData[i][n].tooltip == null ? currentData[i][n].y : currentData[i][n].tooltip;
-                          }
-                        dataString += " <div style='color : "+chart.colorOvr(i)+";'>  "+tunerValue +"</div>";
-                          d3.select(that).select('text').text(chart.y.invert(pos.y).toFixed(0));
-                        return "translate(" + mouse + "," + pos.y +")";
-                    }
-                  })
-                  block.html(dataString).style("stroke-width","2px")
-                       .style("border","1px").style("stroke","black");
-              var tooltip = document.getElementById(chart.id+"tooltip-floating"); 
-                var rect = document.getElementById(chart.id+"mouse-line");
-                var container = document.getElementById(chart.id);
-              var popper = createPopper(rect, tooltip, {
-                            placement: 'left-start',
-                        removeOnDestroy: true,
-                            modifiers: {
-                                  flip: { behavior: ['left', 'right', 'bottom-middle'],
-                                       padding: 0 },
-                            preventOverflow: { boundariesElement: container },
-                             offset: { offset: '0px,50px' }
-                                  },
-                });
+                            .attr("class","back-shadow tooltip")
+                            .style("display","block")
+                            .style("width", "").style("height", "")
+                            ;
+           d3.select(".mouse-line"+chart.id).attr("d", function() {
+                 var d = "M" + mouse + "," + chart.height;
+                 d += " " + mouse + "," + 0;
+                 return d;
+           });       
+           d3.selectAll(".mouse-per-line"+chart.id)
+             .attr("transform", function(d, i) {
+                 var beginning = 0, end = (typeof lines[i] == 'undefined') ? chart.width : lines[i].getTotalLength(), target = null;
+                 while (true)
+                  {
+                    target = Math.floor((beginning + end) / 2);
+                    var pos =(typeof lines[i] == 'undefined') ? chart.height : lines[i].getPointAtLength(target);
+                    if ((target === end || target === beginning) && pos.x !== mouse)
+                     break;
+                    if (pos.x > mouse)
+                     end = target;
+                    else if (pos.x < mouse)
+                     beginning = target;
+                    else break; //position found
+                  }
+                 var currentData = chart.seriesLineData;
+                 if(typeof pos.y == "undefined")
+                  {
+                    d3.select(that).remove();
+                  }
+                 else
+                  {
+                    var index = chart.x.invert(pos.x).toFixed(0);     
+                    var tuner = (typeof chart.tunerlabel == 'undefined') ? "": chart.tunerlabel;
+                    var xindex = chart.x.invert(pos.x).toFixed();
+                    var tunerValue = "";
+                    for (var n = 0; n < currentData[i].length; n++)
+                     {
+                       if(currentData[i][n].x == xindex)
+                        tunerValue = currentData[i][n].tooltip == null ? currentData[i][n].y : currentData[i][n].tooltip;
+                     }
+                    dataString += " <div style='color : "+chart.colorOvr(i)+";'>  "+tunerValue +"</div>";
+                    d3.select(that).select('text').text(chart.y.invert(pos.y).toFixed(0));
+                    return "translate(" + mouse + "," + pos.y +")";
+                  }
+              });
+           block.html(dataString).style("stroke-width","2px")
+                .style("border","1px").style("stroke","black");
+           var tooltip = document.getElementById(chart.id+"tooltip-floating"); 
+           var rect = document.getElementById(chart.id+"mouse-line");
+           var container = document.getElementById(chart.id);
+//           console.log("-----> POPPER (2) 753")
+           var popper = createPopper(rect, tooltip, { placement: 'left-start'
+                                                     ,removeOnDestroy: true
+                                                     ,modifiers: {
+                                                        flip: { behavior: ['left', 'right', 'bottom-middle'], padding: 0 }
+                                                       ,preventOverflow: { boundariesElement: container }
+                                                       ,offset: { offset: '0px,50px' }
+                                                      }
+                                                    });
               //popper.disableEventListeners();
          }
          if((chart.type.indexOf("Line") != -1) && (chart.type.indexOf("Scatter") == -1 && chart.type.indexOf("Bar") == -1)){
@@ -767,18 +782,19 @@ require(["jslibs/d3-7.6.1/d3.min"], function(d3)
           .attr('fill', 'none')
           .attr('pointer-events', 'all')
           .on("mousemove",function(d,z){
-            var that = this;      
-            mouseOverFn(d, z, that);})
+            mouseOverFn(d, z, this);})
           .on('mouseout', function() { // on mouse out hide line, circles and text
              d3.select(".mouse-line"+chart.id).transition().duration(500).style("opacity", "0");
              d3.selectAll(".mouse-per-line"+chart.id+" circle").transition().duration(500).style("opacity", "0");
              d3.selectAll(".mouse-per-line"+chart.id+" text").transition().duration(500).style("opacity", "0");  
-                  chart.tooltipFloating.style("position", "absolute").style("display","none"); })  
+             chart.tooltipFloating.style("position", "absolute").style("display","none"); 
+          })  
           .on('mouseover', function() { // on mouse in show line, circles and text
             d3.select(".mouse-line"+chart.id).transition().duration(500).style("opacity", "1");
             d3.selectAll(".mouse-per-line"+chart.id+" circle").transition().duration(500).style("opacity", "1");
             d3.selectAll(".mouse-per-line"+chart.id+" text").transition().duration(500).style("opacity", "1");
-            chart.tooltipFloating.attr("class","tooltip").style("display","block")})  
+            chart.tooltipFloating.attr("class","tooltip").style("display","block")
+          })  
          }
         chart.dot.data(chart.seriesLineData[i])      
              .enter().append("circle")
@@ -796,6 +812,8 @@ require(["jslibs/d3-7.6.1/d3.min"], function(d3)
                   var tooltipDot = document.getElementById(chart.id+"tool");
                   var rect = document.getElementById(chart.id+""+(chart.x(d.x) + chart.y(d.y)) +""+i);
                   var container = document.getElementById(chart.id);
+//                  console.log("tooltip 799: ", tooltipDot);
+//                  console.log("-----> POPPER (3) 804")
                   var popperDot = createPopper(rect, tooltipDot
                                                      ,{placement: 'left'
                                                       ,removeOnDestroy: true
@@ -979,17 +997,19 @@ FloriaCharts.ChartBase.prototype.drawBar = function(horizontal)
                   //   .attr("height", function(d) { return (horizontal) ? chart.y1.bandwidth() : chart.height - chart.y(chart.undefinedMin + d.y) ; })
                      ;
    chart.rect = (horizontal) ?  chart.rect :  chart.rect.text(function(d) { return "The x "+ d.x +"The y "+d.y; })
-   chart.rect.on("mouseover", function(d, i) {
+   chart.rect.on("mouseover", function(d, z, that) {
                        d3.select(this).transition().duration(500).style("fill","#FA8072");
                        chart.tooltip.style("display", "inline-block")
                                     .attr("class","back-shadow tooltip")
-                                    .html((typeof d.tooltip == 'undefined' || d.tooltip == null) ? d.y : d.tooltip)
+                                    .html((typeof z.tooltip == 'undefined' || z.tooltip == null) ? z.y : z.tooltip)
                                     ;
+                       var i="";
                        var tooltip = document.getElementById(chart.id+"tool"); 
-                       var rect = (horizontal) ? document.getElementById(chart.id+""+(chart.x(d.y) + chart.y(d.x)) +""+(i+""+d.name))
-                                               : document.getElementById(chart.id+""+(chart.x(d.x) + chart.y(d.y)) +""+(i+""+d.name))
+                       var rect = (horizontal) ? document.getElementById(chart.id+""+(chart.x(z.y) + chart.y(z.x)) +""+(i+""+z.name))
+                                               : document.getElementById(chart.id+""+(chart.x(z.x) + chart.y(z.y)) +""+(i+""+z.name))
                                                ;
                        var container = document.getElementById(chart.id);
+//                       console.log("-----> POPPER (4) 999")
                        var popper = createPopper(rect, tooltip, { placement: (horizontal) ? 'top-start' : 'right'
                                                                ,modifiers: { flip: { behavior: ['top', 'right', 'bottom', 'left'] }
                                                                             ,preventOverflow: { enable : true
@@ -1108,15 +1128,16 @@ FloriaCharts.ChartBase.prototype.addBarClickHandler = function(handlerFunc) {
                  .style("stroke", "black")
                  .style("stroke-width", 0.5)
                  .attr("r", dot)
-                 .on("mouseover", function(d) {
+                 .on("mouseover", function(d, z, that) {
                    d3.select(this).transition().duration(500).attr("r", 7);               
                    chart.tooltip.style("display", "inline-block")
                      .attr("class","back-shadow tooltip")
-                     .html((typeof d.tooltip == 'undefined' || d.tooltip == null) ? d.y : d.tooltip)
+                     .html((typeof z.tooltip == 'undefined' || z.tooltip == null) ? z.y : z.tooltip)
                    //  .style("word-wrap","break-down"); 
                    var tooltipDot = document.getElementById(chart.id+"tool"); 
-                   var rect = document.getElementById(chart.id+""+(chart.x(d.x) + chart.y(d.y)) +"tool");
+                   var rect = document.getElementById(chart.id+""+(chart.x(z.x) + chart.y(z.y)) +"tool");
                    var container = document.getElementById(chart.id);
+//                   console.log("-----> POPPER (5) 1127")
                    var popperDot = createPopper(rect, tooltipDot, {
                                placement: 'left',
                              removeOnDestroy: true,

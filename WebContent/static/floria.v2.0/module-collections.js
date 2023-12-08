@@ -538,9 +538,22 @@ var ArrayAggs = {
 };
 
 
+var ValueSets = {
+  getValue: function(values, id)
+   {
+     if (values != null && id != null)
+      for (let i = 0; i < values.length; ++i)
+       if (values[i][0] == id)
+        return values[i];
+     return null;
+   }
+}
+
+
 export var FloriaCollections = { "SortedStringArray": SortedStringArray
                                , "SortedObjectArray": SortedObjectArray
                                , "SortedObjectMap": SortedObjectMap
                                , "ArrayAggs": ArrayAggs
+                               , "ValueSets": ValueSets
                                };
 

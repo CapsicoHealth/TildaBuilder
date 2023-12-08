@@ -10,7 +10,7 @@ import { FloriaDialog  } from "./module-dialog.js";
 
 function makeUpdatePageFunc(that, toPageId) 
   { 
-    return function() { that.paint(toPageId); };
+    return function() { that.updatePage(toPageId); };
   }
   
 var maxLabelLengthBeforeWrapping = 30;
@@ -41,12 +41,16 @@ function createNavEvents(form)
          e.disabled = 1;
          FloriaDOM.addCSS(e, "formButtonBusy");
          try { form.updatePage(null); } catch(e) { console.error(e); }
-//         e.disabled = 0;
-//         FloriaDOM.removeCSS(e, "formButtonBusy");
     }, null, true);
 
    if (form._cancelButton == true)
     FloriaDOM.addEvent(form._elementId+'_F_CANCEL', "click", function() {
+       if (form._dlg == null)
+        {
+          if (form._processCallbackFunc != null)
+           form._processCallbackFunc();
+          return;
+        }
        // Cancel means closing the popup and bypassing everything
        var onHideHandler = form._dlg._onHideHandler;
        form._dlg.setOnHide(null);
@@ -286,9 +290,12 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
     this._persistId = persist;
    else if (persist == true)
      this._persistId = elementId;
-   if (FloriaDOM.isObjectNullOrEmpty(data) == true && this._persistId != null)
+   // Can pass a null or { }, or some preset data.
+   this._data = FloriaDOM.isObjectNullOrEmpty(data) == true ? { } : data;
+   // Only check local cache if empty or not preset.
+   if (FloriaDOM.isObjectNullOrEmpty(this._data) == true && this._persistId != null)
     {
-      data = Object.assign(data, FloriaDOM.localStorageGet(this._persistId));
+      this._data = Object.assign(this._data, FloriaDOM.localStorageGet(this._persistId));
       // If data is obtained from the cache, we have to check default values for Hidden fields
       // and reset those values. It is posible to change the form definition over time and there
       // is a mismatch with the 
@@ -301,11 +308,10 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
             {
               var f = d[j];
               if (f.type=="hidden" && f.defaultValue != null)
-               data[f.name] = f.defaultValue;
+               this._data[f.name] = f.defaultValue;
             }
         }
     }
-   this._data = FloriaDOM.isObjectNullOrEmpty(data) == true ? { } : data;
 //   console.log("=>=>=> Forms2.constructor (this._data): ", this._data);
    this._descriptions = {};
    this._validationErrMsg = FloriaText.isNoE(validationErrMsg) == false ? validationErrMsg : "There are missing or invalid values.";
@@ -369,7 +375,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
     {
       this._dlg = new FloriaDialog(elementId+"_DLG");
       var that = this;
-      this._dlg.setOnHide(function() { if (that._cancelButton != true) that.updatePage(null, null, true); });
+      this._dlg.setOnHide(function() { if (that._submitButton != true) that.updatePage(null, null, true); });
     }
     
    this.setCollapser = function(collapserClassName, collapseHTML, collapseTitle, expandHTML, expandTitle)
@@ -509,6 +515,13 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
       if (this._dlg != null)
        this._dlg.hide();
     }
+
+   this.reactivateSubmit = function()
+    {
+      var e = document.getElementById(this._elementId+'_F_SUBMIT');
+      e.disabled = 0;
+      FloriaDOM.removeCSS(e, "formButtonBusy");
+    }
    
    this.getWizardModeMarkup = function(pageId)
    {
@@ -532,7 +545,8 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
            Str+= '<DIV class="formNavFooter">'
                    +'<CENTER><BUTTON class="formButton" id="'+this._elementId+'_F_PREV">Previous</BUTTON>'
                            +'&nbsp;&nbsp;&nbsp;&nbsp;<BUTTON class="formButton" id="'+this._elementId+'_F_NEXT">Next</BUTTON>'
-                           +(this._popupTitle   == null || this._submitButton == true?'&nbsp;&nbsp;&nbsp;&nbsp;<BUTTON class="formButton" id="'+this._elementId+'_F_SUBMIT" style="display:none;" data-forms2="1">Submit</BUTTON>':'')
+                           +(this._submitButton == true || this._cancelButton == true?'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;':'')
+                           +(this._submitButton == true?'&nbsp;&nbsp;&nbsp;&nbsp;<BUTTON class="formButton" id="'+this._elementId+'_F_SUBMIT" data-forms2="1">Submit</BUTTON>':'')
                            +(this._cancelButton == true?'&nbsp;&nbsp;&nbsp;&nbsp;<BUTTON class="formButton" id="'+this._elementId+'_F_CANCEL">Cancel</BUTTON>':'')
                    +'</CENTER>'
                  +'</DIV>'
@@ -555,14 +569,15 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
          {
            Str+='<DIV class="formNavFooter">'
                 +'<CENTER>'
-                  +(this._popupTitle==null || this._submitButton == true
-                      ?'<BUTTON class="formButton" id="'+this._elementId+'_F_SUBMIT" data-forms2="1">Submit</BUTTON>'
-                      :''
-                   )
-                  +(this._cancelButton == true
-                      ?'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<BUTTON class="formButton" id="'+this._elementId+'_F_CANCEL">Cancel</BUTTON>'
-                      :''
-                   )
+                +(this._submitButton == true || this._cancelButton == true?'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;':'')
+                +(this._submitButton == true
+                    ?'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<BUTTON class="formButton" id="'+this._elementId+'_F_SUBMIT" data-forms2="1">Submit</BUTTON>'
+                    :''
+                  )
+                +(this._cancelButton == true
+                    ?'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<BUTTON class="formButton" id="'+this._elementId+'_F_CANCEL">Cancel</BUTTON>'
+                    :''
+                  )
                 +'</CENTER>'
               +'</DIV>'
               ;
@@ -632,7 +647,8 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
                 if (this._popupTitle==null)
                  {
                    FloriaDOM.hide(this._elementId+'_F_NEXT');
-                   FloriaDOM.show(this._elementId+'_F_SUBMIT');
+               //    debugger;
+               //    FloriaDOM.show(this._elementId+'_F_SUBMIT');
                  }
               }
              else
@@ -643,7 +659,8 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
                    e.disabled = false;
                    FloriaDOM.show(e);
                  }
-                FloriaDOM.hide(this._elementId+'_F_SUBMIT');
+                //debugger;
+                // FloriaDOM.hide(this._elementId+'_F_SUBMIT');
               }
            }
         }
@@ -986,6 +1003,7 @@ export var FloriaForms = function(elementId, data, formDefs, edgeColumnCount, pr
                 }
                alert(this._validationErrMsg);
                this._failedValidation = true;
+               this.reactivateSubmit();
                return false;
              }
             if (this._persistId != null)

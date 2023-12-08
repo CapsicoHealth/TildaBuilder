@@ -197,6 +197,27 @@ export var FloriaDOM = {
            FloriaDOM.removeCSS(element, className);
         }, millis);
      },
+    styleSheetMod: function(sheetName, selector, propertyValues)
+     {
+       // Getting the stylesheet
+       for (var i = 0; i < document.styleSheets.length; ++i)
+         {
+           const ss = document.styleSheets[i];
+           if (ss.href == null || ss.href.indexOf(sheetName) == -1)
+             continue;
+           for(var j = 0; j < ss.cssRules.length; j++)
+             {
+               const r = ss.cssRules[j];
+               if (r.selectorText == selector)
+                for (let k = 0; k < propertyValues.length; ++k)
+                 {
+                   let pv = propertyValues[k];
+                   r.style.setProperty(pv[0], pv[1]);
+                 }
+                break;
+             }
+         }
+     },     
     show: function(e, Str)
       {
         var e = FloriaDOM.getElement(e, Str);

@@ -218,11 +218,13 @@ import { FloriaText } from "./module-text.js";
   };
   
 
-  Date.prototype.printYYYYMMDD = function()
+  Date.prototype.printYYYYMMDD = function(sep)
   {
+    if (sep == null)
+     sep = '/';
     var m = this.getMonth()+1;
     var d = this.getDate();
-    return this.getFullYear() + "/" + (m < 10 ? "0"+m : m) + "/" + (d < 10 ? "0"+d : d);
+    return this.getFullYear() + sep + (m < 10 ? "0"+m : m) + sep + (d < 10 ? "0"+d : d);
   };
 
   Date.prototype.printYearQuarter = function()
@@ -399,10 +401,10 @@ export var FloriaDate = {
       }
       return d;
     },
-    printYYYYMMDD: function(dtStr)
+    printYYYYMMDD: function(dtStr, sep)
      {
        var dt = FloriaDate.parseDateTime(dtStr);
-       return dt = dt==null ? FloriaText.spanNA : dt.printYYYYMMDD();
+       return dt = dt==null ? FloriaText.spanNA : dt.printYYYYMMDD(sep);
      },
     printContextual: function(dtStr)
      {

@@ -573,6 +573,7 @@ var Ranking = {
   window.Radio = Radio;
   window.Dropdown = Dropdown;
   window.Checkbox = Checkbox;
+  window.Rating = Rating;
 
 export var FloriaControls = { "Radio": Radio
                             , "Dropdown": Dropdown

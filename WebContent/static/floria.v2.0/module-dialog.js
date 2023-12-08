@@ -269,7 +269,7 @@ export function FloriaTooltipDialog(elementId, content)
 
 
 
-export function FloriaContextMenu(elementId, options, cssPostfix, callbackFunc)
+export function FloriaContextMenu(elementId, options, cssPostfix, callbackFunc, leftClick)
  {
    this._elementId = elementId;
    this._callbackFunc = callbackFunc;
@@ -286,14 +286,19 @@ export function FloriaContextMenu(elementId, options, cssPostfix, callbackFunc)
 
    let that = this;
 
-   FloriaDOM.addEvent(elementId, "contextmenu", function(e, event, target) {
+   FloriaDOM.addEvent(elementId, leftClick == true ? "click" : "contextmenu", function(e, event, target) {
        if (target.dataset.contexttarget != 1)
         return;
        event.preventDefault();
+       event.stopPropagation();
+       event.stopImmediatePropagation();
        that._contextMenu.style.left=(event.pageX-5)+"px";
        that._contextMenu.style.top=(event.pageY-5)+"px";
        that._contextMenu.lastTarget = target;
        FloriaDOM.show(that._contextMenu);
+       var screenWidth = document.body.offsetWidth;
+       if (that._contextMenu.offsetLeft+that._contextMenu.offsetWidth > screenWidth)
+        that._contextMenu.style.left = (that._contextMenu.offsetLeft - that._contextMenu.offsetWidth+15)+"px";
    });
 
    FloriaDOM.addEvent(this._contextMenu, "click", function(e, event, target) {
@@ -313,9 +318,9 @@ export function FloriaContextMenu(elementId, options, cssPostfix, callbackFunc)
 
 /**
  tabs ia an array:
-    { label:"", onHideHanler: function, onSelectHandler: function }
+    { label:"", descr:"", hide:true|false, onHideHanler: function, onSelectHandler: function }
  */
-export function FloriaTabs(elementId, tabs, singleDiv, managingFunc)
+export function FloriaTabs(elementId, tabs, singleDiv, managingFunc, trashcan)
  {
    this._elementId = elementId;
    this._tabs = tabs;
@@ -328,7 +333,9 @@ export function FloriaTabs(elementId, tabs, singleDiv, managingFunc)
       for (var i = 0; i < this._tabs.length; ++i)
        {
          var t = this._tabs[i];
-         str+='<SPAN id="'+elementId+'_TABHEADER_'+i+'" data-tabid="'+i+'" data-contextTarget="1">'+t.label+'</SPAN>';
+         if (t.hide == true)
+          continue;
+         str+='<SPAN id="'+elementId+'_TABHEADER_'+i+'" data-tabid="'+i+'" data-contextTarget="1" title="'+(t.descr==null?"":t.descr.printHtmlAttrValue())+'">'+t.label+'</SPAN>';
        }
       str+='</DIV><DIV class="tabBody">';
       var current = 0;
@@ -354,12 +361,21 @@ export function FloriaTabs(elementId, tabs, singleDiv, managingFunc)
 
       if (managingFunc != null)
        {
-         let contextMenuOptions = [{id:"R", label:"Settings" }
-                                  ,{id:"N", label:"New"      }
-                                  ,{id:"M", label:"Slide"    }
-                                  ,{id:"D", label:"Delete"   }
+         let contextMenuOptions = [{id:"SETTINGS", label:"Settings" }
+                                  ,{id:"NEW"     , label:"New"      }
+                                  ,{id:"SLIDE"   , label:"Slide"    }
+                                  ,{id:"DELETE"  , label:"Delete"   }
                                   ];
-         that._contextMenu = new FloriaContextMenu(elementId+"_TABHEADERS", contextMenuOptions, "_tabs", managingFunc);
+         if (trashcan == true)
+          contextMenuOptions.push({id:"TRASHCAN"  , label:"Trashcan"   });
+
+         that._contextMenu = new FloriaContextMenu(elementId+"_TABHEADERS", contextMenuOptions, "_tabs", function(targetTab, menuOptionId) {
+             let tabId = 1*targetTab.dataset.tabid;
+             let tab = that._tabs[tabId];
+             managingFunc(tabId, tab, menuOptionId, function() { 
+                that.show();
+             });
+          });
        }
     }
     
@@ -370,6 +386,7 @@ export function FloriaTabs(elementId, tabs, singleDiv, managingFunc)
          FloriaDOM.removeCSS(elementId+'_TABHEADER_'+this._currentTabId, "selected");
          FloriaDOM.removeCSS(elementId+'_TABPANEL_'+this._currentTabId, "selected");
          var t = this._tabs[this._currentTabId];
+         t.current = false;
          if (t.onHideHanler != null)
           t.onHideHanler(elementId+'_TABPANEL_'+this._currentTabId);
        }
@@ -379,6 +396,7 @@ export function FloriaTabs(elementId, tabs, singleDiv, managingFunc)
       ++t._renderCount;
       if (t.onSelectHandler != null)
        t.onSelectHandler(elementId+'_TABPANEL_'+(this._singleDiv==true?0:i), t._renderCount==1);
+      t.current = true;
       this._currentTabId = i;
     }
  };

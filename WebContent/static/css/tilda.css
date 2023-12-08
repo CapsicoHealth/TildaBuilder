@@ -276,9 +276,6 @@ select {
 }
 
 
-
-
-
 .Checkbox_ON, .Checkbox_OFF, .Checkbox_GREY, .Checkbox_ON:link, .Checkbox_OFF:link, .Checkbox_GREY:link, .Checkbox_ON:visited, .Checkbox_OFF:visited, .Checkbox_GREY:visited, .Radio_ON, .Radio_OFF, .Radio_ON:link, .Radio_OFF:link, .Radio_ON:visited, .Radio_OFF:visited {
    background-repeat: no-repeat;
    white-space: nowrap;
@@ -324,29 +321,11 @@ select {
 }
 
 @media only screen and (device-width: 768px) {
-.outline .Checkbox_OFF, .outline .Checkbox_ON, .outline .Radio_OFF, .outline .Radio_ON {
-  line-height: 1.8em;
-}
+  .outline .Checkbox_OFF, .outline .Checkbox_ON, .outline .Radio_OFF, .outline .Radio_ON {
+    line-height: 1.8em;
+  }
 }
 
-
-.Ranking {
-}
-.Ranking img {
-  position: relative;
-  height: 15px;
-  vertical-align: middle;
-  padding: 2px 6px 2px 6px;
-  top: -1px;
-}
-.Ranking img.left {
-  position: relative;
-  left: 4px;
-}
-.Ranking img.right {
-  position: relative;
-  left: -2px;
-}
 
 
 .ErrorMessage {
@@ -359,15 +338,6 @@ select {
   line-height: 1;
   padding: 0px 0px 10px 0px;
 }
-
-/*
-.ErrorMessage span {
-  font-weight: normal;
-  font-style: italic;
-  display:none;
-}
-*/
-
 
 .ErrorField {
   background-color: #ffeeee;
@@ -613,6 +583,11 @@ select {
  FLORIA FORMS
 **********************************************************/
 
+.fieldNameSpan {
+  font-weight: bold;
+  white-space: nowrap;
+  padding-right: 3px;
+}
 .fieldName, .fieldName2 {
   font-weight: bold;
   text-align: right;
@@ -658,7 +633,7 @@ select {
 
 .bottomPadded, .bottomPadded TD {
   vertical-align: top;
-  padding: 0px 3px 8px 0px;
+  padding: 0px 3px 14px 0px;
 }
 .bottomPadded:hover TD:first-child.fieldName2 {
   text-decoration: dashed underline;
@@ -694,15 +669,15 @@ select {
   filter: drop-shadow(4px 4px 2px #CCC) invert(30%);
 }
 .floriaForms_boolwall_img IMG.floriaForms_customSelected {
-  filter: drop-shadow(3px 3px 4px #F00) invert(10%);
+  filter: drop-shadow(5px 5px 3px #bbb) invert(10%);
 }
 .floriaForms_boolwall_img_2 IMG {
   cursor: pointer;
 }
 .floriaForms_boolwall_img_2 IMG.floriaForms_customSelected {
-  filter: drop-shadow(2px 2px 1px #084);
-  box-shadow: 4px 4px 8px black;
-  border-radius: 10px;
+  padding-bottom: 10px;  
+  border-bottom: 1px solid #AAA;
+  filter: drop-shadow(4px 4px 2px #AAA);
 }
 
 
@@ -719,56 +694,15 @@ select {
     position: relative;
     padding: 0px 5px 2px 5px;
     font-size: 90%;
-    align: left
+    text-align: left;
     font-weight: bold;
     border-bottom: 2px solid #BABABA;
     background-color: #f8fcfc;
 }
 
-/*************************************************************************
-   PATIENT BANNER
-**************************************************************************/
-.patientBanner {
-  background-color: #FFF;
-  width: 97.5%;
-  margin-left: .5%;
-  box-shadow: 0px 0px 4px #AAA;
-}
-
-.patientBanner TD {
-  padding: 5px;
-}
 
 
-.NA, .NA_Clean {
-  font-size: 80%;
-  color: #BBBBBB;
-}
-.NA::before {
-  content: "N/A";   
-}
 
-.greyedOut {
-  filter: invert(60%);
-}
-
-
-.lineMenu {
-  position: relative;
-  padding-left: 1.25em;
-}
-.lineMenu:before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.25em;
-  width: 1em;
-  height: 0.15em;
-  background: black;
-  box-shadow: 
-    0 0.25em 0 0 black,
-    0 0.5em 0 0 black;
-}
 
 
 
@@ -782,10 +716,6 @@ select {
        -moz-border-radius: 50%;
             border-radius: 50%;
      border: 1px white ridge;
-
-//    -webkit-box-shadow: 0 0 0 2px #fff, 0 0 0 1px #999, 0 2px 4px 3px rgba(0,0,0,.2);
-//       -moz-box-shadow: 0 0 0 2px #fff, 0 0 0 1px #999, 0 2px 4px 3px rgba(0,0,0,.2);
-//            box-shadow: 0 0 0 2px #fff, 0 0 0 1px #999, 0 2px 4px 3px rgba(0,0,0,.2);
 }
 
 
@@ -1858,16 +1788,6 @@ select {
    background-color: #EEE;
 }
 
-.fieldName {
-   text-align: left !important;
-}
-.fieldName.mandatory {
-  background-position: 10px -2px;
-}
-.fieldQuestion.mandatory {
-  background-position: 10px -2px;
-}
-
 .column.left {
   left: 0px;
 }
@@ -2018,11 +1938,6 @@ select {
 }
 
 
-
-//.formContainer {
-//   bottom: 0;
-//   font-size: 90%;
-//}
 
 .formDiv {
    position: absolute;
@@ -2677,7 +2592,7 @@ table.centered {
 .tabContainer .tabHeader {
   border-bottom: 1px solid #EEE;
   box-shadow: 0 4px 2px -0px #EEE;
-  margin: 2px 0px 0px -20px;
+  margin: 4px 0px 0px -20px;
 }
 
 .tabContainer .tabHeader SPAN {
@@ -2696,7 +2611,6 @@ table.centered {
 .tabContainer .tabHeader SPAN.selected {
     background-color: #c8e8ff;
     color: #2d4e71;
-//    font-weight: bold;
     text-decoration: underline;
 }
 .tabContainer .tabHeader SPAN:hover {
@@ -2725,3 +2639,25 @@ table.centered {
   display: block;
 }
 
+
+/*********************************************************
+  Context Menu
+**********************************************************/
+
+.contextMenu_tabs {
+  position: absolute;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  filter: drop-shadow(0px 0px 2px #666);
+  padding: 5px 15px 15px 15px;
+}
+.contextMenu_tabs li {
+  cursor: pointer;
+  padding: 3px 5px 3px 5px;
+}
+.contextMenu_tabs li:hover {
+  background-color: #eee;
+}

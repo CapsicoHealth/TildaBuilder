@@ -1,0 +1,114 @@
+
+<SCRIPT>
+var djConfig = { isDebug: false, locale: 'en-us', parseOnLoad: false, disableFlashStorage:true, parseWidgets:false, baseUrl: "/static/", cacheBust: "<%=tilda.utils.SystemValues.STARTUP_DATE_STR%>",
+                 packages: [ { name: "dojo", location: "dojo-release-1.16.4/dojo" },
+                             { name: "dijit", location: "dojo-release-1.16.4/dijit" },
+                             { name: "dojox", location: "dojo-release-1.16.4/dojox" },
+                             { name: "jslibs", location: "jslibs" },
+//                             { name: "json", location: "json" },
+                           ]
+               };
+</SCRIPT>
+<script src="/static/dojo-release-1.16.4/dojo/dojo.js?<%=tilda.utils.SystemValues.STARTUP_DATE_STR%>"></script>
+
+
+<STYLE>
+.capsDendro_node > circle {
+   fill: #5858cb;
+   stroke: none;
+   stroke-width: none;
+   r: 10px;
+ }
+.capsDendro_node > circle:hover {
+   transition: 300ms;
+   fill: lightblue;
+   stroke: blue;
+   stroke-width: 1px;
+   opacity: 0.75;
+   r: 12px;
+   cursor: pointer;
+ }
+.capsDendro_path {
+    fill: none;
+    stroke: lightgreen;
+ }
+.capsDendro_label {
+    stroke: black;
+    stroke-width: 0.1px;
+    font-size: 15px;
+    font-variant: small-caps;
+    text-anchor: middle;
+ }
+
+  
+</STYLE>
+
+<DIV id="DENDRO" style="position: relative; width:750px; height:500px;"></DIV>
+
+
+
+<SCRIPT type="module">
+import { FloriaCharts2 } from "/static/floria.v2.0/module-charts2.js";
+
+var data = [[{value:"33285", label:"", title:""}
+            ,{value:"33208", label:"", title:""}
+            ,{value:"C9113", label:"", title:""}
+            ,{value:"C1785", label:"", title:""}
+            ,{value:"C1898", label:"", title:""}
+            ,{value:"J0690", label:"", title:""}
+            ,{value:"J2250", label:"", title:""}
+            ,{value:"J3010", label:"", title:""}
+            ,{value:"93296", label:"", title:""}
+            ,{value:"93296", label:"", title:""}
+            ]
+           ,[{value:"33285", label:"", title:""}
+            ,{value:"33208", label:"", title:""}
+            ,{value:"C9113", label:"", title:""}
+            ,{value:"C1785", label:"", title:""}
+            ,{value:"C1894", label:"", title:""}
+            ,{value:"C1898", label:"", title:""}
+            ,{value:"J0690", label:"", title:""}
+            ,{value:"J2250", label:"", title:""}
+            ,{value:"J2704", label:"", title:""}
+            ,{value:"J3010", label:"", title:""}
+            ]
+           ,[{value:"33285", label:"", title:""}
+            ,{value:"33208", label:"", title:""}
+            ,{value:"C9113", label:"", title:""}
+            ,{value:"C1785", label:"", title:""}
+            ,{value:"C1894", label:"", title:""}
+            ,{value:"C1898", label:"", title:""}
+            ,{value:"J0690", label:"", title:""}
+            ,{value:"J2250", label:"", title:""}
+            ,{value:"J3010", label:"", title:""}
+            ]
+           ,[{value:"33285", label:"", title:""}
+            ,{value:"33208", label:"", title:""}
+            ,{value:"C9113", label:"", title:""}
+            ,{value:"C1785", label:"", title:""}
+            ,{value:"C1898", label:"", title:""}
+            ,{value:"J0690", label:"", title:""}
+            ,{value:"J2250", label:"", title:""}
+            ,{value:"J3010", label:"", title:""}
+            ,{value:"Q9967", label:"", title:""}
+            ]
+           ,[{value:"33285", label:"", title:""}
+            ,{value:"33208", label:"", title:""}
+            ,{value:"C9113", label:"", title:""}
+            ,{value:"C1785", label:"", title:""}
+            ,{value:"C1894", label:"", title:""}
+            ,{value:"C1898", label:"", title:""}
+            ,{value:"J0690", label:"", title:""}
+            ,{value:"J2704", label:"", title:""}
+            ,{value:"J3010", label:"", title:""}
+            ,{value:"93296", label:"", title:""}
+            ]
+           ];
+
+let dendro = new FloriaCharts2.dendrogram("DENDRO", "capsDendro", data, function(d) {
+  console.log(d); 
+ });
+dendro.draw();
+
+</SCRIPT>
+
