@@ -386,8 +386,8 @@ export var ERView = {
      this._graph = new joint.dia.Graph();
      this._paper = new joint.dia.Paper({
         el: this._canvasElement.childNodes[0]
-       ,width: "2000px"
-       ,height: "2000px"
+       ,width: "5000px"
+       ,height: "5000px"
        ,model: this._graph
        ,gridSize: 10
      });
@@ -425,7 +425,7 @@ export var ERView = {
  ,tabManagement: function(tabId, tab, menuOptionId, callbackFunc)
    {
      let that = this;
-     if (menuOptionId=='SETTINGS')
+     if (menuOptionId=='PROPERTIES')
       {
         var tabData = { label: tab.label, descr: tab.descr };
         var f = new FloriaForms("TAB_SETTINGS", tabData, tabFormDef, null

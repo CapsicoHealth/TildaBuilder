@@ -361,10 +361,10 @@ export function FloriaTabs(elementId, tabs, singleDiv, managingFunc, trashcan)
 
       if (managingFunc != null)
        {
-         let contextMenuOptions = [{id:"SETTINGS", label:"Settings" }
-                                  ,{id:"NEW"     , label:"New"      }
-                                  ,{id:"SLIDE"   , label:"Slide"    }
-                                  ,{id:"DELETE"  , label:"Delete"   }
+         let contextMenuOptions = [{id:"PROPERTIES", label:"Properties" }
+                                  ,{id:"NEW"       , label:"New"      }
+                                  ,{id:"SLIDE"     , label:"Slide"    }
+                                  ,{id:"DELETE"    , label:"Delete"   }
                                   ];
          if (trashcan == true)
           contextMenuOptions.push({id:"TRASHCAN"  , label:"Trashcan"   });
