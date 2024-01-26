@@ -107,7 +107,7 @@ import { FloriaCollections } from "./module-collections.js";
     print : function(val, def, maxCount)
     {
       if (TextUtil.isNullOrEmpty(def) == true)
-       def = '<SPAN class="NA"/>';
+       def = TextUtil.spanNA;
       if (Array.isArray(val) == false)
         return TextUtil.isNullOrEmpty(val) == true ? def : (maxCount != null && val.length > maxCount ? val.substring(0, maxCount)+"..." : val);
       if (maxCount == null || maxCount < 2 || maxCount > val.length)
@@ -128,15 +128,15 @@ import { FloriaCollections } from "./module-collections.js";
     replaceNewLinesWithBreaks : function(Str, paragraphIndent)
     {
       var indent = paragraphIndent == false ? "" : "&nbsp;&nbsp;&nbsp;";
-      return Str == null ? "" : indent+Str.replaceAll(this.REGEX_NL, "\n<BR>"+indent);
+      return Str == null ? "" : indent+Str.replaceAll(TextUtil.REGEX_NL, "\n<BR>"+indent);
     },
     replaceNewLinesWithSpaces : function(Str)
     {
-      return Str == null ? "" : Str.replace(this.REGEX_NL, " ");
+      return Str == null ? "" : Str.replace(TextUtil.REGEX_NL, " ");
     },
     replaceNewLinesWithCommas : function(Str)
     {
-      return Str == null ? "" : Str.replace(this.REGEX_NL, ", ");
+      return Str == null ? "" : Str.replace(TextUtil.REGEX_NL, ", ");
     },
     replaceSpacesWithNBSPs : function(Str)
     {
@@ -145,7 +145,7 @@ import { FloriaCollections } from "./module-collections.js";
     REGEX_DictMatch : /\[\^([^\^]*)``\^\]/g,
     dictionaryMatchHighlight : function(Str, ClassName)
     {
-      return Str == null ? "" : Str.highlight(this.REGEX_DictMatch, ClassName);
+      return Str == null ? "" : Str.highlight(TextUtil.REGEX_DictMatch, ClassName);
     },
     printHtmlAttrValue: function(Str)
     {
@@ -174,11 +174,14 @@ import { FloriaCollections } from "./module-collections.js";
             return '<span class="' + cls + '">' + match + '</span>';
         });
      }
-    ,getSemanticCheckbox: function(status, fontSize)
+    ,getSemanticCheckbox: function(status, classNamePrefix)
        {
-         return status ==  0 ? '<B style="color:#AAA ;font-size:'+(fontSize==null?"120%":fontSize)+';">&#9744;</B>'
-               :status ==  1 ? '<B style="color:green;font-size:'+(fontSize==null?"120%":fontSize)+';">&#9745;</B>'
-               :status == -1 ? '<B style="color:red  ;font-size:'+(fontSize==null?"120%":fontSize)+';">&#9746;</B>'
+         if (classNamePrefix == null)
+          classNamePrefix="semanticCheckbox";
+
+         return status ==  0 ? '<B class="'+classNamePrefix+'None">&#9744;</B>'
+               :status ==  1 ? '<B class="'+classNamePrefix+'Yes" >&#9745;</B>'
+               :status == -1 ? '<B class="'+classNamePrefix+'No"  >&#9746;</B>'
                :TextUtil.spanNA;
        }
     ,getBooleanCheckbox: function(status, fontSize)
@@ -326,7 +329,7 @@ import { FloriaCollections } from "./module-collections.js";
   var MetricUtil = {
     printWithMetric : function printWithMetric(num, digits) {
        num = +num;
-    	 var si = [
+         var si = [
         { value: 1E18, symbol: "E" },
         { value: 1E15, symbol: "P" },
         { value: 1E12, symbol: "T" },
@@ -345,7 +348,7 @@ import { FloriaCollections } from "./module-collections.js";
     },
     printWithCurrencyMetric : function printWithCurrencyMetric(num, digits) {
      num = +num;
-   	 var si = [
+     var si = [
        { value: 1E12, symbol: "T" },
        { value: 1E9,  symbol: "B" },
        { value: 1E6,  symbol: "M" },

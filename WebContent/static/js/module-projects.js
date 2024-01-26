@@ -156,12 +156,13 @@ projects.paintSchema = function(div, projectName, fullSchemaPath)
    FloriaDOM.toggleCSS(div, "selected");
 
    var title = FloriaDOM.getElement("HEADER_TITLE");
-   title.innerHTML = "TIDE / "+projectName+" / "+parseSchemaName(fullSchemaPath);
+   var schemaName = parseSchemaName(fullSchemaPath);
+   title.innerHTML = "TIDE / "+projectName+" / "+schemaName;
    FloriaDOM.switchVisibility("MAINCONTAINER_SCHEMAS", "MAINCONTAINER_ENTITIES");
    FloriaAjax.ajaxUrl("/svc/project/schema/details?projectName="+encodeURIComponent(projectName)+"&fullSchemaPath="+encodeURIComponent(fullSchemaPath)+"&ts="+new Date(), "GET", "Cannot get the schema for this project", function(tildaJson) {
 
        //FloriaDOM.setInnerHTML("EDITOR", tildaJson);
-       schemas.paint(tildaJson);
+       schemas.paint(projectName, schemaName, fullSchemaPath, tildaJson);
 //       InitializeMonaco(tildaJson);
     })  
  }

@@ -2,9 +2,12 @@
 
 import { FloriaDOM } from "/static/floria.v2.0/module-dom.js";
 import { FloriaAjax } from "/static/floria.v2.0/module-ajax.js";
+import { FloriaDate } from "/static/floria.v2.0/module-date.js";
 import { FloriaCollections } from "/static/floria.v2.0/module-collections.js";
+import { FloriaForms } from "/static/floria.v2.0/module-forms2.js";
+import { FloriaDialog, FloriaTabs } from "/static/floria.v2.0/module-dialog.js";
 
-import { sampleTildaJsonData } from "./module-testtildajson.js";
+//import { sampleTildaJsonData } from "./module-testtildajson.js";
 
 
 
@@ -39,6 +42,33 @@ class CanvasState
       for (let i = 0; i < this._canvasData.length; ++i)
        if (this._canvasData[i].name == canvasName)
         return this._canvasData[i];
+      return null;
+    }
+
+   trashCanvas(canvasName)
+    {
+      for (let i = 0; i < this._canvasData.length; ++i)
+       if (this._canvasData[i].name == canvasName)
+        {
+          let c = this._canvasData[i];
+          c.trashcan = new Date();
+          c.name+=" ["+c.trashcan.printShort(true)+"]";
+          return c;
+        }
+      return null;
+    }
+
+   untrashCanvas(canvasName)
+    {
+      for (let i = 0; i < this._canvasData.length; ++i)
+        {
+          let c = this._canvasData[i];
+          if (c.name == canvasName && c.trashcan != null)
+           {
+             c.trashcan = null;
+             return c;
+           }
+        }
       return null;
     }
 
@@ -101,12 +131,12 @@ class CanvasState
          let canvas = this.getCanvas(canvasName);
          if (canvas == null)
           return console.error("Canvas '" + canvasName + "' not found");
-         console.log("new entity");
+//         console.log("new entity");
          canvas.entities.push({ "name": entityName, "x": x, "y": y, "showColumns": showColumns, "showKeys": showKeys, "vertices":{} });
        }
       else // entity is being updated
        {
-          console.log("updated entity--> x: ", x, "; y: ", y, "; showColumns: ", showColumns, "; showKeys: ", showKeys, ";");
+//          console.log("updated entity--> x: ", x, "; y: ", y, "; showColumns: ", showColumns, "; showKeys: ", showKeys, ";");
           entity.x = x;
           entity.y = y;
           entity.showColumns = showColumns;
@@ -166,18 +196,37 @@ class CanvasState
 
    saveState()
     {
-      console.log("Saving canvas state: ", this._canvasData);
-      localStorage.setItem('canvasState', JSON.stringify(this._canvasData));
+      FloriaAjax.ajaxUrl("/svc/project/schema/state/save?projectName="+encodeURIComponent(this._projectName)
+                                                      +"&schemaName="+encodeURIComponent(this._schemaName)
+                                                      +"&fullSchemaPath="+encodeURIComponent(this._fullSchemaPath)
+                                                      +"&state="+encodeURIComponent(JSON.stringify(this._canvasData))
+                                                      +"&ts="+new Date(), "POST", "Cannot get the schema for this project", function(canvasState) {
+      });
+//      localStorage.removeItem('canvasState');
     }
 
-   loadState()
+   /** Loads the state from the server. If not available, check the browser's cache
+      in case there is something already in there from a previous session before the 
+      save-to-server functionality was developed
+    */
+   loadState(projectName, schemaName, fullSchemaPath, callbackFunc)
     {
-      const savedState = localStorage.getItem('canvasState');
-      if (savedState == null)
-       return false;
-      this._canvasData = JSON.parse(savedState);
-      console.log("Loading canvas state: ", this._canvasData);
-      return true;
+      this._projectName = projectName;
+      this._schemaName = schemaName;
+      this._fullSchemaPath = fullSchemaPath;
+      let that = this;
+      FloriaAjax.ajaxUrl("/svc/project/schema/state/get?projectName="+encodeURIComponent(this._projectName)
+                                                     +"&schemaName="+encodeURIComponent(this._schemaName)
+                                                     +"&fullSchemaPath="+encodeURIComponent(this._fullSchemaPath)
+                                                     +"&ts="+new Date(), "GET", "Cannot get the schema for this project", function(canvasState) {
+         canvasState = canvasState?.state || localStorage.getItem('canvasState');
+         if (canvasState == null)
+          that._canvasData = { };
+         else
+          that._canvasData = JSON.parse(canvasState);
+         console.log("Loading canvas state: ", that._canvasData);
+         callbackFunc();
+      });
     }
  }
 
@@ -296,6 +345,15 @@ function createContextenu()
    return e;
  }
 
+
+var _DLG = new FloriaDialog();
+
+
+var tabFormDef = [{"name":"label", "label":"Label"        , "type":"text"                }
+                 ,{"name":"descr", "label":"Description" , "type":"textarea", "rows": 6  }
+                 ];
+
+
 export var ERView = {
   _entities: []
  ,_paper: null
@@ -315,7 +373,7 @@ export var ERView = {
      return console.warn("Cannot find entity '"+entityName+"' in ERView._entities.")
    }
 
- ,start: function(mainDivId, entityListDivId, searchInputId, tildaJsonData)
+ ,start: function(mainDivId, entityListDivId, searchInputId, projectName, schemaName, fullSchemaPath, tildaJsonData)
    {
      this._mainDivId = mainDivId;
      this.createEntitiesFromTildaJson(tildaJsonData);
@@ -337,34 +395,119 @@ export var ERView = {
 //     this._paper.drawGrid()
 
      this._shelf = new Shelf(entityListDivId, searchInputId, this._entities);        
-     
-     canvasStateManager.loadState();
-     this._currentCanvasState = canvasStateManager.getCurrentCanvas();
-     if (this._currentCanvasState == null)
-      this._currentCanvasState = canvasStateManager.addCanvas("Main")
-      
-     let str = '';
-     for (let i = 0; i < canvasStateManager._canvasData.length; ++i)
-      {
-        let canvas = canvasStateManager._canvasData[i];
-        let tabId = this._canvasElement.id+'_'+canvas.id;
-        str+='<BUTTON class="tab" id="'+tabId+'" data-canvasid="'+canvas.id+'">'+canvas.name+'</BUTTON>';
-      }
-     if (str != '')
-      FloriaDOM.setInnerHTML(this._mainDivId + '_CANVAS_TABS', str);
-     
-     this.showCurrentCanvas();
 
-     this.bindEventHandlersToPaper();
-
-     var that = this;
-     $('#' + mainDivId + '_ADD_CANVAS_BUTTON').click(function() { that.addCanvas(); });
-     $('#' + mainDivId + '_CANVAS_TABS').on('click', '.tab', function(e) {
-          that._currentCanvasState = canvasStateManager.setCurrentCanvasById(e.target.dataset.canvasid);
-          that.showCurrentCanvas();
+     let that = this;
+     canvasStateManager.loadState(projectName, schemaName, fullSchemaPath, function() {
+         that._currentCanvasState = canvasStateManager.getCurrentCanvas();
+         if (that._currentCanvasState == null)
+          that._currentCanvasState = canvasStateManager.addCanvas("Main")
+          
+         let tabs = [];
+         for (let i = 0; i < canvasStateManager._canvasData.length; ++i)
+          {
+            let canvas = canvasStateManager._canvasData[i];
+            tabs.push({label:canvas.name
+                      ,canvasId: canvas.id
+                      ,current: canvas.current
+                      ,hide:canvas.trashcan!=null
+                      ,onSelectHandler: function(cntId, firstRender) { 
+                           that._currentCanvasState = canvasStateManager.setCurrentCanvasById(this.canvasId);
+                           that.showCurrentCanvas();
+                       }}
+                     );
+          }
+         that._tabs = new FloriaTabs(that._mainDivId + '_CANVAS_TABS', tabs, true, function(tabId, tab, menuOptionId, callbackFunc) { that.tabManagement(tabId, tab, menuOptionId, callbackFunc); }, true);
+         that._tabs.show();
+         that.bindEventHandlersToPaper();
      });
    }
    
+ ,tabManagement: function(tabId, tab, menuOptionId, callbackFunc)
+   {
+     let that = this;
+     if (menuOptionId=='SETTINGS')
+      {
+        var tabData = { label: tab.label, descr: tab.descr };
+        var f = new FloriaForms("TAB_SETTINGS", tabData, tabFormDef, null
+                              , function(data) {
+                                   tab.label = data.label;
+                                   tab.descr = data.descr;
+                                   canvasStateManager._canvasData[tabId].name = data.label;
+                                   canvasStateManager._canvasData[tabId].descr = data.descr;
+                                   canvasStateManager.saveState();
+                                   that._tabs.select(tabId);
+                                   callbackFunc();
+                                 }
+                         , "Settings - "+tab.label, true);
+        f.paint(0, null, null, .4, .5);
+      }
+     else if (menuOptionId=='NEW')
+      {
+        var f = new FloriaForms("TAB_SETTINGS", { }, tabFormDef, null
+                              , function(data) {
+                                    for (let i = 0; i < that._tabs._tabs.length; ++i)
+                                     that._tabs._tabs[i].current = false;
+                                    that._tabs._tabs.push({label:data.label
+                                                          ,canvasId: that._tabs._tabs.length
+                                                          ,current: true
+                                                          ,onSelectHandler: function(cntId, firstRender) { 
+                                                              that._currentCanvasState = canvasStateManager.setCurrentCanvasById(this.canvasId);
+                                                              that.showCurrentCanvas();
+                                                             }
+                                                         });
+                                    that._currentCanvasState = canvasStateManager.addCanvas(data.label);
+                                    callbackFunc();
+                                  },"New Canvas", true);
+        f.paint(0, null, null, .4, .5);
+      }
+     else if (menuOptionId=='SLIDE')
+      {
+        if (tabId < this._tabs._tabs.length-1)
+         {
+           this._tabs._tabs[tabId] = this._tabs._tabs[tabId+1];
+           this._tabs._tabs[tabId+1] = tab;
+         }
+        else
+         {
+           this._tabs._tabs[tabId] = this._tabs._tabs[tabId-1];
+           this._tabs._tabs[tabId-1] = tab;
+         }
+        callbackFunc();
+      }
+     else if (menuOptionId=='DELETE')
+      {
+        this._tabs._tabs[tabId].hide = true;
+        var c = canvasStateManager.trashCanvas(tab.label);
+        tab.label = c.name;
+        that._tabs.select(0);
+//        that._currentCanvasState = canvasStateManager.setCurrentCanvasById(0);
+//        that.showCurrentCanvas();
+        callbackFunc();
+      }
+     else if (menuOptionId=='TRASHCAN')
+      {
+        var str = "";
+        for (let i = 0; i < canvasStateManager._canvasData.length; ++i)
+         if (canvasStateManager._canvasData[i].trashcan != null)
+          str+='<IMG src="/static/img/return.gif" style="height:16px; cursor:pointer; padding-right:10px;" data-idx="'+i+'">'+canvasStateManager._canvasData[i].name+'<BR>';
+        if (str != "")
+         _DLG.show("Trashcan", null, .25, .5, function(cntId) {
+             FloriaDOM.setInnerHTML(cntId, '<BR><UL>'+str+'</UL></BR>');
+             FloriaDOM.addEvent(cntId, "click", function(e, event, target) {
+                if (target.nodeName != 'IMG' || target.dataset.idx == null)
+                 return;
+                let idx = 1*target.dataset.idx;
+                canvasStateManager._canvasData[idx].trashcan = null;
+                that._tabs._tabs[idx].hide = false;
+                that._currentCanvasState = canvasStateManager._canvasData[idx];
+                that._tabs.select(idx);
+                callbackFunc();
+                _DLG.hide();
+              }, true);
+         });
+      }
+   }
+         
  ,createEntitiesFromTildaJson: function(tildaJson)
    {
      if (tildaJson.hasOwnProperty('objects') != true)
@@ -380,7 +523,8 @@ export var ERView = {
           allAttributes.push("refnum:LONG");
           entityData.primary.columns=["refnum"];
         }
-       entityData.columns.forEach(column => {
+       if (entityData.columns != null) 
+        entityData.columns.forEach(column => {
           let attribute = column.name;
           if (column.type)
            attribute += ':'+column.type;
@@ -459,14 +603,6 @@ export var ERView = {
    
  ,showCurrentCanvas: function()
    {
-     $('.tab.active').removeClass('active');
-     let tabId = this._canvasElement.id+'_'+(this._currentCanvasState.id);
-     let tab = FloriaDOM.getElement(tabId);
-     if (tab == null)
-      FloriaDOM.appendInnerHTML(this._mainDivId + '_CANVAS_TABS', '<BUTTON class="tab active" id="'+tabId+'">'+this._currentCanvasState.name+'</BUTTON>');
-     else
-      FloriaDOM.addCSS(tab, "active");
-      
      this._graph.clear();
      this._zoomLevel = this._currentCanvasState.zoomLevel || 1;
      this._zoom();
@@ -556,33 +692,19 @@ export var ERView = {
    }
    
 
-
- ,addCanvas: function()
-   {
-     var canvasName = prompt("Please enter your new canvas' name");
-     let canvasNumber = $('.canvas').length + 1;
-     let tabId = this._canvasElement.id+'_'+canvasNumber;
-
-     // Adding tab
-     FloriaDOM.appendInnerHTML(this._mainDivId + '_CANVAS_TABS', '<BUTTON class="tab" id="'+tabId+'" data-canvasid="'+canvasNumber+'">'+canvasName+'</BUTTON>');
-     this._currentCanvasState = canvasStateManager.addCanvas(canvasName);
-     this.showCurrentCanvas();
+ , _zoomLevel: 1
+ , _zoom: function() {
+      this._paper.scale(this._zoomLevel);
+      canvasStateManager.setZoomLevel(this._zoomLevel);
    }
-
-
-    , _zoomLevel: 1
-    , _zoom: function() {
-        this._paper.scale(this._zoomLevel);
-        canvasStateManager.setZoomLevel(this._zoomLevel);
-    }
-    , zoomIn: function() {
-        this._zoomLevel = Math.min(5, this._zoomLevel + 0.2);
-        this._zoom();
-    }
-    , zoomOut: function() {
-        this._zoomLevel = Math.max(0.2, this._zoomLevel - 0.2);
-        this._zoom();
-    }
+ , zoomIn: function() {
+      this._zoomLevel = Math.min(5, this._zoomLevel + 0.2);
+      this._zoom();
+   }
+ , zoomOut: function() {
+      this._zoomLevel = Math.max(0.2, this._zoomLevel - 0.2);
+      this._zoom();
+   }
 
  ,bindEventHandlersToPaper: function()
    {
@@ -658,17 +780,6 @@ export var ERView = {
       this._paper.on('blank:pointerup', function(cellView, evt, x, y) {
          FloriaDOM.hide(that._contextMenu);
       });
-
-/*      
-      this._paper.on("blank:mousewheel", function(evt, x, y, delta) {
-         evt.preventDefault();
-         if (delta > 0)
-          that.zoomIn();
-         else
-          that.zoomOut();
-      });
-*/
-
    }
 
 

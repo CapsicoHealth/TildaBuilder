@@ -63,18 +63,39 @@ FloriaLogin.PopupLogin = {
   },
   init: function(elementIdBase)
     {
-      var c = FloriaDOM.getCookie("REMEMBERME");
-      if (c == null)
-       return;
-      var e = document.getElementById(elementIdBase+"RememberMe");
-      if (e != null)
-        e.checked = true;
-      e = document.getElementById(elementIdBase+"Email");
-      if (e != null)
-        e.value=c;
-      e = document.getElementById(elementIdBase+"Password");
-      if (e != null)
-       e.focus();
+      // Data Masking
+      let c = FloriaDOM.getCookie("DATAMASKING");
+      if (c != null)
+       {
+         let e = document.getElementById(elementIdBase+"DataMasking");
+         if (e != null)
+          e.checked = true;
+       }
+
+      // RememberMe
+      c = FloriaDOM.getCookie("REMEMBERME");
+      if (c != null)
+       {
+         let e = document.getElementById(elementIdBase+"RememberMe");
+         if (e != null)
+          e.checked = true;
+         // Email
+         e = document.getElementById(elementIdBase+"Email");
+         if (e != null)
+          { 
+            e.value=c;
+            e = document.getElementById(elementIdBase+"Password");
+            if (e != null)
+             e.focus();
+          }
+        }
+      else
+        {
+          let e = document.getElementById(elementIdBase+"Email");
+          if (e != null)
+           e.focus();
+        }
+      
     },
    createPopup : function(onSuccessFunc, errorMessage, title, url, width, height, Contents)
     {
@@ -117,9 +138,16 @@ FloriaLogin.PopupLogin = {
       if (v == true)
        FloriaDOM.setCookie("REMEMBERME", Email, 30);
       else
-       FloriaDOM.removeCookie("REMEMBERME")
+       FloriaDOM.removeCookie("REMEMBERME");
+
+      var e = document.getElementById(elementIdBase+"DataMasking");
+      var v = e == null ? false : e.checked;
+      if (v == true)
+       FloriaDOM.setCookie("DATAMASKING", 1, 30);
+      else
+       FloriaDOM.removeCookie("DATAMASKING");
        
-      FloriaAjax.ajaxUrl("/"+FloriaLogin.PopupLogin.basePath+"/svc/Login?email=" + encodeURIComponent(Email) + "&pswd=" + encodeURIComponent(Pswd), "POST", null, FloriaLogin.PopupLogin.signInOK, FloriaLogin.PopupLogin.signInErr);
+      FloriaAjax.ajaxUrl("/"+FloriaLogin.PopupLogin.basePath+"/svc/Login?email=" + encodeURIComponent(Email) + "&pswd=" + encodeURIComponent(Pswd) + "&dataMasking="+(v==true?1:0), "POST", null, FloriaLogin.PopupLogin.signInOK, FloriaLogin.PopupLogin.signInErr);
       return false;
     },
   signInOK : function(data)
