@@ -48,7 +48,10 @@ public class SchemaDetails extends SimpleServletNonTransactional
           {
             F = new File(p._rootPath + p._srcPath + fullSchemaPath);
             if (F.exists() == false)
-              req.addError("schemaFullPath", "Cannot find schema definition file on disk.");
+              {
+                LOG.debug("Cannot find file '"+F.getAbsolutePath()+"'.");
+                req.addError("schemaFullPath", "Cannot find schema definition file on disk.");
+              }
           }
         req.throwIfErrors();
 
