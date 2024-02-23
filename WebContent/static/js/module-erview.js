@@ -221,7 +221,7 @@ class CanvasState
                                                      +"&ts="+new Date(), "GET", "Cannot get the schema for this project", function(canvasState) {
          canvasState = canvasState?.state || localStorage.getItem('canvasState');
          if (canvasState == null)
-          that._canvasData = { };
+          that._canvasData = [];
          else
           that._canvasData = JSON.parse(canvasState);
          console.log("Loading canvas state: ", that._canvasData);
