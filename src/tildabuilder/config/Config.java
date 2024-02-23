@@ -26,7 +26,8 @@ public class Config
     protected static final Logger LOG       = LogManager.getLogger(Config.class.getName());
 
     /*@formatter:off*/
-    @SerializedName("projects"    ) public List<Project> _projects   = new ArrayList<Project>();
+    @SerializedName("projects"    ) public List<ConfigProject>    _projects   = new ArrayList<ConfigProject>();
+    @SerializedName("users"      ) public List<ConfigUser>  _users      = new ArrayList<ConfigUser>();
     /*@formatter:on*/
 
 
@@ -75,7 +76,7 @@ public class Config
 
     private boolean validate()
       {
-        for (Project p : _projects)
+        for (ConfigProject p : _projects)
           {
             if (p != null && p.validate() == false)
               {
@@ -92,9 +93,9 @@ public class Config
      * @param name
      * @return
      */
-    public Project getProject(String name)
+    public ConfigProject getProject(String name)
       {
-        for (Project p : _projects)
+        for (ConfigProject p : _projects)
           if (p._name.equalsIgnoreCase(name) == true)
             return p;
         return null;
@@ -106,7 +107,7 @@ public class Config
      * @param p
      * @return the project added, or null if the project already exists by case-insensitive name
      */
-    public Project addProject(Project p)
+    public ConfigProject addProject(ConfigProject p)
       {
         return addProject(p, false);
       }
@@ -118,7 +119,7 @@ public class Config
      * @param p
      * @return The project added, or null if the project already exists by case-insensitive name and replace was false.
      */
-    public Project addProject(Project p, boolean replace)
+    public ConfigProject addProject(ConfigProject p, boolean replace)
       {
         if (getProject(p._name) != null)
           {
@@ -136,9 +137,9 @@ public class Config
      * @param name
      * @return The removed project, or null if not found.
      */
-    public Project removeProject(String name)
+    public ConfigProject removeProject(String name)
       {
-        for (Project p : _projects)
+        for (ConfigProject p : _projects)
           if (p._name.equalsIgnoreCase(name) == true)
             {
               _projects.remove(p);
@@ -159,6 +160,22 @@ public class Config
           }
 
 
+      }
+
+    public ConfigUser getUser(String userName)
+      {
+        for (ConfigUser CU : _users)
+          if (CU._name.equalsIgnoreCase(userName) == true)
+            return CU;
+        return null;
+      }
+
+    public List<String> getUserNames()
+      {
+        List<String> L = new ArrayList<String>();
+        for (ConfigUser CU : _users)
+          L.add(CU._name);
+        return L;
       }
 
   }

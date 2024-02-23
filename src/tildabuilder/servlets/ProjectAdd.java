@@ -12,7 +12,7 @@ import com.google.gson.GsonBuilder;
 
 import tilda.utils.json.JSONUtil;
 import tildabuilder.config.Config;
-import tildabuilder.config.Project;
+import tildabuilder.config.ConfigProject;
 import wanda.web.RequestUtil;
 import wanda.web.ResponseUtil;
 import wanda.web.SimpleServletNonTransactional;
@@ -39,14 +39,14 @@ public class ProjectAdd extends SimpleServletNonTransactional
         boolean update = req.getParamBoolean("update", false);
 
         Config conf = Config.getInstance();
-        Project p = conf.getProject(name);
+        ConfigProject p = conf.getProject(name);
         if (p != null && update == false)
           req.addError("name", "Project '" + name + "' already exists. Use parameter update=1 to update.");
 
         req.throwIfErrors();
 
         if (p == null)
-         p = new Project();
+         p = new ConfigProject();
 
         p._name = name;
         p._description = description;

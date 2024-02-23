@@ -14,9 +14,9 @@ import tilda.utils.FileUtil;
 import tilda.utils.LogUtil;
 import tilda.utils.TextUtil;
 
-public class Project
+public class ConfigProject
   {
-    protected static final Logger LOG          = LogManager.getLogger(Project.class.getName());
+    protected static final Logger LOG          = LogManager.getLogger(ConfigProject.class.getName());
 
     /*@formatter:off*/
     @SerializedName("name"       ) public String   _name        = null;

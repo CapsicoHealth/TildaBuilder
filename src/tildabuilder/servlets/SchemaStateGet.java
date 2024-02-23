@@ -14,7 +14,7 @@ import com.google.gson.GsonBuilder;
 import tilda.utils.FileUtil;
 import tilda.utils.json.JSONUtil;
 import tildabuilder.config.Config;
-import tildabuilder.config.Project;
+import tildabuilder.config.ConfigProject;
 import wanda.web.RequestUtil;
 import wanda.web.ResponseUtil;
 import wanda.web.SimpleServletNonTransactional;
@@ -39,7 +39,7 @@ public class SchemaStateGet extends SimpleServletNonTransactional
 
         File F = null;
         Config conf = Config.getInstance();
-        Project p = conf.getProject(projectName);
+        ConfigProject p = conf.getProject(projectName);
         if (p == null)
           req.addError("projectName", "Cannot find project.");
         else if (p.hasSchema(fullSchemaPath) == false)

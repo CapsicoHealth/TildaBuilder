@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import tilda.utils.FileUtil;
 import tildabuilder.config.Config;
-import tildabuilder.config.Project;
+import tildabuilder.config.ConfigProject;
 import wanda.web.RequestUtil;
 import wanda.web.ResponseUtil;
 import wanda.web.SimpleServletNonTransactional;
@@ -37,7 +37,7 @@ public class SchemaStateSave extends SimpleServletNonTransactional
 
         File F = null;
         Config conf = Config.getInstance();
-        Project p = conf.getProject(projectName);
+        ConfigProject p = conf.getProject(projectName);
         if (p == null)
           req.addError("projectName", "Cannot find project.");
         else if (p.hasSchema(fullSchemaPath) == false)
