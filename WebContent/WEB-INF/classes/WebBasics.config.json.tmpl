@@ -1,6 +1,12 @@
-{ "email": { "sysadmin": { "smtp"  :"smtp.gmail.com:465:ssl", "userId":"hello@capsicohealth.com", "pswd"  :"IDK" }
-            ,"user"    : { "smtp"  :"smtp.gmail.com:465:ssl", "userId":"hello@capsicohealth.com", "pswd"  :"IDK" }
-   }
+{ "email": { "smtp":"smtp.office365.com:587:starttls"
+            ,"userId":"notifications@capsicohealth.com", "pswd":"xxx"
+            ,"maxCount": 1000
+           }
+ ,"emailSys": { "smtp":"smtp.office365.com:587:starttls"
+               ,"userId":"sysnotifs@capsicohealth.com", "pswd":"xxx"
+               ,"maxCount": 1000
+               ,"defaultAdmins":["ldh@capsicohealth.com"]
+              }
  ,"sessionConfig": {
         "loginAttempts"      : 5
        ,"withinMins"         : 5
