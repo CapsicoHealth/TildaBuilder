@@ -86,9 +86,9 @@ const Class = joint.dia.Element.define('uml.Class', {
             if (section.visible) {
                 
                 var lines = Array.isArray(section.text) ? section.text : [section.text];
-                console.log(lines);
+//                console.log(lines);
                 var rectHeight = Math.max(lines.length * lineHeight + minHeight, minHeight);
-                console.log(rectHeight);
+//                console.log(rectHeight);
                 var sectionWidth = lines.reduce((max, line) => {
                     const estimatedWidth = line.length * 7 + padding * 2;
                     return Math.max(max, estimatedWidth);
@@ -102,7 +102,7 @@ const Class = joint.dia.Element.define('uml.Class', {
     
                 offsetY += rectHeight; 
                 totalHeight += rectHeight;
-                console.log(totalHeight);
+//                console.log(totalHeight);
             } else {
                 attrs['.uml-class-' + section.type + '-rect'].height = 0;
             }
@@ -111,13 +111,15 @@ const Class = joint.dia.Element.define('uml.Class', {
         this.resize(maxWidth, totalHeight); 
     }
     
-    
-    
-    
-    
-
 });
 
+
+
+
+
+
+
+/*
 
 const ClassView = joint.dia.ElementView.extend({
 
@@ -181,175 +183,4 @@ const Composition = joint.dia.Link.define('uml.Composition', {
 
 const Association = joint.dia.Link.define('uml.Association');
 
-
-const shapes = {
-    ...joint.shapes,
-    uml: { Class, ClassView, Abstract, AbstractView, Interface, InterfaceView, Generalization, Implementation, Aggregation, Composition, Association }
-};
-
-var graph = new joint.dia.Graph({}, { cellNamespace: shapes });
-
-var paper = new joint.dia.Paper({
-    el: document.getElementById('paper'),
-    width: 800,
-    height: 600,
-    gridSize: 1,
-    model: graph,
-    cellViewNamespace: shapes,
-    linkView: joint.dia.LegacyLinkView,
-});
-
-paper.on('element:pointerdblclick', function(cellView, evt) {
-    evt.preventDefault(); 
-    var model = cellView.model;
-    var currentVisibility = model.attr('.uml-class-attrs-rect/display');
-    var newVisibility = currentVisibility === 'none' ? 'block' : 'none'; 
-    model.attr('.uml-class-attrs-rect/display', newVisibility); 
-    model.attr('.uml-class-attrs-text/display', newVisibility); 
-    model.updateRectangles();
-});
-
-var uml = joint.shapes.uml;
-
-var classes = {
-
-    mammal: new uml.Interface({
-        position: { x:300  , y: 50 },
-        size: { width: 240, height: 100 },
-        name: 'Mammal',
-        attributes: ['dob: Date'],
-        attributespk: ['id: Integer'],
-        attributesfk: ['parent_id: Integer'],
-        attrs: {
-            '.uml-class-name-rect': {
-                fill: '#feb662',
-                stroke: '#ffffff',
-                'stroke-width': 0.5
-            },
-            '.uml-class-attrs-rect': {
-                fill: '#fdc886',
-                stroke: '#fff',
-                'stroke-width': 0.5
-            },
-            '.uml-class-attributespk-rect': {
-                fill: '#fdc886',
-                stroke: '#fff',
-                'stroke-width': 0.5
-            },
-            '.uml-class-attributesfk-rect': {
-                fill: '#fdc886',
-                stroke: '#fff',
-                'stroke-width': 0.5
-            },
-            '.uml-class-attrs-text': {
-                ref: '.uml-class-attrs-rect',
-                'ref-y': 0.5,
-                'y-alignment': 'middle'
-            },
-            '.uml-class-attributespk-text': {
-                ref: '.uml-class-attributespk-rect',
-                'ref-y': 0.5,
-                'y-alignment': 'middle'
-            },
-            '.uml-class-attributesfk-text': {
-                ref: '.uml-class-attributesfk-rect',
-                'ref-y': 0.5,
-                'y-alignment': 'middle'
-            }
-
-        }
-    }),
-
-    person: new uml.Abstract({
-        position: { x:300  , y: 300 },
-        size: { width: 260, height: 100 },
-        name: 'Person',
-        attributes: ['firstName: String','lastName: String'],
-        attributespk: ['id: Integer'],
-        attributesfk: ['address_id: Integer'],
-        attrs: {
-            '.uml-class-name-rect': {
-                fill: '#68ddd5',
-                stroke: '#ffffff',
-                'stroke-width': 0.5
-            },
-            '.uml-class-attrs-rect': {
-                fill: '#9687fe',
-                stroke: '#fff',
-                'stroke-width': 0.5
-            },
-            '.uml-class-attributespk-rect': {
-                fill: '#9687fe',
-                stroke: '#fff',
-                'stroke-width': 0.5
-            },
-            '.uml-class-attributesfk-rect': {
-                fill: '#9687fe',
-                stroke: '#fff',
-                'stroke-width': 0.5
-            },
-            '.uml-class-methods-rect': {
-                fill: '#9687fe',
-                stroke: '#fff',
-                'stroke-width': 0.5
-            },
-            '.uml-class-methods-text, .uml-class-attrs-text': {
-                fill: '#fff'
-            }
-        }
-    }),
-
-    bloodgroup: new uml.Class({
-        position: { x:20  , y: 190 },
-        size: { width: 220, height: 100 },
-        name: 'BloodGroup',
-        attributes: ['bloodGroup: String'],
-        attributespk: ['id: Integer'],
-        attributesfk: ['person_id: Integer', 'type: O', 'types: A','type2: J','person_id: Integer', 'type: O', 'types: A','type2: J','person_id: Integer', 'type: O', 'types: A','type2: J','person_id: Integer', 'type: O', 'types: A','type2: J'],
-        methods: ['+ isCompatible(bG: String): Boolean'],
-        attrs: {
-            '.uml-class-name-rect': {
-                fill: '#ff8450',
-                stroke: '#fff',
-                'stroke-width': 0.5,
-            },
-            '.uml-class-attrs-rect': {
-                fill: '#fe976a',
-                stroke: '#fff',
-                'stroke-width': 0.5
-            },
-            '.uml-class-attributespk-rect': {
-                fill: '#fe976a',
-                stroke: '#fff',
-                'stroke-width': 0.5
-            },
-            '.uml-class-attributesfk-rect': {
-                fill: '#fe976a',
-                stroke: '#fff',
-                'stroke-width': 0.5
-            },
-            '.uml-class-methods-rect': {
-                fill: '#fe976a',
-                stroke: '#fff',
-                'stroke-width': 0.5
-            },
-            '.uml-class-attrs-text': {
-                'ref-y': 0.5,
-                'y-alignment': 'middle'
-            }
-        }
-    }),
-};
-
-Object.keys(classes).forEach(function(key) {
-    graph.addCell(classes[key]);
-});
-
-var relations = [
-    new uml.Association({ source: { id: classes.person.id }, target: { id: classes.mammal.id }, router: { name: 'normal' }}),
-    new uml.Association({ source: { id: classes.person.id }, target: { id: classes.bloodgroup.id }, router: { name: 'normal' }})
-];
-
-Object.keys(relations).forEach(function(key) {
-    graph.addCell(relations[key]);
-});
+*/

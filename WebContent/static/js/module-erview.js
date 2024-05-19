@@ -375,6 +375,27 @@ export var ERView = {
 
  ,start: function(mainDivId, entityListDivId, searchInputId, projectName, schemaName, fullSchemaPath, tildaJsonData)
    {
+    
+   
+/*     
+const graph = new joint.dia.Graph();
+
+const paper = new joint.dia.Paper({
+   el: FloriaDOM.getElement(mainDivId + '_CANVAS_CONTAINER'),
+   width: 800,
+   height: 900,
+   model: graph,
+   async: true
+});
+
+paper.on('blank:contextmenu', function(evt, x, y) {
+   evt.stopPropagation();
+   evt.preventDefault();
+   console.log('context menu!', x, y);
+});
+    
+return;
+*/    
      this._mainDivId = mainDivId;
      this.createEntitiesFromTildaJson(tildaJsonData);
      
@@ -386,10 +407,12 @@ export var ERView = {
      this._graph = new joint.dia.Graph();
      this._paper = new joint.dia.Paper({
         el: this._canvasElement.childNodes[0]
-       ,width: "5000px"
-       ,height: "5000px"
+       ,width: 5000
+       ,height: 5000
        ,model: this._graph
        ,gridSize: 10
+       ,async: true
+       ,preventContextMenu: true
      });
 //     this._paper.setGrid({ name: 'mesh', args: { color: '#999', thickness:1 }});
 //     this._paper.drawGrid()
@@ -731,9 +754,13 @@ export var ERView = {
           }
          FloriaDOM.hide(that._contextMenu);
       });
-      
+      // prevent a right click on the context menu itself
+      FloriaDOM.addEvent(this._contextMenu, "contextmenu", function(e, event, target) {
+         event.preventDefault();
+      });      
       this._paper.on('element:contextmenu', function(cellView, evt, x, y) {
          evt.stopPropagation();
+         evt.preventDefault();
          that._contextMenu.style.left=evt.pageX+"px";
          that._contextMenu.style.top=evt.pageY+"px";
          var str = '<LI>'+(cellView.model.get('showKeys'   ) != true ? 'Show Keys'    : 'Hide Keys')+'</LI>'
@@ -747,6 +774,7 @@ export var ERView = {
 
       this._paper.on('blank:contextmenu', function(evt, x, y) {
          evt.stopPropagation();
+         evt.preventDefault();
          that._contextMenu.style.left=evt.pageX+"px";
          that._contextMenu.style.top=evt.pageY+"px";
          var str = '<LI>Zoom In</LI>'

@@ -26,8 +26,8 @@ public class Config
     protected static final Logger LOG       = LogManager.getLogger(Config.class.getName());
 
     /*@formatter:off*/
-    @SerializedName("projects"    ) public List<ConfigProject>    _projects   = new ArrayList<ConfigProject>();
-    @SerializedName("users"      ) public List<ConfigUser>  _users      = new ArrayList<ConfigUser>();
+    @SerializedName("projects") public List<ConfigProject>    _projects   = new ArrayList<ConfigProject>();
+    @SerializedName("users"   ) public List<ConfigUser>       _users      = new ArrayList<ConfigUser>();
     /*@formatter:on*/
 
 

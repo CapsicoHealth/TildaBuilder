@@ -287,11 +287,11 @@ export function FloriaContextMenu(elementId, options, cssPostfix, callbackFunc, 
    let that = this;
 
    FloriaDOM.addEvent(elementId, leftClick == true ? "click" : "contextmenu", function(e, event, target) {
-       if (target.dataset.contexttarget != 1)
-        return;
        event.preventDefault();
        event.stopPropagation();
        event.stopImmediatePropagation();
+       if (target.dataset.contexttarget != 1)
+        return;
        that._contextMenu.style.left=(event.pageX-5)+"px";
        that._contextMenu.style.top=(event.pageY-5)+"px";
        that._contextMenu.lastTarget = target;
@@ -302,10 +302,20 @@ export function FloriaContextMenu(elementId, options, cssPostfix, callbackFunc, 
    });
 
    FloriaDOM.addEvent(this._contextMenu, "click", function(e, event, target) {
+     event.preventDefault();
+     event.stopPropagation();
+     event.stopImmediatePropagation();
      if (target.nodeName != 'LI')
       return;
      FloriaDOM.hide(that._contextMenu);
      callbackFunc(that._contextMenu.lastTarget, target.dataset.id);
+   });
+
+   // We have to prevent right click menus on the context menu
+   FloriaDOM.addEvent(this._contextMenu, "contextmenu", function(e, event, target) {
+     event.preventDefault();
+     event.stopPropagation();
+     event.stopImmediatePropagation();
    });
 
    FloriaDOM.addEvent(this._contextMenu, "mouseleave", function(e, event, target) {

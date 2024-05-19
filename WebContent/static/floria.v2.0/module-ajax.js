@@ -13,11 +13,13 @@ ajaxUrl: function(url, method, errorMsg, successFunc, errorFunc, postContents, t
          return FloriaDOM.alertThrow("Error: you cannot post data in a non POST ajax request");
         url = url + "?" + (FloriaDOM.isObject(postContents) == true ? FloriaDOM.makeUrlParams(postContents) : postContents);
      }
-         
+    if (handleAs==null)
+     handleAs="json";
+
     // Is this used at all anymore?????
-    if (handleAs != null && handleAs != 'json' && handleAs != 'jsonX')
+    if (handleAs != 'json' && handleAs != 'jsonX' && handleAs != 'jsonRAW')
      {
-       alert("FloriaAjax.ajaxUrl called with handleAs: '"+handleAs+"'. Check consle logs for stack trace.\n\nThis was deprecated!");
+       alert("FloriaAjax.ajaxUrl called with handleAs: '"+handleAs+"'. Check console logs for stack trace.\n\nThis was deprecated!");
        console.trace();
        return;
      }
@@ -26,7 +28,7 @@ ajaxUrl: function(url, method, errorMsg, successFunc, errorFunc, postContents, t
     xhr.open(method, url);
     xhr.timeout = timeout
     xhr.setRequestHeader("Content-type", "application/"+(handleAs||'json')+"; charset=utf-8");
-    if (handleAs==null || handleAs=='json')
+    if (handleAs=='json' || handleAs=='jsonRAW')
      xhr.responseType = 'json';
     else if (handleAs=='jsonX')
      xhr.responseType = 'text';
@@ -38,17 +40,17 @@ ajaxUrl: function(url, method, errorMsg, successFunc, errorFunc, postContents, t
             alert("FYI THAT YOU CANCELED ANOTHER REQUEST!\n\nYou (or another user on the same account) was running a request you interrupted.");
 
           let data = handleAs=='jsonX' ? FloriaDOM.jsonParseWithComments(xhr.response) : xhr.response;
-          if (data?.code != 200 || xhr.status != 200)
+          if ((handleAs != 'jsonRAW' && data?.code != 200) || xhr.status != 200)
            return xhr.onerror({code: data?.code||xhr.status, message : data?.msg||xhr.statusText, errors: data?.errors, type: data?.type });
           if (data == null)
             throw ("An error occurred: no data for " + FloriaDOM.truncateUrl(url));
-          if (data.code == undefined)
-            throw ("An error occurred: invalid JSON data for " + FloriaDOM.truncateUrl(url));
+          if (handleAs != 'jsonRAW' && (data.code == null || data.data == null))
+            throw ("An error occurred: invalid JSON data for " + FloriaDOM.truncateUrl(url)+". Expecting WANDA server-formated response with 'code' and 'data' sub-elements.");
 
           if (data.perfMessage != null)
            setTimeout(function(){ alert(data.perfMessage); }, 10);
           if (successFunc != null)
-           successFunc(data.data);   
+           successFunc(handleAs=='jsonRAW' ? data : data.data);   
         }
       catch (e)
         {
