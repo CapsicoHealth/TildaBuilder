@@ -1,0 +1,44 @@
+body {
+  font-family: Arial, sans-serif;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th,
+td {
+  border: 1px solid #4caf50;
+  padding: 8px;
+  text-align: left;
+}
+th {
+  background-color: #4caf50;
+  color: white;
+}
+.repo-name {
+  font-weight: bold;
+}
+.repo-name.disabled {
+  color: gray;
+}
+.action-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.action-button.clone {
+  background-color: #003366;
+}
+.action-button.delete {
+  background-color: #ff6666;
+}
+.dropdown {
+  padding: 5px;
+}
+
+button {
+  padding: 20px;
+  border-radius: 40%;
+}

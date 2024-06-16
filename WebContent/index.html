@@ -15,7 +15,7 @@
     <TABLE width="100%" border="0px" cellspacing="0px" cellpadding="0px">
       <TR><TD id="HEADER_LOGO"><A href="/index.html"><IMG src="/static/img/tilda-logo.gif"></A></TD>
           <TD id="HEADER_TITLE">TIDE</TD>
-          <TD id="HEADER_ACCOUNTS"><A href="/index.html"><IMG src="/static/img/user.gif"></A></TD>
+          <TD id="HEADER_ACCOUNTS"><A href="/login.html"><IMG src="/static/img/user.gif"></A></TD> <!-- javascript:TILDA_GLOBAL.accountDetails();-->
       </TR>
     </TABLE>
   </HEADER>
@@ -81,6 +81,7 @@
 
 <SCRIPT type="module">
 import { projects } from "/static/js/module-projects.js";
+import { accounts } from "/static/js/module-accounts.js";
 
 window.TILDA_GLOBAL = {
   addProject: function()
@@ -94,6 +95,10 @@ window.TILDA_GLOBAL = {
  ,addEntity: function()
     {
        alert("not implemented yet");
+    }
+,accountDetails: function()
+    {
+       accounts.details();
     }
 };
 projects.start("PROJECT_LIST");
