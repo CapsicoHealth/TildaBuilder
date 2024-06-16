@@ -7,3 +7,4 @@
 /*.svg
 /*.dot
 /tomcat.*
+/tilda.migration.*.sql
