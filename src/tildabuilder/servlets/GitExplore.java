@@ -1,21 +1,14 @@
 package tildabuilder.servlets;
 
-import java.util.List;
-
 import javax.servlet.annotation.WebServlet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import tilda.utils.CollectionUtil;
 import tilda.utils.json.JSONPrinter;
-import tildabuilder.config.Config;
-import tildabuilder.config.ConfigUser;
-import tildabuilder.utils.GitHubUtils;
 import wanda.web.RequestUtil;
 import wanda.web.ResponseUtil;
 import wanda.web.SimpleServletNonTransactional;
-import wanda.web.exceptions.NotFoundException;
 
 @WebServlet("/svc/repo/explore")
 public class GitExplore extends SimpleServletNonTransactional
@@ -40,18 +33,17 @@ public class GitExplore extends SimpleServletNonTransactional
 //         throw new NotFoundException("user", userName);
 //
 //        GitHubUtils ghu = new GitHubUtils(CU._token);
-        String str = "[\r\n"
-        		+ "        {\r\n"
-        		+ "          org: \"Org1\",\r\n"
-        		+ "          name: \"Repo1\",\r\n"
-        		+ "          branches: [\"Branch A\", \"Branch B\"],\r\n"
-        		+ "          deletable: true,\r\n"
-        		+ "        },\r\n"
-        		+ "        { org: \"Org1\", name: \"Repo2\", branches: [], deletable: false },\r\n"
-        		+ "        { org: \"Org1\", name: \"Repo3\", branches: [], deletable: false },\r\n"
-        		+ "        { org: \"Org 2\", name: \"Repo4\", branches: [\"master\"], deletable: true },\r\n"
-        		+ "        { org: \"Org 2\", name: \"Repo5\", branches: [], deletable: false },\r\n"
-        		+ "      ]";
+        String str = "[ {\r\n"
+        		+ "        \"org\": \"Org1\",\r\n"
+        		+ "        \"name\": \"Repo1\",\r\n"
+        		+ "        \"branches\": [\"Branch A\", \"Branch B\"],\r\n"
+        		+ "        \"deletable\": true\r\n"
+        		+ "      },\r\n"
+        		+ "      { \"org\": \"Org1\", \"name\": \"Repo2\", \"branches\": [], \"deletable\": false },\r\n"
+        		+ "      { \"org\": \"Org1\", \"name\": \"Repo3\", \"branches\": [], \"deletable\": false },\r\n"
+        		+ "      { \"org\": \"Org 2\", \"name\": \"Repo4\", \"branches\": [\"master\"], \"deletable\": true },\r\n"
+        		+ "      { \"org\": \"Org 2\", \"name\": \"Repo5\", \"branches\": [], \"deletable\": false }\r\n"
+        		+ "]";
         //List<String> L = ghu.listUserRepositories();
         JSONPrinter out = new JSONPrinter(false);
         out.addElementRaw("repositories", str);
