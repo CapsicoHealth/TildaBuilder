@@ -9,6 +9,9 @@ import tilda.utils.json.JSONPrinter;
 import wanda.web.RequestUtil;
 import wanda.web.ResponseUtil;
 import wanda.web.SimpleServletNonTransactional;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GitHub;
+
 
 @WebServlet("/svc/repo/explore")
 public class GitExplore extends SimpleServletNonTransactional

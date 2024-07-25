@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Popup information</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .top-right-button {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 10;
+    }
+    .popup-overlay {
+      display: flex;
+      opacity: 0;
+      visibility: hidden;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 9;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    .popup {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      transform: scale(0.7);
+      transition: transform 0.5s ease;
+    }
+    .popup input {
+      width: 80%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .popup button {
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .close-btn {
+      background-color: #dc3545;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+    .popup-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .popup-overlay.show .popup {
+      transform: scale(1);
+    }
+  </style>
+</head>
+<body>
+  <button class="top-right-button" onclick="togglePopup()">Login</button>
+  <div class="popup-overlay" id="popupOverlay">
+    <div class="popup">
+      <form id="form" action="/svc/repo/github/login" method="POST">
+        <button type="button" class="close-btn" onclick="closePopup()">close</button>
+        <h2>Login</h2>
+        <input type="text" id="user" name="user" placeholder="github user" />
+        <input type="password" id="token" name="token" placeholder="personal token" />
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    /* document.addEventListener('DOMContentLoaded', () => {
+    	document.getElementById('form').addEventListener('submit', (event) => {
+    	    event.preventDefault();
+    	    
+    	    const username = document.getElementById('user').value;
+    	    const tokenID = document.getElementById('token').value;
+    	    const minutes = 30;
+    	    const date = new Date();
+    	    date.setTime(date.getTime() + minutes * 60 * 1000);
+    	    const expires = "expires=" + date.toUTCString();
+
+    	    if (username === "" || tokenID === "") {
+    	        alert("Please enter all fields");
+    	    } else {
+    	        document.cookie = `username=${username}; ${expires}; path=/`;
+    	        document.cookie = `tokenID=${tokenID}; ${expires}; path=/`;
+
+    	        // Redirect to repo-testing.html
+    	        window.location.href = "repo-testing.html";
+    	    }
+    	});
+
+        
+    }); */
+
+    function togglePopup() {
+      const popupOverlay = document.getElementById("popupOverlay");
+      popupOverlay.classList.toggle("show");
+    }
+
+    function closePopup() {
+      const popupOverlay = document.getElementById("popupOverlay");
+      popupOverlay.classList.remove("show");
+      document.getElementById('user').value = "";
+      document.getElementById('token').value = "";
+    }
+  </script>
+</body>
+</html>

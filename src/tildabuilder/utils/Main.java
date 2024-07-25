@@ -12,7 +12,7 @@ public class Main {
 
     public static void main(String[] args) {
         System.out.println("Enter your GitHub personal access token:");
-        String token = scanner.nextLine();
+        String token = scanner.nextLine(); 
 
         try {
             gitHubService = new GitHubUtils(token);

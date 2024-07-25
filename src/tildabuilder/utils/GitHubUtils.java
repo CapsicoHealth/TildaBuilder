@@ -67,16 +67,17 @@ public class GitHubUtils
 
 
 
-    public void cloneOrPullRepository(String repoUrl, String localPath)
+    public void cloneOrPullRepository(String repoUrl, String localPath)//swapped. After testing, it seems like this order works
       {
         File localRepo = new File(localPath);
         if (localRepo.exists())
-          {
-            pullRepository(localPath);
+          {cloneRepository(repoUrl, localPath);
+        	
           }
         else
           {
-            cloneRepository(repoUrl, localPath);
+        	
+        	pullRepository(localPath);
           }
       }
 
