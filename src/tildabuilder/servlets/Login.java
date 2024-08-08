@@ -53,9 +53,11 @@ public class Login extends SimpleServletNonTransactional {
     	   }
        }
        u._token = token;
-     //check if token is valid, return error if not
        conf.save();
-       
+       if(u._token == null)
+       {
+    	   throw new Error ("Empty field");
+       }
        res.success();
 
 

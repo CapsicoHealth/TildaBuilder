@@ -63,7 +63,7 @@ public class LocalTest extends SimpleServletNonTransactional
     	File folder = new File(directoryPath);
         List<String> folderContents = new ArrayList<>();
 
-        if (folder.exists() && folder.isDirectory()) {
+        if (folder.exists() && folder.isDirectory()) {//looping through all the files/folders and making a string collection to compare for certain cases
             for (File file : folder.listFiles()) {
                 folderContents.add(file.getName());
             }
@@ -72,15 +72,17 @@ public class LocalTest extends SimpleServletNonTransactional
             new File(directoryPath).mkdirs();
         }
         String result = String.join(",", folderContents);
-//        if(result.indexOf(".git") > -1) {
-//        	
-//        }
+        if(result.indexOf(".git") > -1) {//case 1 is where there is a .git folder existing in the directory, signaling a git project already existing in that directory
+        	String errorMsg = "This folder path already contains a .git folder. Please choose a different directory";
+            LOG.error(errorMsg);
+            throw new Exception(errorMsg);
+        }
+        else if(result.length() == 0){//case 2 is where there is an empty folder. There needs to be a directory with items to clone
+        	String errorMsg = "Cannot clone in empty folder, please select a seperate directory";
+        	LOG.error(errorMsg);
+            throw new Exception(errorMsg);
+        }
         gitHubUtils.cloneOrPullRepository(repoUrl, directoryPath);
         res.success();
-//        
-//
-//        JSONPrinter out = new JSONPrinter(false);
-//        out.addElementRaw("repositories", result);
-//        res.successJson(out);
   }
   }
