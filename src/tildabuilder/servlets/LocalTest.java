@@ -26,63 +26,59 @@ import org.kohsuke.github.GitHub;
 
 
 @WebServlet("/svc/repo/localtest")
-public class LocalTest extends SimpleServletNonTransactional
-  {
-    private static final long     serialVersionUID = 1018123535563202342L;
-    protected static final Logger LOG              = LogManager.getLogger(LocalTest.class.getName());
+public class LocalTest extends SimpleServletNonTransactional {
+    private static final long serialVersionUID = 1018123535563202342L;
+    protected static final Logger LOG = LogManager.getLogger(LocalTest.class.getName());
 
-    public LocalTest()
-      {
+    public LocalTest() {
         super(false);
-      }
+    }
 
     @Override
-    protected void justDo(RequestUtil req, ResponseUtil res)
-      throws Exception
-      {
-    	String user = req.getSessionString(Login._USER);
+    protected void justDo(RequestUtil req, ResponseUtil res) throws Exception {
+        String user = req.getSessionString(Login._USER);
         Config conf = Config.getInstance();
         ConfigUser u = conf.getUser(user);
-        if(u == null)
-        {
-        	throw new Exception("Exception: User not found");
-        	//add more information in the log
+        if (u == null) {
+            throw new Exception("Exception: User not found");
+            //add more information in the log
         }
-        
-        // Initialize GitHubUtils with the provided token
+
         GitHubUtils gitHubUtils;
         try {
             gitHubUtils = new GitHubUtils(u._token);
         } catch (IOException e) {
             LOG.error("Failed to initialize GitHubUtils", e);
-            ((Logger) res).error("Failed to connect to GitHub: " + e.getMessage());
             return;
         }
+
         String repoUrl = req.getParamString("repoUrl", true);
         String directoryPath = req.getParamString("directoryPath", true);
-    	File folder = new File(directoryPath);
-        List<String> folderContents = new ArrayList<>();
+        File folder = new File(directoryPath);
 
-        if (folder.exists() && folder.isDirectory()) {//looping through all the files/folders and making a string collection to compare for certain cases
-            for (File file : folder.listFiles()) {
-                folderContents.add(file.getName());
+        // Check if the directory exists and contains a .git folder
+        if (folder.exists() && folder.isDirectory()) {
+            File gitFolder = new File(folder, ".git");
+            if (gitFolder.exists() && gitFolder.isDirectory()) {//if the same project is being cloned, it will instead pull the latest version. 
+                // Pull latest changes instead of cloning
+                LOG.info("Repository already exists. Pulling latest changes...");
+                gitHubUtils.pullRepository(directoryPath);
+                LOG.info("Pulled latest changes if existed, all up to date!");
+            } else if (folder.listFiles().length > 0) {//case 1 is where there is a .git folder existing in the directory, signaling a git project already existing in that directory
+                String errorMsg = "The directory is not empty and doesn't contain a Git repository.";
+                LOG.error(errorMsg);
+                throw new Exception(errorMsg);
+            } else {
+                //everything is good, proceed to clone
+                gitHubUtils.cloneOrPullRepository(repoUrl, directoryPath);
             }
         } else {
-            LOG.warn("Folder does not exist or is not a directory: " + folder.getAbsolutePath());
-            new File(directoryPath).mkdirs();
+            // Directory does not exist, will create it then clone
+            LOG.info("Directory does not exist. Creating directory and cloning...");
+            folder.mkdirs();
+            gitHubUtils.cloneOrPullRepository(repoUrl, directoryPath);
         }
-        String result = String.join(",", folderContents);
-        if(result.indexOf(".git") > -1) {//case 1 is where there is a .git folder existing in the directory, signaling a git project already existing in that directory
-        	String errorMsg = "This folder path already contains a .git folder. Please choose a different directory";
-            LOG.error(errorMsg);
-            throw new Exception(errorMsg);
-        }
-        else if(result.length() == 0){//case 2 is where there is an empty folder. There needs to be a directory with items to clone
-        	String errorMsg = "Cannot clone in empty folder, please select a seperate directory";
-        	LOG.error(errorMsg);
-            throw new Exception(errorMsg);
-        }
-        gitHubUtils.cloneOrPullRepository(repoUrl, directoryPath);
+
         res.success();
-  }
-  }
+    }
+}
