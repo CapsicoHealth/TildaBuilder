@@ -67,16 +67,16 @@ public class GitHubUtils
 
 
 
-    public void cloneOrPullRepository(String repoUrl, String localPath)
+    public void cloneOrPullRepository(String repoUrl, String localPath)//swapped. After testing, it seems like this order works
       {
         File localRepo = new File(localPath);
         if (localRepo.exists())
           {
-            pullRepository(localPath);
+        	cloneRepository(repoUrl, localPath);
           }
         else
           {
-            cloneRepository(repoUrl, localPath);
+        	pullRepository(localPath);
           }
       }
 
@@ -93,7 +93,7 @@ public class GitHubUtils
           }
       }
 
-    private static void pullRepository(String localPath)
+    public void pullRepository(String localPath)//made this public, the if else logic for clone or pull repository was not working properly. Need seperate methods
       {
         try (Git git = Git.open(new File(localPath)))
           {

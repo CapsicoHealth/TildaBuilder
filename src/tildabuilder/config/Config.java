@@ -170,6 +170,15 @@ public class Config
         return null;
       }
 
+    public ConfigUser addUser(ConfigUser user)
+    {
+    	if(getUser(user._name) != null)
+    	{
+    		return null;
+    	}
+    	_users.add(user);
+    	return user;
+    }
     public List<String> getUserNames()
       {
         List<String> L = new ArrayList<String>();
