@@ -8,7 +8,6 @@ import javax.servlet.annotation.WebServlet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import tilda.utils.FileUtil;
 import tildabuilder.config.Config;
 import tildabuilder.config.ConfigProject;
 import wanda.web.RequestUtil;

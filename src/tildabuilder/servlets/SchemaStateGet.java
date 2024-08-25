@@ -8,9 +8,6 @@ import javax.servlet.annotation.WebServlet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import tilda.utils.FileUtil;
 import tilda.utils.json.JSONUtil;
 import tildabuilder.config.Config;
