@@ -8,7 +8,7 @@ HttpStatus Status = HttpStatus.parse((Integer) request.getAttribute("javax.servl
 String StatusMessage = (String) request.getAttribute("javax.servlet.error.message");
 String  PageTitle=Status._Code == HttpStatus.Unauthorized._Code ? "CapsicoHealth Login" : "CapsicoHealth error: "+Status._Code;
 %>
-    <link rel="stylesheet" href="/static/css/dojoSimple.css"/>
+    <!--  link rel="stylesheet" href="/static/css/dojo-XXX-Simple.css"/ -->
     <link rel="stylesheet" href="/static/css/tilda.css"/>
 
 <STYLE>
